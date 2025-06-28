@@ -1,7 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, Phone, MapPin, Award, Bell, Calendar, MessageCircle } from 'lucide-react-native';
+import { 
+  User, 
+  Settings, 
+  Star, 
+  Shield, 
+  CreditCard, 
+  LogOut, 
+  Edit3, 
+  Phone, 
+  MapPin, 
+  Award, 
+  Bell, 
+  Calendar, 
+  MessageCircle,
+  ChevronDown,
+  ChevronUp,
+  Users,
+  Clock,
+  TrendingUp
+} from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
@@ -13,6 +32,47 @@ import { QuickStatsCard } from '../../components/QuickStatsCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { databaseService } from '../../lib/database';
+
+interface CollapsibleSectionProps {
+  title: string;
+  icon: React.ComponentType<any>;
+  children: React.ReactNode;
+  defaultExpanded?: boolean;
+}
+
+function CollapsibleSection({ title, icon: Icon, children, defaultExpanded = true }: CollapsibleSectionProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  return (
+    <Card style={styles.collapsibleCard}>
+      <TouchableOpacity 
+        style={styles.sectionHeader} 
+        onPress={() => setExpanded(!expanded)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.sectionTitleContainer}>
+          <View style={styles.sectionIconContainer}>
+            <Icon size={20} color="#2563EB" />
+          </View>
+          <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+        <View style={styles.chevronContainer}>
+          {expanded ? (
+            <ChevronUp size={20} color="#6B7280" />
+          ) : (
+            <ChevronDown size={20} color="#6B7280" />
+          )}
+        </View>
+      </TouchableOpacity>
+      
+      {expanded && (
+        <View style={styles.sectionContent}>
+          {children}
+        </View>
+      )}
+    </Card>
+  );
+}
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -57,13 +117,12 @@ export default function ProfileScreen() {
 
   const loadUserStats = async () => {
     try {
-      // Load user statistics
       const matches = await databaseService.getUserMatches(user!.id);
       const schedules = await databaseService.getUserSchedules(user!.id);
       
       setUserStats({
         totalMatches: matches.length,
-        activeChats: matches.length, // Simplified - in production, count active conversations
+        activeChats: matches.length,
         upcomingSchedules: schedules.filter(s => 
           s.status === 'confirmed' && new Date(s.start_ts) > new Date()
         ).length,
@@ -92,21 +151,14 @@ export default function ProfileScreen() {
   };
 
   const handleProfileSaved = () => {
-    // Refresh profile data if needed
     console.log('Profile saved successfully');
     loadUserReviews();
     loadUserRating();
     loadUserStats();
   };
 
-  const profileStats = [
-    { label: 'Rating', value: userRating.average > 0 ? userRating.average.toString() : 'N/A', icon: Star },
-    { label: 'Reviews', value: userRating.count.toString(), icon: Award },
-    { label: 'Years', value: '3+', icon: Shield },
-  ];
-
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <AppHeader
         title="Profile"
         emergencyPhone={user?.emergency_phone}
@@ -123,150 +175,216 @@ export default function ProfileScreen() {
         }
       />
 
-      {/* Profile Info */}
-      <Card style={styles.profileCard}>
-        <View style={styles.profileHeader}>
-          <Image
-            source={{ 
-              uri: user?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-            }}
-            style={styles.avatar}
-          />
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name}</Text>
-            <Text style={styles.profileRole}>
-              {user?.role === 'family' ? 'Family Member' : 'Caregiver'}
-            </Text>
-            {isSubscriber && (
-              <View style={styles.subscriberBadge}>
-                <Shield size={16} color="#059669" />
-                <Text style={styles.subscriberText}>FlashCare Plus</Text>
+      <View style={styles.content}>
+        {/* Profile Header */}
+        <CollapsibleSection title="Profile Information" icon={User} defaultExpanded={true}>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{ 
+                  uri: user?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
+                }}
+                style={styles.avatar}
+              />
+              <TouchableOpacity style={styles.editAvatarButton}>
+                <Edit3 size={16} color="#2563EB" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.profileInfo}>
+              <View style={styles.nameContainer}>
+                <Text style={styles.profileName}>{user?.name}</Text>
+                <TouchableOpacity onPress={handleEditProfile} style={styles.editButton}>
+                  <Edit3 size={18} color="#2563EB" />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.profileRole}>
+                {user?.role === 'family' ? 'Family Member' : 'Professional Caregiver'}
+              </Text>
+              
+              {isSubscriber && (
+                <View style={styles.subscriberBadge}>
+                  <Shield size={16} color="#059669" />
+                  <Text style={styles.subscriberText}>FlashCare Plus</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {user?.bio && (
+            <View style={styles.bioContainer}>
+              <Text style={styles.bioLabel}>About</Text>
+              <Text style={styles.profileBio}>{user.bio}</Text>
+            </View>
+          )}
+
+          <View style={styles.contactDetails}>
+            {user?.phone && (
+              <View style={styles.detailItem}>
+                <Phone size={16} color="#6B7280" />
+                <Text style={styles.detailText}>{user.phone}</Text>
+              </View>
+            )}
+            {user?.location && (
+              <View style={styles.detailItem}>
+                <MapPin size={16} color="#6B7280" />
+                <Text style={styles.detailText}>{user.location}</Text>
               </View>
             )}
           </View>
-          <TouchableOpacity onPress={handleEditProfile} style={styles.editButton}>
-            <Edit3 size={20} color="#2563EB" />
-          </TouchableOpacity>
-        </View>
+        </CollapsibleSection>
 
-        {user?.bio && (
-          <Text style={styles.profileBio}>{user.bio}</Text>
-        )}
-
-        <View style={styles.profileDetails}>
-          {user?.phone && (
-            <View style={styles.detailItem}>
-              <Phone size={16} color="#6B7280" />
-              <Text style={styles.detailText}>{user.phone}</Text>
-            </View>
-          )}
-          {user?.location && (
-            <View style={styles.detailItem}>
-              <MapPin size={16} color="#6B7280" />
-              <Text style={styles.detailText}>{user.location}</Text>
-            </View>
-          )}
-        </View>
-      </Card>
-
-      {/* Quick Stats */}
-      <QuickStatsCard 
-        userRole={user?.role || 'family'}
-        stats={{
-          ...userStats,
-          rating: userRating.average,
-          reviewCount: userRating.count,
-        }}
-      />
-
-      {/* Recent Reviews (for caregivers) */}
-      {user?.role === 'caregiver' && (
-        <>
-          {/* Recent Reviews */}
-          {userReviews.length > 0 && (
-            <Card style={styles.reviewsCard}>
-              <View style={styles.reviewsHeader}>
-                <Text style={styles.reviewsTitle}>Recent Reviews</Text>
-                <TouchableOpacity onPress={() => setShowReviewModal(true)}>
-                  <Text style={styles.viewAllText}>View All</Text>
-                </TouchableOpacity>
+        {/* Performance Stats */}
+        <CollapsibleSection title="Performance Overview" icon={TrendingUp} defaultExpanded={true}>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#EEF2FF' }]}>
+                <Users size={20} color="#2563EB" />
               </View>
-              {userReviews.slice(0, 2).map((review) => (
-                <View key={review.id} style={styles.reviewItem}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewerName}>{review.reviewer.name}</Text>
-                    <View style={styles.reviewRating}>
-                      {[...Array(review.rating_int)].map((_, i) => (
-                        <Star key={i} size={12} color="#F59E0B" fill="#F59E0B" />
-                      ))}
-                    </View>
-                  </View>
-                  {review.comment_text && (
-                    <Text style={styles.reviewComment} numberOfLines={2}>
-                      {review.comment_text}
-                    </Text>
-                  )}
-                  <Text style={styles.reviewDate}>
-                    {new Date(review.created_at).toLocaleDateString()}
+              <Text style={styles.statValue}>{userStats.totalMatches}</Text>
+              <Text style={styles.statLabel}>Total Matches</Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#F0FDF4' }]}>
+                <MessageCircle size={20} color="#059669" />
+              </View>
+              <Text style={styles.statValue}>{userStats.activeChats}</Text>
+              <Text style={styles.statLabel}>Active Chats</Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                <Calendar size={20} color="#D97706" />
+              </View>
+              <Text style={styles.statValue}>{userStats.upcomingSchedules}</Text>
+              <Text style={styles.statLabel}>Upcoming</Text>
+            </View>
+          </View>
+
+          {user?.role === 'caregiver' && (
+            <View style={styles.ratingContainer}>
+              <View style={styles.ratingItem}>
+                <Star size={24} color="#F59E0B" fill="#F59E0B" />
+                <View style={styles.ratingDetails}>
+                  <Text style={styles.ratingValue}>
+                    {userRating.average > 0 ? userRating.average.toFixed(1) : 'N/A'}
+                  </Text>
+                  <Text style={styles.ratingLabel}>
+                    {userRating.count} review{userRating.count !== 1 ? 's' : ''}
                   </Text>
                 </View>
-              ))}
-            </Card>
+              </View>
+            </View>
           )}
-        </>
-      )}
+        </CollapsibleSection>
 
-      {/* Quick Actions */}
-      <Card style={styles.actionsCard}>
-        <Text style={styles.actionsTitle}>Quick Actions</Text>
-        <View style={styles.actionsList}>
-          <TouchableOpacity style={styles.actionItem}>
-            <Calendar size={20} color="#2563EB" />
-            <Text style={styles.actionText}>View Schedule</Text>
+        {/* Quick Actions */}
+        <CollapsibleSection title="Quick Actions" icon={Clock} defaultExpanded={true}>
+          <View style={styles.actionsList}>
+            <TouchableOpacity style={styles.actionItem}>
+              <View style={styles.actionIconContainer}>
+                <Calendar size={20} color="#2563EB" />
+              </View>
+              <Text style={styles.actionText}>View Schedule</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionItem}>
+              <View style={styles.actionIconContainer}>
+                <MessageCircle size={20} color="#2563EB" />
+              </View>
+              <Text style={styles.actionText}>Messages</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionItem}>
+              <View style={styles.actionIconContainer}>
+                <Star size={20} color="#2563EB" />
+              </View>
+              <Text style={styles.actionText}>Reviews</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionItem}>
+              <View style={styles.actionIconContainer}>
+                <CreditCard size={20} color="#2563EB" />
+              </View>
+              <Text style={styles.actionText}>Billing & Subscription</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+          </View>
+        </CollapsibleSection>
+
+        {/* Recent Reviews (for caregivers) */}
+        {user?.role === 'caregiver' && userReviews.length > 0 && (
+          <CollapsibleSection title="Recent Reviews" icon={Award} defaultExpanded={false}>
+            {userReviews.slice(0, 3).map((review) => (
+              <View key={review.id} style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  <Text style={styles.reviewerName}>{review.reviewer.name}</Text>
+                  <View style={styles.reviewRating}>
+                    {[...Array(review.rating_int)].map((_, i) => (
+                      <Star key={i} size={12} color="#F59E0B" fill="#F59E0B" />
+                    ))}
+                  </View>
+                </View>
+                {review.comment_text && (
+                  <Text style={styles.reviewComment} numberOfLines={2}>
+                    {review.comment_text}
+                  </Text>
+                )}
+                <Text style={styles.reviewDate}>
+                  {new Date(review.created_at).toLocaleDateString()}
+                </Text>
+              </View>
+            ))}
+            
+            {userReviews.length > 3 && (
+              <TouchableOpacity style={styles.viewAllButton} onPress={() => setShowReviewModal(true)}>
+                <Text style={styles.viewAllText}>View All Reviews</Text>
+              </TouchableOpacity>
+            )}
+          </CollapsibleSection>
+        )}
+
+        {/* Settings */}
+        <CollapsibleSection title="Settings & Support" icon={Settings} defaultExpanded={false}>
+          <View style={styles.settingsList}>
+            <TouchableOpacity style={styles.settingItem}>
+              <Settings size={20} color="#6B7280" />
+              <Text style={styles.settingText}>App Settings</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.settingItem}>
+              <Shield size={20} color="#6B7280" />
+              <Text style={styles.settingText}>Privacy & Safety</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.settingItem}>
+              <User size={20} color="#6B7280" />
+              <Text style={styles.settingText}>Help & Support</Text>
+              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+            </TouchableOpacity>
+          </View>
+        </CollapsibleSection>
+
+        {/* Sign Out */}
+        <Card style={styles.signOutCard}>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <LogOut size={20} color="#DC2626" />
+            <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem}>
-            <MessageCircle size={20} color="#2563EB" />
-            <Text style={styles.actionText}>Messages</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem}>
-            <Star size={20} color="#2563EB" />
-            <Text style={styles.actionText}>Reviews</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem}>
-            <CreditCard size={20} color="#2563EB" />
-            <Text style={styles.actionText}>Billing</Text>
-          </TouchableOpacity>
+        </Card>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Built with Bolt</Text>
+          <Text style={styles.versionText}>FlashCare v1.0.0</Text>
         </View>
-      </Card>
-
-      {/* Settings Menu */}
-      <Card style={styles.settingsCard}>
-        <TouchableOpacity style={styles.settingItem}>
-          <Settings size={20} color="#6B7280" />
-          <Text style={styles.settingText}>Settings</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <Shield size={20} color="#6B7280" />
-          <Text style={styles.settingText}>Privacy & Safety</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <User size={20} color="#6B7280" />
-          <Text style={styles.settingText}>Help & Support</Text>
-        </TouchableOpacity>
-      </Card>
-
-      {/* Sign Out */}
-      <Card style={styles.signOutCard}>
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <LogOut size={20} color="#DC2626" />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </Card>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Built with Bolt</Text>
-        <Text style={styles.versionText}>FlashCare v1.0.0</Text>
       </View>
 
       <ProfileEditModal
@@ -288,6 +406,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
+  content: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
   notificationButton: {
     position: 'relative',
     padding: 8,
@@ -308,30 +430,84 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  profileCard: {
-    marginHorizontal: 20,
-    marginTop: 20,
+  collapsibleCard: {
     marginBottom: 16,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  chevronContainer: {
+    padding: 4,
+  },
+  sectionContent: {
+    paddingTop: 16,
   },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 16,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    marginRight: 16,
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   profileInfo: {
     flex: 1,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   profileName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 4,
+    flex: 1,
+  },
+  editButton: {
+    padding: 8,
   },
   profileRole: {
     fontSize: 16,
@@ -353,16 +529,21 @@ const styles = StyleSheet.create({
     color: '#059669',
     marginLeft: 4,
   },
-  editButton: {
-    padding: 8,
+  bioContainer: {
+    marginBottom: 16,
+  },
+  bioLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
   },
   profileBio: {
     fontSize: 16,
     color: '#374151',
     lineHeight: 24,
-    marginBottom: 16,
   },
-  profileDetails: {
+  contactDetails: {
     gap: 8,
   },
   detailItem: {
@@ -374,128 +555,80 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginLeft: 8,
   },
-  statsCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-  },
-  statsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
-  },
   statsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 20,
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
-    marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
+    textAlign: 'center',
   },
-  subscriptionCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
+  ratingContainer: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
   },
-  subscriptionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  subscriptionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginLeft: 8,
-  },
-  subscriptionStatus: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  subscriptionDetails: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 16,
-  },
-  upgradeButton: {
-    alignSelf: 'flex-start',
-  },
-  settingsCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  settingText: {
-    fontSize: 16,
-    color: '#374151',
-    marginLeft: 12,
-  },
-  signOutCard: {
-    marginHorizontal: 20,
-    marginBottom: 40,
-  },
-  signOutButton: {
+  ratingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
   },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#DC2626',
-    marginLeft: 8,
-  },
-  footer: {
+  ratingDetails: {
+    marginLeft: 12,
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
   },
-  footerText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 4,
-  },
-  versionText: {
-    fontSize: 12,
-    color: '#D1D5DB',
-  },
-  reviewsCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-  },
-  reviewsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  reviewsTitle: {
-    fontSize: 18,
+  ratingValue: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#111827',
   },
-  viewAllText: {
+  ratingLabel: {
     fontSize: 14,
-    color: '#2563EB',
-    fontWeight: '600',
+    color: '#6B7280',
+  },
+  actionsList: {
+    gap: 0,
+  },
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  actionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  actionText: {
+    fontSize: 16,
+    color: '#374151',
+    flex: 1,
   },
   reviewItem: {
     paddingVertical: 12,
@@ -527,30 +660,57 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
-  actionsCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
+  viewAllButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  actionsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
+  viewAllText: {
+    fontSize: 14,
+    color: '#2563EB',
+    fontWeight: '600',
   },
-  actionsList: {
-    gap: 12,
+  settingsList: {
+    gap: 0,
   },
-  actionItem: {
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  actionText: {
+  settingText: {
     fontSize: 16,
     color: '#374151',
     marginLeft: 12,
+    flex: 1,
+  },
+  signOutCard: {
+    marginBottom: 16,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC2626',
+    marginLeft: 8,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 4,
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#D1D5DB',
   },
 });
