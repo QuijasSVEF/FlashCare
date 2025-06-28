@@ -4,7 +4,6 @@ import {
   Text, 
   StyleSheet, 
   FlatList, 
-  TextInput, 
   TouchableOpacity, 
   KeyboardAvoidingView, 
   Platform,
@@ -14,10 +13,14 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send, Phone, Video } from 'lucide-react-native';
 import { AppHeader } from '../../components/AppHeader';
+import { EnhancedMessageInput } from '../../components/EnhancedMessageInput';
+import { TypingIndicator } from '../../components/TypingIndicator';
+import { MessageAttachment } from '../../components/MessageAttachment';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMessages } from '../../hooks/useMessages';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { PaywallModal } from '../../components/PaywallModal';
+import { databaseService } from '../../lib/database';
 
 export default function ChatScreen() {
   const { id: matchId } = useLocalSearchParams<{ id: string }>();
@@ -27,6 +30,7 @@ export default function ChatScreen() {
   const [messageText, setMessageText] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
   const [otherUser, setOtherUser] = useState<any>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -71,6 +75,22 @@ export default function ChatScreen() {
       setMessageText('');
     } catch (error) {
       Alert.alert('Error', 'Failed to send message. Please try again.');
+    }
+  };
+
+  const handleAttachment = async (attachment: { type: 'image' | 'file'; uri: string; name?: string }) => {
+    if (!isSubscriber) {
+      setShowPaywall(true);
+      return;
+    }
+
+    try {
+      // In a real app, you would upload the file to storage first
+      // For now, we'll just send a message with attachment info
+      const attachmentMessage = `[${attachment.type.toUpperCase()}] ${attachment.name || 'Attachment'}`;
+      await sendMessage(attachmentMessage, user!.id);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to send attachment. Please try again.');
     }
   };
 
@@ -186,29 +206,16 @@ export default function ChatScreen() {
         }
       />
 
-      {/* Message Input */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          value={messageText}
-          onChangeText={setMessageText}
-          placeholder={isSubscriber ? "Type a message..." : "Upgrade to send messages"}
-          placeholderTextColor="#9CA3AF"
-          multiline
-          maxLength={500}
-          editable={isSubscriber}
-        />
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (!messageText.trim() || !isSubscriber) && styles.sendButtonDisabled
-          ]}
-          onPress={handleSendMessage}
-          disabled={!messageText.trim() || !isSubscriber}
-        >
-          <Send size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+      <TypingIndicator visible={isTyping} userName={otherUser?.name} />
+
+      <EnhancedMessageInput
+        value={messageText}
+        onChangeText={setMessageText}
+        onSend={handleSendMessage}
+        onAttachment={handleAttachment}
+        disabled={!isSubscriber}
+        placeholder={isSubscriber ? "Type a message..." : "Upgrade to send messages"}
+      />
 
       <PaywallModal
         visible={showPaywall}
@@ -321,37 +328,5 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  textInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    maxHeight: 100,
-    marginRight: 12,
-    backgroundColor: '#F9FAFB',
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#2563EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#D1D5DB',
   },
 });
