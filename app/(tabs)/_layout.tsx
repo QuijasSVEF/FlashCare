@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, User, Search, Users, Plus, Briefcase, Heart, Settings } from 'lucide-react-native';
+import { Heart, MessageCircle, User, Plus, Briefcase, Settings, BarChart3, Search } from 'lucide-react-native';
 import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { router } from 'expo-router';
@@ -73,7 +73,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: isFamily ? 'Find Care' : 'Browse',
+          title: isFamily ? 'Find Care' : 'Find Jobs',
           tabBarIcon: ({ size, color, focused }) => (
             isFamily ? (
               <Heart 
@@ -131,9 +131,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="search"
           options={{
-            title: 'Search',
+            title: 'Analytics',
             tabBarIcon: ({ size, color, focused }) => (
-              <Search 
+              <BarChart3 
                 size={focused ? size + 2 : size} 
                 color={color}
                 strokeWidth={focused ? 2.5 : 2}
@@ -144,20 +144,6 @@ export default function TabLayout() {
       )}
       
       {/* Shared tabs */}
-      <Tabs.Screen
-        name="matches"
-        options={{
-          title: 'Matches',
-          tabBarIcon: ({ size, color, focused }) => (
-            <Users 
-              size={focused ? size + 2 : size} 
-              color={color} 
-              strokeWidth={focused ? 2.5 : 2}
-            />
-          ),
-        }}
-      />
-      
       <Tabs.Screen
         name="messages"
         options={{
@@ -175,7 +161,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Settings',
           tabBarIcon: ({ size, color, focused }) => (
             <Settings 
               size={focused ? size + 2 : size} 
@@ -187,6 +173,13 @@ export default function TabLayout() {
       />
 
       {/* Hidden tabs that shouldn't show in navigation */}
+      <Tabs.Screen
+        name="matches"
+        options={{
+          href: null, // This hides it from the tab bar
+        }}
+      />
+      
       <Tabs.Screen
         name="schedule"
         options={{
