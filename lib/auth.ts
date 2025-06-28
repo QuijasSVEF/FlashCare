@@ -33,9 +33,17 @@ export const authService = {
   },
 
   async signIn(email: string, password: string) {
+    console.log('🔐 Starting sign in process for:', email);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
+    });
+
+    console.log('🔐 Supabase auth response:', { 
+      user: data.user?.id, 
+      session: !!data.session,
+      error: error?.message 
     });
 
     if (error) {
@@ -44,9 +52,11 @@ export const authService = {
     }
     
     if (!data.user) {
+      console.error('🔐 No user returned from sign in');
       throw new Error('Sign in failed - no user returned');
     }
     
+    console.log('🔐 Sign in successful, user ID:', data.user.id);
     return data;
   },
 

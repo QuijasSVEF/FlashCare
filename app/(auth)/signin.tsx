@@ -31,17 +31,20 @@ export default function SignInScreen() {
   const handleSignIn = async () => {
     if (!validateForm()) return;
 
+    console.log('📱 SignIn Screen: Starting sign in process');
     setLoading(true);
     setErrors({}); // Clear any previous errors
     
     try {
+      console.log('📱 SignIn Screen: Calling signIn with:', formData.email);
       await signIn(formData.email, formData.password);
       
+      console.log('📱 SignIn Screen: Sign in successful, navigating to tabs');
       // Navigate immediately - auth state will handle the rest
       router.replace('/(tabs)');
       
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      console.error('📱 SignIn Screen error:', error);
       let errorMessage = 'Failed to sign in';
       
       // Handle different types of auth errors
@@ -52,6 +55,8 @@ export default function SignInScreen() {
         errorMessage = 'Please check your email and click the confirmation link before signing in.';
       } else if (error.message?.includes('too_many_requests')) {
         errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
       }
