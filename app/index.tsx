@@ -35,8 +35,10 @@ export default function SignInScreen() {
       }
     };
     
-    handleAutoSignIn();
-  }, [user]);
+    if (user) {
+      handleAutoSignIn();
+    }
+  }, [user, formData.email, formData.password, signIn, routerInstance]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -65,21 +67,9 @@ export default function SignInScreen() {
         console.log('Navigating to tabs after signin');
         routerInstance.replace('/(tabs)');
       }, 100);
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
-          }, 100);
-        } catch (error) {
-          console.error('Auto signin error:', error);
-        }
-      };
-      
-      handleAutoSignIn();
       
       if (error.message?.includes('Invalid login credentials') || 
           error.message?.includes('invalid_credentials')) {
@@ -102,7 +92,7 @@ export default function SignInScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user, formData.email, formData.password, signIn, routerInstance]);
+  };
 
   return (
     <View style={styles.container}>
