@@ -73,18 +73,6 @@ export default function SignInScreen() {
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
-        name: account.name,
-        role: account.type as 'family' | 'caregiver',
-        avatar_url: account.avatar,
-        location: account.location,
-        bio: account.description,
-        phone: '+1 (555) 123-4567',
-        emergency_phone: '+1 (555) 911-0000',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    }
-    
       
       if (error.message?.includes('Invalid login credentials') || 
           error.message?.includes('invalid_credentials')) {
