@@ -120,6 +120,8 @@ export default function MatchesScreen() {
     <View style={styles.container}>
       <AppHeader
         title="Matches"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       <FlatList
         data={matches}

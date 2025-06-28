@@ -149,6 +149,8 @@ export default function ScheduleScreen() {
     <View style={styles.container}>
       <AppHeader
         title="Schedule"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       {!isSubscriber ? (
         <View style={styles.upgradePrompt}>
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   scheduleItem: {
-    marginBottom: 0,
+    marginBottom: 10,
   },
   scheduleHeader: {
     flexDirection: 'row',
