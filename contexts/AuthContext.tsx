@@ -20,6 +20,7 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
+    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -73,7 +74,7 @@ export default function SignInScreen() {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
-      }
+      } else {
         errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
