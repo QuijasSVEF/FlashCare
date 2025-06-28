@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { Shield, Users } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { Asset } from 'expo-asset';
 
 export default function WelcomeScreen() {
   const { loading } = useAuth();
@@ -13,7 +14,7 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../assets/images/logo (2).png')}
+            source={{ uri: Asset.fromModule(require('../../assets/images/logo (2).png')).uri }}
             style={styles.logoImage}
             resizeMode="contain"
           />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { EmergencyButton } from './EmergencyButton';
+import { Asset } from 'expo-asset';
 
 interface AppHeaderProps {
   title: string;
@@ -22,7 +23,7 @@ export function AppHeader({
       {/* Logo Row */}
       <View style={styles.logoRow}>
         <Image
-          source={require('../assets/images/logo (2).png')}
+          source={{ uri: Asset.fromModule(require('../assets/images/logo (2).png')).uri }}
           style={styles.flashCareLogo}
           resizeMode="contain"
         />
