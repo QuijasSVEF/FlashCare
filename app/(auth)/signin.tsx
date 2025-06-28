@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart } from 'lucide-react-native';
+import { ArrowLeft, Heart, Mail, Lock } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
-import { authService } from '../../lib/auth';
+import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
   const [formData, setFormData] = useState({
@@ -37,12 +37,11 @@ export default function SignInScreen() {
     try {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
-      
-      console.log('Signin successful, navigating to tabs');
-      
-      // Navigate immediately since auth context will handle the redirect
-      router.replace('/(tabs)');
-      
+
+      if (result) {
+        console.log('Signin successful, navigating to tabs');
+        router.replace('/(tabs)');
+      }
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
@@ -72,55 +71,73 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color="#2563EB" />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
-        </View>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <ArrowLeft size={24} color={Colors.text.primary} />
+      </TouchableOpacity>
+      
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../../assets/images/logo (2).png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+        <Image
+          source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+          style={styles.boltBadge}
+          resizeMode="contain"
+        />
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+      <View style={styles.formContainer}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Welcome back</Text>
+          <Text style={styles.subtitle}>Sign in to your account</Text>
+        </View>
 
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          error={errors.email}
-        />
+        <View style={styles.inputContainer}>
+          <View style={styles.inputIconContainer}>
+            <Mail size={20} color={Colors.text.secondary} />
+          </View>
+          <Input
+            value={formData.email}
+            onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={errors.email}
+            style={styles.input}
+          />
+        </View>
 
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          error={errors.password}
-        />
+        <View style={styles.inputContainer}>
+          <View style={styles.inputIconContainer}>
+            <Lock size={20} color={Colors.text.secondary} />
+          </View>
+          <Input
+            value={formData.password}
+            onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+            placeholder="Enter your password"
+            secureTextEntry
+            error={errors.password}
+            style={styles.input}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.forgotPassword}>
+          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        </TouchableOpacity>
 
         <Button
           title={loading ? "Signing in..." : "Sign In"}
           onPress={handleSignIn}
           disabled={loading}
           size="large"
-          style={styles.signInButton}
+          style={[styles.signInButton, { backgroundColor: Colors.primary[500] }]}
         />
 
         <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
           <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+            Don't have an account? <Text style={[styles.signUpLink, { color: Colors.primary[500] }]}>Sign up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -131,64 +148,80 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
   },
   backButton: {
-    padding: 8,
-    marginRight: 16,
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    zIndex: 10,
+    padding: 10,
   },
   logoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    position: 'relative',
+    marginTop: 80,
+    marginBottom: 40,
   },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2563EB',
-    marginLeft: 8,
-    position: 'relative',
+  logoImage: {
+    width: 200,
+    height: 80,
   },
   boltBadge: {
     position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
+    top: -10,
+    right: 20,
+    width: 40,
+    height: 40,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
+  formContainer: {
+    width: '100%',
+  },
+  titleContainer: {
+    marginBottom: 30,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 32,
+    color: Colors.text.secondary,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    position: 'relative',
+  },
+  inputIconContainer: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 1,
+  },
+  input: {
+    paddingLeft: 48,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontWeight: '500',
   },
   signInButton: {
-    marginTop: 16,
     marginBottom: 24,
   },
   signUpText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
   },
   signUpLink: {
-    color: '#2563EB',
     fontWeight: '600',
   },
 });

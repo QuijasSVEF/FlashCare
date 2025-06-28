@@ -108,12 +108,17 @@ export function SwipeableCard({
   const renderCaregiverCard = () => (
     <View style={styles.cardContent}>
       <View style={styles.imageContainer}>
-        <Image
-          source={{ 
-            uri: data.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-          }}
-          style={styles.profileImage}
-        />
+        {data.avatar_url ? (
+          <Image
+            source={{ uri: data.avatar_url }}
+            style={styles.profileImage}
+          />
+        ) : (
+          <Image
+            source={{ uri: 'https://images.pexels.com/photos/3768114/pexels-photo-3768114.jpeg?auto=compress&cs=tinysrgb&w=800' }}
+            style={styles.profileImage}
+          />
+        )}
         <View style={styles.ratingBadge}>
           <Star size={16} color={Colors.warning} fill={Colors.warning} />
           <Text style={styles.ratingText}>4.8</Text>
@@ -158,14 +163,19 @@ export function SwipeableCard({
   const renderJobCard = () => (
     <View style={styles.cardContent}>
       <View style={styles.jobHeader}>
-        <Text style={styles.jobTitle}>{data.title}</Text>
+        <Text style={styles.jobTitle} numberOfLines={2}>{data.title}</Text>
         <View style={styles.familyInfo}>
-          <Image
-            source={{ 
-              uri: data.family?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-            }}
-            style={styles.familyAvatar}
-          />
+          {data.family?.avatar_url ? (
+            <Image
+              source={{ uri: data.family.avatar_url }}
+              style={styles.familyAvatar}
+            />
+          ) : (
+            <Image
+              source={{ uri: 'https://images.pexels.com/photos/3768168/pexels-photo-3768168.jpeg?auto=compress&cs=tinysrgb&w=800' }}
+              style={styles.familyAvatar}
+            />
+          )}
           <View>
             <Text style={styles.familyName}>{data.family?.name || 'Family Member'}</Text>
             <View style={styles.location}>
@@ -245,9 +255,11 @@ const styles = StyleSheet.create({
   container: {
     width: screenWidth - 40,
     alignSelf: 'center',
+    marginTop: 20,
   },
   card: {
-    height: 540,
+    minHeight: 500,
+    maxHeight: 540,
     borderRadius: 24,
     overflow: 'hidden',
   },
@@ -275,7 +287,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: 20,
     borderWidth: 4,
     borderColor: Colors.background,
   },
@@ -394,7 +406,7 @@ const styles = StyleSheet.create({
   jobTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: Colors.primary[700],
     marginBottom: 16,
   },
   familyInfo: {
@@ -404,7 +416,7 @@ const styles = StyleSheet.create({
   familyAvatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     marginRight: 12,
   },
   familyName: {
@@ -432,13 +444,13 @@ const styles = StyleSheet.create({
   weeklyEarnings: {
     backgroundColor: Colors.primary[100],
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 12,
   },
   weeklyEarningsText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.primary[600],
+    color: Colors.primary[700],
   },
   postedTime: {
     fontSize: 12,

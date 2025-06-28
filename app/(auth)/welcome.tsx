@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import { Link } from 'expo-router';
 import { Shield, Users } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
@@ -71,8 +71,8 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    paddingTop: 60,
+    backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
   },
   content: {
     flex: 1,
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
     position: 'relative',
+    width: '100%',
   },
   logoImage: {
     width: 300,
@@ -119,6 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
+    marginBottom: 20,
   },
   feature: {
     alignItems: 'center',
@@ -131,6 +133,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   featureText: {
     fontSize: 14,
@@ -144,6 +151,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginBottom: 16,
+    backgroundColor: Colors.primary[500],
   },
   terms: {
     fontSize: 12,
