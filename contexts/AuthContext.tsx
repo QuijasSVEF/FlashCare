@@ -41,15 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const profile = await Promise.race([
               authService.getCurrentUser(),
-              new Promise<null>((_, reject) => 
+              new Promise<null>((_, reject) => {
                 setTimeout(() => {
                   console.log('Profile fetch timeout reached in auth change');
                   reject(new Error('Profile fetch timeout'));
-                }, 30000)
-                  console.log('Profile fetch timeout reached');
-                  reject(new Error('Profile fetch timeout'));
-                }, 30000)
-              )
+                }, 30000);
+              })
             ]);
             console.log('Profile loaded:', !!profile);
             setUser(profile);
