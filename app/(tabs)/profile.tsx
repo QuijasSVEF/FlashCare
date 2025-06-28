@@ -6,6 +6,8 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { ProfileEditModal } from '../../components/ProfileEditModal';
+import { ReviewModal } from '../../components/ReviewModal';
+import { NotificationCenter } from '../../components/NotificationCenter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 
@@ -13,6 +15,35 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { isSubscriber } = useSubscription();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [userRating, setUserRating] = useState({ average: 0, count: 0 });
+
+  useEffect(() => {
+    if (user?.id) {
+      loadUserReviews();
+      loadUserRating();
+    }
+  }, [user?.id]);
+
+  const loadUserReviews = async () => {
+    try {
+      const reviews = await databaseService.getUserReviews(user!.id);
+      setUserReviews(reviews);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
+
+  const loadUserRating = async () => {
+    try {
+      const rating = await databaseService.getUserRating(user!.id);
+      setUserRating(rating);
+    } catch (error) {
+      console.error('Error loading rating:', error);
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -32,11 +63,13 @@ export default function ProfileScreen() {
   const handleProfileSaved = () => {
     // Refresh profile data if needed
     console.log('Profile saved successfully');
+    loadUserReviews();
+    loadUserRating();
   };
 
   const profileStats = [
-    { label: 'Rating', value: '4.9', icon: Star },
-    { label: 'Reviews', value: '127', icon: Award },
+    { label: 'Rating', value: userRating.average > 0 ? userRating.average.toString() : 'N/A', icon: Star },
+    { label: 'Reviews', value: userRating.count.toString(), icon: Award },
     { label: 'Years', value: '3+', icon: Shield },
   ];
 
@@ -44,7 +77,18 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.notificationButton}
+            onPress={() => setShowNotifications(true)}
+          >
+            <Bell size={24} color="#6B7280" />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>2</Text>
+            </View>
+          </TouchableOpacity>
+          <EmergencyButton phoneNumber={user?.emergency_phone} />
+        </View>
       </View>
 
       {/* Profile Info */}
@@ -95,16 +139,414 @@ export default function ProfileScreen() {
 
       {/* Stats (for caregivers) */}
       {user?.role === 'caregiver' && (
-        <Card style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Your Stats</Text>
-          <View style={styles.statsGrid}>
-            {profileStats.map((stat, index) => (
-              <View key={index} style={styles.statItem}>
-                <stat.icon size={24} color="#2563EB" />
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+        <>
+          <Card style={styles.statsCard}>
+            <Text style={styles.statsTitle}>Your Stats</Text>
+            <View style={styles.statsGrid}>
+              {profileStats.map((stat, index) => (
+                <View key={index} style={styles.statItem}>
+                  <stat.icon size={24} color="#2563EB" />
+                  <Text style={styles.statValue}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+          </Card>
+
+          {/* Recent Reviews */}
+          {userReviews.length > 0 && (
+            <Card style={styles.reviewsCard}>
+              <View style={styles.reviewsHeader}>
+                <Text style={styles.reviewsTitle}>Recent Reviews</Text>
+                <TouchableOpacity onPress={() => setShowReviewModal(true)}>
+                  <Text style={styles.viewAllText}>View All</Text>
+                </TouchableOpacity>
               </View>
-            ))}
+              {userReviews.slice(0, 2).map((review) => (
+                <View key={review.id} style={styles.reviewItem}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewerName}>{review.reviewer.name}</Text>
+                    <View style={styles.reviewRating}>
+                      {[...Array(review.rating_int)].map((_, i) => (
+                        <Star key={i} size={12} color="#F59E0B" fill="#F59E0B" />
+                      ))}
+                    </View>
+                  </View>
+                  {review.comment_text && (
+                    <Text style={styles.reviewComment} numberOfLines={2}>
+                      {review.comment_text}
+                    </Text>
+                  )}
+                  <Text style={styles.reviewDate}>
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </Text>
+                </View>
+              ))}
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Quick Actions */}
+      <Card style={styles.actionsCard}>
+        <Text style={styles.actionsTitle}>Quick Actions</Text>
+        <View style={styles.actionsList}>
+          <TouchableOpacity style={styles.actionItem}>
+            <Calendar size={20} color="#2563EB" />
+            <Text style={styles.actionText}>View Schedule</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <MessageCircle size={20} color="#2563EB" />
+            <Text style={styles.actionText}>Messages</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <Star size={20} color="#2563EB" />
+            <Text style={styles.actionText}>Reviews</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <CreditCard size={20} color="#2563EB" />
+            <Text style={styles.actionText}>Billing</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+
+      {/* Settings Menu */}
+      <Card style={styles.settingsCard}>
+        <TouchableOpacity style={styles.settingItem}>
+          <Settings size={20} color="#6B7280" />
+          <Text style={styles.settingText}>Settings</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <Shield size={20} color="#6B7280" />
+          <Text style={styles.settingText}>Privacy & Safety</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <User size={20} color="#6B7280" />
+          <Text style={styles.settingText}>Help & Support</Text>
+        </TouchableOpacity>
+      </Card>
+
+      {/* Sign Out */}
+      <Card style={styles.signOutCard}>
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <LogOut size={20} color="#DC2626" />
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
+      </Card>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Built with Bolt</Text>
+        <Text style={styles.versionText}>FlashCare v1.0.0</Text>
+      </View>
+
+      <ProfileEditModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleProfileSaved}
+      />
+
+      <NotificationCenter
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#DC2626',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  profileCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 16,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  profileRole: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  subscriberBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  subscriberText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#059669',
+    marginLeft: 4,
+  },
+  editButton: {
+    padding: 8,
+  },
+  profileBio: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  profileDetails: {
+    gap: 8,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailText: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginLeft: 8,
+  },
+  statsCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  statsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  reviewsCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  reviewsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#2563EB',
+    fontWeight: '600',
+  },
+  reviewItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  reviewRating: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  actionsCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  actionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  actionsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  actionItem: {
+    flex: 1,
+    minWidth: '45%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+  },
+  actionText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  subscriptionCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  subscriptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginLeft: 8,
+  },
+  subscriptionStatus: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  subscriptionDetails: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 16,
+  },
+  upgradeButton: {
+    alignSelf: 'flex-start',
+  },
+  settingsCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  settingText: {
+    fontSize: 16,
+    color: '#374151',
+    marginLeft: 12,
+  },
+  signOutCard: {
+    marginHorizontal: 20,
+    marginBottom: 40,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC2626',
+    marginLeft: 8,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 4,
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#D1D5DB',
+  },
+});
+```
           </View>
         </Card>
       )}

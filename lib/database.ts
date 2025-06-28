@@ -433,6 +433,18 @@ export const databaseService = {
 
   // Review operations
   async createReview(reviewData: Database['public']['Tables']['reviews']['Insert']) {
+    // Check if review already exists
+    const { data: existingReview } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('reviewer_id', reviewData.reviewer_id)
+      .eq('reviewee_id', reviewData.reviewee_id)
+      .single();
+
+    if (existingReview) {
+      throw new Error('You have already reviewed this person');
+    }
+
     const { data, error } = await supabase
       .from('reviews')
       .insert(reviewData)
@@ -473,6 +485,29 @@ export const databaseService = {
     const average = total / data.length;
     
     return { average: Math.round(average * 10) / 10, count: data.length };
+  },
+
+  // Notification operations
+  async createNotification(notificationData: {
+    user_id: string;
+    type: string;
+    title: string;
+    message: string;
+    data?: any;
+  }) {
+    // In a real app, you'd have a notifications table
+    // For now, we'll use browser notifications or push notifications
+    console.log('Creating notification:', notificationData);
+  },
+
+  async getUserNotifications(userId: string) {
+    // Mock notifications for demo
+    return [];
+  },
+
+  async markNotificationAsRead(notificationId: string) {
+    // Mark notification as read
+    console.log('Marking notification as read:', notificationId);
   },
 
   // Real-time subscriptions

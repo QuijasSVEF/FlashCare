@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { PaywallModal } from '../../components/PaywallModal';
+import { EnhancedScheduleModal } from '../../components/EnhancedScheduleModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useSchedules } from '@/hooks/useSchedules';
@@ -15,12 +16,32 @@ export default function ScheduleScreen() {
   const { isSubscriber } = useSubscription();
   const { schedules, loading, refetch } = useSchedules();
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
 
   const handleScheduleAction = () => {
     if (!isSubscriber) {
       setShowPaywall(true);
     } else {
       console.log('Access scheduling features');
+    }
+  };
+
+  const handleNewSession = () => {
+    if (!isSubscriber) {
+      setShowPaywall(true);
+    } else {
+      // For demo, we'll use a mock match - in production, show match selection
+      setSelectedMatch({
+        id: 'demo-match',
+        otherUser: { name: 'Sarah Johnson' },
+        jobDetails: {
+          title: 'Senior Care Assistant',
+          rate_hour: 25,
+          location: 'San Francisco, CA'
+        }
+      });
+      setShowScheduleModal(true);
     }
   };
 
@@ -150,7 +171,7 @@ export default function ScheduleScreen() {
             <View style={styles.quickActions}>
               <Button
                 title="Schedule New Session"
-                onPress={handleScheduleAction}
+                onPress={handleNewSession}
                 style={styles.newSessionButton}
               />
             </View>
@@ -182,6 +203,24 @@ export default function ScheduleScreen() {
         onClose={() => setShowPaywall(false)}
         feature="advanced scheduling"
       />
+
+      {selectedMatch && (
+        <EnhancedScheduleModal
+          visible={showScheduleModal}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setSelectedMatch(null);
+          }}
+          matchId={selectedMatch.id}
+          otherUserName={selectedMatch.otherUser.name}
+          jobDetails={selectedMatch.jobDetails}
+          onScheduleCreated={() => {
+            refetch();
+            setShowScheduleModal(false);
+            setSelectedMatch(null);
+          }}
+        />
+      )}
     </View>
   );
 }
