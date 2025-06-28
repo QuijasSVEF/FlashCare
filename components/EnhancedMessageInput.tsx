@@ -76,7 +76,7 @@ export function EnhancedMessageInput({
           try {
             if (!user?.id) return;
             
-            const result = await storageService.uploadFileFromInput(file, user.id, 'attachment');
+            const result = await storageService.uploadFileFromInput(file, user.id, 'document');
             if (result) {
               onAttachment?.({
                 type: 'file',
@@ -87,7 +87,7 @@ export function EnhancedMessageInput({
           } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to upload file');
           }
-        }, 'application/pdf,text/plain,.doc,.docx');
+        }, 'application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       } else {
         Alert.alert('Document Upload', 'Document upload feature coming soon on mobile!');
       }

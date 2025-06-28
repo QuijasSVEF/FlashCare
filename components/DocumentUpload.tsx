@@ -73,18 +73,13 @@ export function DocumentUpload({
           setUploading(true);
           
           // Validate file type
-          if (!allowedTypes.includes(file.type)) {
-            Alert.alert('Invalid File Type', 'Please select a supported file type.');
+          const validation = storageService.validateFile(file, 'documents');
+          if (!validation.isValid) {
+            Alert.alert('Invalid File', validation.errors.join('\n'));
             return;
           }
 
-          // Validate file size (max 10MB)
-          if (file.size > 10 * 1024 * 1024) {
-            Alert.alert('File Too Large', 'File size must be less than 10MB.');
-            return;
-          }
-
-          const result = await storageService.uploadFileFromInput(file, userId, 'attachment');
+          const result = await storageService.uploadFileFromInput(file, userId, 'document');
           if (result) {
             // Create document record
             await databaseService.createUserDocument({

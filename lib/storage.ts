@@ -3,9 +3,72 @@ import { Platform } from 'react-native';
 import { databaseService } from './database';
 import * as ImagePicker from 'expo-image-picker';
 
+interface BucketConfig {
+  maxSize: number;
+  allowedTypes: string[];
+}
+
+const BUCKET_CONFIGS: Record<string, BucketConfig> = {
+  avatars: {
+    maxSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  },
+  attachments: {
+    maxSize: 10 * 1024 * 1024, // 10MB
+    allowedTypes: [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'text/plain',
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]
+  },
+  documents: {
+    maxSize: 10 * 1024 * 1024, // 10MB
+    allowedTypes: [
+      'application/pdf', 'text/plain',
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg', 'image/png'
+    ]
+  }
+};
+
 export const storageService = {
-  async uploadFile(uri: string, fileName: string, bucket: string = 'avatars') {
+  validateFile(file: File | { type?: string; size?: number }, bucket: string = 'avatars') {
+    const errors: string[] = [];
+    const config = BUCKET_CONFIGS[bucket];
+
+    if (!config) {
+      errors.push('Invalid storage bucket');
+      return { isValid: false, errors };
+    }
+
+    // Check file type
+    const fileType = file.type || '';
+    if (!config.allowedTypes.includes(fileType)) {
+      errors.push(`File type ${fileType} is not allowed for ${bucket}`);
+    }
+
+    // Check file size
+    const fileSize = file.size || 0;
+    if (fileSize > config.maxSize) {
+      const maxSizeMB = config.maxSize / (1024 * 1024);
+      errors.push(`File size must be less than ${maxSizeMB}MB`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  },
+
+  async uploadFile(uri: string, fileName: string, bucket: string = 'avatars', userId?: string) {
     try {
+      // Get current user if not provided
+      if (!userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+        userId = user.id;
+      }
+
       let fileData;
       
       if (Platform.OS === 'web') {
@@ -23,7 +86,8 @@ export const storageService = {
       }
 
       const fileExt = fileName.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      // Include user ID in file path for RLS compliance
+      const filePath = `${userId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -42,20 +106,17 @@ export const storageService = {
       // Track the uploaded file in our database
       if (bucket !== 'temp') {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await databaseService.supabase
-              .from('user_documents')
-              .insert({
-                user_id: user.id,
-                file_name: fileName,
-                file_url: urlData.publicUrl,
-                file_path: filePath,
-                file_type: this.getContentType(fileExt || ''),
-                file_size: fileData.size || 0,
-                document_type: this.getDocumentType(bucket)
-              });
-          }
+          await databaseService.supabase
+            .from('user_documents')
+            .insert({
+              user_id: userId,
+              file_name: fileName,
+              file_url: urlData.publicUrl,
+              file_path: filePath,
+              file_type: this.getContentType(fileExt || ''),
+              file_size: fileData.size || 0,
+              document_type: this.getDocumentType(bucket)
+            });
         } catch (dbError) {
           console.warn('Failed to track file in database:', dbError);
           // Don't fail the upload if database tracking fails
@@ -76,7 +137,7 @@ export const storageService = {
   async uploadAvatar(uri: string, userId: string) {
     try {
       const fileName = `avatar-${userId}.jpg`;
-      const result = await this.uploadFile(uri, fileName, 'avatars');
+      const result = await this.uploadFile(uri, fileName, 'avatars', userId);
       
       // Update user profile with new avatar URL
       const { error } = await supabase
@@ -122,7 +183,7 @@ export const storageService = {
         return await this.uploadAvatar(asset.uri, userId);
       } else {
         const fileName = asset.fileName || `image-${Date.now()}.jpg`;
-        return await this.uploadFile(asset.uri, fileName, 'attachments');
+        return await this.uploadFile(asset.uri, fileName, 'attachments', userId);
       }
     } catch (error) {
       console.error('Error picking and uploading image:', error);
@@ -158,7 +219,7 @@ export const storageService = {
         return await this.uploadAvatar(asset.uri, userId);
       } else {
         const fileName = `photo-${Date.now()}.jpg`;
-        return await this.uploadFile(asset.uri, fileName, 'attachments');
+        return await this.uploadFile(asset.uri, fileName, 'attachments', userId);
       }
     } catch (error) {
       console.error('Error taking and uploading photo:', error);
@@ -167,20 +228,20 @@ export const storageService = {
   },
 
   // Web-specific file upload
-  async uploadFileFromInput(file: File, userId: string, type: 'avatar' | 'attachment' = 'avatar') {
+  async uploadFileFromInput(file: File, userId: string, type: 'avatar' | 'attachment' | 'document' = 'avatar') {
     try {
       if (Platform.OS !== 'web') {
         throw new Error('This method is only available on web');
       }
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Only image files are allowed');
-      }
+      // Determine bucket based on type
+      const bucket = type === 'avatar' ? 'avatars' : 
+                    type === 'attachment' ? 'attachments' : 'documents';
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File size must be less than 5MB');
+      // Validate file
+      const validation = this.validateFile(file, bucket);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join('\n'));
       }
 
       if (type === 'avatar') {
@@ -191,7 +252,7 @@ export const storageService = {
         return result;
       } else {
         const objectUrl = URL.createObjectURL(file);
-        const result = await this.uploadFile(objectUrl, file.name, 'attachments');
+        const result = await this.uploadFile(objectUrl, file.name, bucket, userId);
         URL.revokeObjectURL(objectUrl);
         return result;
       }
@@ -275,7 +336,7 @@ export const storageService = {
 
   async uploadDocument(uri: string, fileName: string, userId: string) {
     try {
-      const result = await this.uploadFile(uri, fileName, 'documents');
+      const result = await this.uploadFile(uri, fileName, 'documents', userId);
       
       // Optionally store document reference in database
       const { error } = await supabase
