@@ -7,11 +7,20 @@ export default function Index() {
   const { user, loading } = useAuth();
   const [timeoutReached, setTimeoutReached] = useState(false);
   const [forceRedirect, setForceRedirect] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Add a timeout to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setTimeoutReached(true);
+      if (isMountedRef.current) {
+        setTimeoutReached(true);
+      }
     }, 5000); // 5 second timeout (reduced from 10)
 
     return () => clearTimeout(timeout);
@@ -20,7 +29,9 @@ export default function Index() {
   // Force redirect after a longer timeout
   useEffect(() => {
     const forceTimeout = setTimeout(() => {
-      setForceRedirect(true);
+      if (isMountedRef.current) {
+        setForceRedirect(true);
+      }
     }, 8000); // 8 second force timeout
 
     return () => clearTimeout(forceTimeout);

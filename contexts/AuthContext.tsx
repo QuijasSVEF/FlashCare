@@ -21,6 +21,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Get initial session
@@ -46,22 +53,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               )
             ]);
             console.log('Profile loaded:', !!profile);
-            setUser(profile);
+            if (isMountedRef.current) {
+              setUser(profile);
+            }
           } catch (profileError) {
             console.error('Error getting user profile:', profileError instanceof Error ? profileError.message : 'Unknown error');
             // If profile fetch fails, sign out and redirect to auth
             await supabase.auth.signOut();
-            setUser(null);
+            if (isMountedRef.current) {
+              setUser(null);
+            }
           }
         } else {
           // No session, user is not authenticated
-          setUser(null);
+          if (isMountedRef.current) {
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        setUser(null);
+        if (isMountedRef.current) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
@@ -81,20 +98,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               )
             ]);
             console.log('Profile in auth change:', !!profile);
-            setUser(profile);
+            if (isMountedRef.current) {
+              setUser(profile);
+            }
           } catch (profileError) {
             console.error('Error getting profile in auth change:', profileError instanceof Error ? profileError.message : 'Unknown error');
-            setUser(null);
+            if (isMountedRef.current) {
+              setUser(null);
+            }
           }
         } else {
-          setUser(null);
+          if (isMountedRef.current) {
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Error in auth state change:', error instanceof Error ? error.message : 'Unknown error');
-        setUser(null);
+        if (isMountedRef.current) {
+          setUser(null);
+        }
       }
     });
-      console.error('Error initializing auth:', error instanceof Error ? error.message : 'Unknown error');
     return () => subscription.unsubscribe();
   }, []);
 
@@ -109,7 +133,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Starting signin for:', email);
       
       // Clear any existing user state first
-      setUser(null);
+      if (isMountedRef.current) {
+        setUser(null);
+      }
       
       const result = await authService.signIn(email, password);
       
@@ -119,7 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const profile = await authService.getCurrentUser();
         if (profile) {
-          setUser(profile);
+          if (isMountedRef.current) {
+            setUser(profile);
+          }
           console.log('AuthContext: Profile loaded successfully');
         } else {
           throw new Error('Failed to load user profile');
@@ -134,7 +162,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return result;
     } catch (error) {
       console.error('AuthContext SignIn error:', error instanceof Error ? error.message : 'Unknown error');
-      setUser(null);
+      if (isMountedRef.current) {
+        setUser(null);
+      }
       throw error;
     }
   };
@@ -147,7 +177,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await authService.signOut();
       
       // Clear user state after successful sign out
-      setUser(null);
+      if (isMountedRef.current) {
+        setUser(null);
+      }
       
       // Clear subscription state if on mobile
       if (Platform.OS !== 'web') {
@@ -166,14 +198,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('AuthContext: Error during sign out:', error instanceof Error ? error.message : 'Unknown error');
       // Even if there's an error, clear the user state
-      setUser(null);
+      if (isMountedRef.current) {
+        setUser(null);
+      }
       return true;
     }
   };
 
   const updateProfile = async (updates: Database['public']['Tables']['users']['Update']) => {
     const updatedUser = await authService.updateProfile(updates);
-    setUser(updatedUser);
+    if (isMountedRef.current) {
+      setUser(updatedUser);
+    }
   };
 
   return (
