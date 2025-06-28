@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
-import { MessageCircle, Star, Clock } from 'lucide-react-native';
+import { MessageCircle, Star, Clock, Users, Heart } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { AppHeader } from '../../components/AppHeader';
@@ -9,6 +9,7 @@ import { PaywallModal } from '../../components/PaywallModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
+import { Colors } from '../../constants/Colors';
 
 export default function MatchesScreen() {
   const { user } = useAuth();
@@ -41,31 +42,31 @@ export default function MatchesScreen() {
           router.push(`/chat/${item.id}`);
         }}
         style={styles.matchItem}
+        activeOpacity={0.7}
       >
-        <Card>
+        <Card style={styles.matchCard}>
           <View style={styles.matchContent}>
-            <Image
-              source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
-              style={styles.avatar}
-            />
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
+                style={styles.avatar}
+              />
+              <View style={styles.onlineIndicator} />
+            </View>
             
             <View style={styles.matchInfo}>
               <View style={styles.matchHeader}>
                 <Text style={styles.matchName}>{otherUser.name}</Text>
-                {false && ( // Unread count - implement when adding message status
-                  <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>0</Text>
-                  </View>
-                )}
+                <Text style={styles.timeStamp}>{formatTimeAgo(item.created_at)}</Text>
               </View>
               
               {isCaregiver ? (
                 <Text style={styles.matchLocation}>{otherUser.location}</Text>
               ) : (
                 <View style={styles.caregiverDetails}>
-                  <Star size={14} color="#F59E0B" />
+                  <Star size={14} color={Colors.warning} fill={Colors.warning} />
                   <Text style={styles.rating}>4.8</Text>
-                  <Clock size={14} color="#6B7280" />
+                  <Clock size={14} color={Colors.text.secondary} />
                   <Text style={styles.experience}>5+ years</Text>
                 </View>
               )}
@@ -76,8 +77,12 @@ export default function MatchesScreen() {
             </View>
             
             <View style={styles.matchActions}>
-              <Text style={styles.timeStamp}>{formatTimeAgo(item.created_at)}</Text>
-              <MessageCircle size={20} color="#2563EB" />
+              <View style={[
+                styles.messageButton,
+                { backgroundColor: isSubscriber ? Colors.primary[500] : Colors.gray[300] }
+              ]}>
+                <MessageCircle size={20} color={Colors.text.inverse} />
+              </View>
             </View>
           </View>
         </Card>
@@ -90,11 +95,16 @@ export default function MatchesScreen() {
       <View style={styles.container}>
         <AppHeader
           title="Matches"
-          emergencyPhone={user?.emergency_phone}
         />
         
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Loading matches...</Text>
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner}>
+            <Heart size={48} color={Colors.primary[500]} />
+          </View>
+          <Text style={styles.loadingTitle}>Finding your matches...</Text>
+          <Text style={styles.loadingText}>
+            We're gathering all your connections
+          </Text>
         </View>
       </View>
     );
@@ -105,12 +115,14 @@ export default function MatchesScreen() {
       <View style={styles.container}>
         <AppHeader
           title="Matches"
-          emergencyPhone={user?.emergency_phone}
         />
         
-        <View style={styles.emptyState}>
-          <Text style={styles.errorTitle}>Failed to load matches</Text>
-          <Text style={styles.emptyText}>Please try again later</Text>
+        <View style={styles.errorContainer}>
+          <Users size={64} color={Colors.gray[300]} />
+          <Text style={styles.errorTitle}>Unable to Load Matches</Text>
+          <Text style={styles.errorText}>
+            We're having trouble loading your matches. Please try again later.
+          </Text>
         </View>
       </View>
     );
@@ -119,8 +131,8 @@ export default function MatchesScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Matches"
-        emergencyPhone={user?.emergency_phone}
+        title="Your Matches"
+        subtitle={`${matches.length} connection${matches.length !== 1 ? 's' : ''}`}
       />
 
       <FlatList
@@ -131,6 +143,9 @@ export default function MatchesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Heart size={64} color={Colors.gray[300]} />
+            </View>
             <Text style={styles.emptyTitle}>No matches yet</Text>
             <Text style={styles.emptyText}>
               {user?.role === 'family' 
@@ -138,6 +153,14 @@ export default function MatchesScreen() {
                 : "Keep browsing job posts to connect with families!"
               }
             </Text>
+            <TouchableOpacity 
+              style={styles.browseButton}
+              onPress={() => router.push('/(tabs)')}
+            >
+              <Text style={styles.browseButtonText}>
+                {user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
+              </Text>
+            </TouchableOpacity>
           </View>
         }
       />
@@ -154,56 +177,110 @@ export default function MatchesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loadingSpinner: {
+    marginBottom: 24,
+  },
+  loadingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   matchesList: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 100,
   },
   matchItem: {
-    marginBottom: 0,
+    marginBottom: 12,
+  },
+  matchCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   matchContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 16,
   },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    marginRight: 16,
+    borderWidth: 3,
+    borderColor: Colors.background,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.success,
+    borderWidth: 2,
+    borderColor: Colors.background,
   },
   matchInfo: {
     flex: 1,
   },
   matchHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
   matchName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     flex: 1,
   },
-  unreadBadge: {
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    minWidth: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  unreadText: {
-    color: '#FFFFFF',
+  timeStamp: {
     fontSize: 12,
-    fontWeight: 'bold',
+    color: Colors.text.tertiary,
   },
   matchLocation: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 8,
   },
   caregiverDetails: {
@@ -214,51 +291,71 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: Colors.text.primary,
     marginLeft: 4,
     marginRight: 12,
   },
   experience: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginLeft: 4,
   },
   lastMessage: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
+    fontStyle: 'italic',
   },
   matchActions: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
-  timeStamp: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 8,
+  messageButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emptyState: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 80,
     paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#DC2626',
+    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 32,
+  },
+  browseButton: {
+    backgroundColor: Colors.primary[500],
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  browseButtonText: {
+    color: Colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

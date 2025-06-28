@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { Calendar, Clock, User, MapPin } from 'lucide-react-native';
+import { Calendar, Clock, User, MapPin, CheckCircle, XCircle, Plus } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { EmergencyButton } from '../../components/EmergencyButton';
 import { AppHeader } from '../../components/AppHeader';
 import { PaywallModal } from '../../components/PaywallModal';
 import { EnhancedScheduleModal } from '../../components/EnhancedScheduleModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-import { useSchedules } from '@/hooks/useSchedules';
+import { useSchedules } from '../../hooks/useSchedules';
 import { databaseService } from '../../lib/database';
+import { Colors } from '../../constants/Colors';
 
 export default function ScheduleScreen() {
   const { user } = useAuth();
@@ -57,12 +57,49 @@ export default function ScheduleScreen() {
   };
 
   const handleDeclineSchedule = async (scheduleId: string) => {
-    try {
-      await databaseService.updateScheduleStatus(scheduleId, 'cancelled');
-      Alert.alert('Success', 'Schedule declined');
-      refetch();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to decline schedule');
+    Alert.alert(
+      'Decline Schedule',
+      'Are you sure you want to decline this schedule?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Decline',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await databaseService.updateScheduleStatus(scheduleId, 'cancelled');
+              Alert.alert('Schedule declined');
+              refetch();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to decline schedule');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return Colors.success;
+      case 'pending':
+        return Colors.warning;
+      case 'cancelled':
+        return Colors.error;
+      default:
+        return Colors.gray[400];
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return CheckCircle;
+      case 'cancelled':
+        return XCircle;
+      default:
+        return Clock;
     }
   };
 
@@ -71,40 +108,50 @@ export default function ScheduleScreen() {
     const otherUser = user?.role === 'family' ? match.caregiver : match.family;
     const startDate = new Date(item.start_ts);
     const endDate = new Date(item.end_ts);
+    const StatusIcon = getStatusIcon(item.status);
+    const statusColor = getStatusColor(item.status);
     
     return (
       <Card style={styles.scheduleItem}>
         <View style={styles.scheduleHeader}>
           <View style={styles.scheduleInfo}>
-            <Text style={styles.scheduleName}>{otherUser.name}</Text>
-            <View style={styles.scheduleDetails}>
-              <Calendar size={16} color="#6B7280" />
-              <Text style={styles.scheduleDate}>
-                {startDate.toLocaleDateString()}
-              </Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.scheduleName}>{otherUser.name}</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+                <StatusIcon size={14} color={statusColor} />
+                <Text style={[styles.statusText, { color: statusColor }]}>
+                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </Text>
+              </View>
             </View>
+            
             <View style={styles.scheduleDetails}>
-              <Clock size={16} color="#6B7280" />
-              <Text style={styles.scheduleTime}>
-                {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Text>
+              <View style={styles.detailRow}>
+                <Calendar size={16} color={Colors.text.secondary} />
+                <Text style={styles.scheduleDate}>
+                  {startDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <Clock size={16} color={Colors.text.secondary} />
+                <Text style={styles.scheduleTime}>
+                  {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                  {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <MapPin size={16} color={Colors.text.secondary} />
+                <Text style={styles.scheduleLocation}>
+                  {otherUser.location || 'Location TBD'}
+                </Text>
+              </View>
             </View>
-            <View style={styles.scheduleDetails}>
-              <MapPin size={16} color="#6B7280" />
-              <Text style={styles.scheduleLocation}>{otherUser.location || 'Location TBD'}</Text>
-            </View>
-          </View>
-          
-          <View style={[
-            styles.statusBadge,
-            item.status === 'confirmed' ? styles.confirmedBadge : styles.pendingBadge
-          ]}>
-            <Text style={[
-              styles.statusText,
-              item.status === 'confirmed' ? styles.confirmedText : styles.pendingText
-            ]}>
-              {item.status === 'confirmed' ? 'Confirmed' : 'Pending'}
-            </Text>
           </View>
         </View>
 
@@ -113,7 +160,7 @@ export default function ScheduleScreen() {
             <Button
               title="Accept"
               onPress={() => handleAcceptSchedule(item.id)}
-              variant="secondary"
+              variant="success"
               size="small"
               style={styles.actionButton}
             />
@@ -135,11 +182,11 @@ export default function ScheduleScreen() {
       <View style={styles.container}>
         <AppHeader
           title="Schedule"
-          emergencyPhone={user?.emergency_phone}
         />
         
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Loading schedules...</Text>
+        <View style={styles.loadingContainer}>
+          <Calendar size={48} color={Colors.primary[500]} />
+          <Text style={styles.loadingText}>Loading your schedule...</Text>
         </View>
       </View>
     );
@@ -148,12 +195,15 @@ export default function ScheduleScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Schedule"
-        emergencyPhone={user?.emergency_phone}
+        title="Your Schedule"
+        subtitle={`${schedules.length} upcoming session${schedules.length !== 1 ? 's' : ''}`}
       />
 
       {!isSubscriber ? (
         <View style={styles.upgradePrompt}>
+          <View style={styles.upgradeIcon}>
+            <Calendar size={48} color={Colors.primary[500]} />
+          </View>
           <Text style={styles.upgradeTitle}>Unlock Advanced Scheduling</Text>
           <Text style={styles.upgradeText}>
             Manage your care schedule, book appointments, and coordinate with your matches. 
@@ -186,13 +236,25 @@ export default function ScheduleScreen() {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Calendar size={64} color={Colors.gray[300]} />
+                </View>
                 <Text style={styles.emptyTitle}>No scheduled sessions</Text>
                 <Text style={styles.emptyText}>
                   {user?.role === 'family' 
-                    ? "Schedule sessions with your matched caregivers"
-                    : "You'll see your upcoming care sessions here"
+                    ? "Schedule sessions with your matched caregivers to get started"
+                    : "You'll see your upcoming care sessions here once families book with you"
                   }
                 </Text>
+                {user?.role === 'family' && (
+                  <TouchableOpacity
+                    style={styles.scheduleButton}
+                    onPress={handleNewSession}
+                  >
+                    <Plus size={20} color={Colors.text.inverse} />
+                    <Text style={styles.scheduleButtonText}>Schedule Session</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             }
           />
@@ -229,10 +291,23 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginTop: 16,
+    textAlign: 'center',
   },
   quickActions: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     marginBottom: 20,
   },
   newSessionButton: {
@@ -243,66 +318,62 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   scheduleItem: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   scheduleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   scheduleInfo: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   scheduleName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  scheduleDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  scheduleDate: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 8,
-  },
-  scheduleTime: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 8,
-  },
-  scheduleLocation: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 8,
+    color: Colors.text.primary,
+    flex: 1,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  confirmedBadge: {
-    backgroundColor: '#D1FAE5',
-  },
-  pendingBadge: {
-    backgroundColor: '#FEF3C7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
     fontWeight: '600',
+    marginLeft: 4,
   },
-  confirmedText: {
-    color: '#059669',
+  scheduleDetails: {
+    gap: 8,
   },
-  pendingText: {
-    color: '#D97706',
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scheduleDate: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 8,
+  },
+  scheduleTime: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 8,
+  },
+  scheduleLocation: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 8,
   },
   scheduleActions: {
     flexDirection: 'row',
-    marginTop: 16,
     gap: 12,
   },
   actionButton: {
@@ -314,16 +385,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
+  upgradeIcon: {
+    marginBottom: 24,
+  },
   upgradeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 16,
   },
   upgradeText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -333,19 +407,43 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 32,
+  },
+  scheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary[500],
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  scheduleButtonText: {
+    color: Colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });

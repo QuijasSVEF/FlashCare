@@ -1,432 +1,575 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { Search, Filter, MapPin, Star, Clock, DollarSign } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { TrendingUp, Users, Calendar, DollarSign, Clock, Star, Award, BarChart3 } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
-import { SearchModal } from '../../components/SearchModal';
-import { AdvancedFilterModal } from '../../components/AdvancedFilterModal';
-import { CaregiverProfileCard } from '../../components/CaregiverProfileCard';
-import { EmergencyButton } from '../../components/EmergencyButton';
 import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
+import { Colors } from '../../constants/Colors';
 
-export default function SearchScreen() {
+const { width } = Dimensions.get('window');
+
+interface AnalyticsData {
+  totalMatches: number;
+  activeJobs: number;
+  completedJobs: number;
+  averageRating: number;
+  totalEarnings: number;
+  responseRate: number;
+  profileViews: number;
+  weeklyStats: Array<{ day: string; matches: number; earnings: number }>;
+}
+
+export default function AnalyticsScreen() {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<any>({});
+  const [analytics, setAnalytics] = useState<AnalyticsData>({
+    totalMatches: 0,
+    activeJobs: 0,
+    completedJobs: 0,
+    averageRating: 0,
+    totalEarnings: 0,
+    responseRate: 0,
+    profileViews: 0,
+    weeklyStats: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'year'>('month');
 
   useEffect(() => {
-    if (searchQuery.trim()) {
-      performSearch();
-    } else {
-      loadDefaultResults();
+    if (user?.id) {
+      loadAnalytics();
     }
-  }, [searchQuery, activeFilters]);
+  }, [user?.id, timeframe]);
 
-  const loadDefaultResults = async () => {
+  const loadAnalytics = async () => {
     try {
       setLoading(true);
-      if (user?.role === 'family') {
-        const caregivers = await databaseService.searchCaregivers({
-          location: user.location,
-          ...activeFilters
-        });
-        setResults(caregivers);
-      } else {
-        const jobs = await databaseService.searchJobPosts({
-          location: user?.location,
-          ...activeFilters
-        });
-        setResults(jobs);
-      }
+      
+      // Load user statistics
+      const matches = await databaseService.getUserMatches(user!.id);
+      const schedules = await databaseService.getUserSchedules(user!.id);
+      const rating = await databaseService.getUserRating(user!.id);
+      
+      // Calculate analytics
+      const completedJobs = schedules.filter(s => 
+        s.status === 'confirmed' && new Date(s.end_ts) < new Date()
+      ).length;
+      
+      const activeJobs = schedules.filter(s => 
+        s.status === 'confirmed' && new Date(s.start_ts) > new Date()
+      ).length;
+
+      // Mock weekly stats for demonstration
+      const weeklyStats = [
+        { day: 'Mon', matches: 2, earnings: 150 },
+        { day: 'Tue', matches: 1, earnings: 75 },
+        { day: 'Wed', matches: 3, earnings: 225 },
+        { day: 'Thu', matches: 1, earnings: 100 },
+        { day: 'Fri', matches: 2, earnings: 180 },
+        { day: 'Sat', matches: 4, earnings: 320 },
+        { day: 'Sun', matches: 1, earnings: 80 },
+      ];
+
+      setAnalytics({
+        totalMatches: matches.length,
+        activeJobs,
+        completedJobs,
+        averageRating: rating.average,
+        totalEarnings: 2450, // Mock data
+        responseRate: 85, // Mock data
+        profileViews: 156, // Mock data
+        weeklyStats
+      });
     } catch (error) {
-      console.error('Error loading results:', error);
+      console.error('Error loading analytics:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const performSearch = async () => {
-    try {
-      setLoading(true);
-      if (user?.role === 'family') {
-        const caregivers = await databaseService.searchCaregivers({
-          location: searchQuery,
-          ...activeFilters
-        });
-        setResults(caregivers);
-      } else {
-        const jobs = await databaseService.searchJobPosts({
-          location: searchQuery,
-          ...activeFilters
-        });
-        setResults(jobs);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleApplyFilters = (filters: any) => {
-    setActiveFilters(filters);
-  };
-
-  const renderCaregiverItem = ({ item }: { item: any }) => (
-    <CaregiverProfileCard 
-      caregiver={item}
-      onMessage={() => console.log('Message caregiver:', item.id)}
-      onViewProfile={() => console.log('View profile:', item.id)}
-    />
+  const StatCard = ({ 
+    title, 
+    value, 
+    change, 
+    icon: Icon, 
+    color = Colors.primary[500],
+    suffix = '' 
+  }: {
+    title: string;
+    value: string | number;
+    change?: string;
+    icon: any;
+    color?: string;
+    suffix?: string;
+  }) => (
+    <Card style={styles.statCard}>
+      <View style={styles.statHeader}>
+        <View style={[styles.statIcon, { backgroundColor: `${color}15` }]}>
+          <Icon size={20} color={color} />
+        </View>
+        {change && (
+          <View style={[styles.changeIndicator, { backgroundColor: Colors.success + '15' }]}>
+            <Text style={[styles.changeText, { color: Colors.success }]}>
+              {change}
+            </Text>
+          </View>
+        )}
+      </View>
+      <Text style={styles.statValue}>{value}{suffix}</Text>
+      <Text style={styles.statTitle}>{title}</Text>
+    </Card>
   );
 
-  const renderJobItem = ({ item }: { item: any }) => {
-    const weeklyEarnings = item.hours_per_week * item.rate_hour;
-    
+  const WeeklyChart = () => (
+    <Card style={styles.chartCard}>
+      <View style={styles.chartHeader}>
+        <Text style={styles.chartTitle}>Weekly Performance</Text>
+        <View style={styles.timeframeSelector}>
+          {(['week', 'month', 'year'] as const).map((period) => (
+            <TouchableOpacity
+              key={period}
+              style={[
+                styles.timeframeButton,
+                timeframe === period && styles.timeframeButtonActive
+              ]}
+              onPress={() => setTimeframe(period)}
+            >
+              <Text style={[
+                styles.timeframeText,
+                timeframe === period && styles.timeframeTextActive
+              ]}>
+                {period.charAt(0).toUpperCase() + period.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      
+      <View style={styles.chart}>
+        <View style={styles.chartBars}>
+          {analytics.weeklyStats.map((stat, index) => {
+            const maxEarnings = Math.max(...analytics.weeklyStats.map(s => s.earnings));
+            const height = (stat.earnings / maxEarnings) * 120;
+            
+            return (
+              <View key={index} style={styles.barContainer}>
+                <View style={styles.barWrapper}>
+                  <View 
+                    style={[
+                      styles.bar, 
+                      { 
+                        height: height || 4,
+                        backgroundColor: Colors.primary[500]
+                      }
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.barLabel}>{stat.day}</Text>
+                <Text style={styles.barValue}>${stat.earnings}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    </Card>
+  );
+
+  if (user?.role !== 'caregiver') {
     return (
-      <Card style={styles.resultCard}>
-        <View style={styles.jobHeader}>
-          <Text style={styles.jobTitle}>{item.title}</Text>
-          <View style={styles.familyInfo}>
-            <Image
-              source={{ 
-                uri: item.family?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-              }}
-              style={styles.familyAvatar}
-            />
-            <Text style={styles.familyName}>{item.family?.name}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.jobDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-
-        <View style={styles.jobDetails}>
-          <View style={styles.jobDetail}>
-            <MapPin size={14} color="#6B7280" />
-            <Text style={styles.jobDetailText}>{item.location}</Text>
-          </View>
-          <View style={styles.jobDetail}>
-            <Clock size={14} color="#6B7280" />
-            <Text style={styles.jobDetailText}>{item.hours_per_week} hrs/week</Text>
-          </View>
-          <View style={styles.jobDetail}>
-            <DollarSign size={14} color="#6B7280" />
-            <Text style={styles.jobDetailText}>${item.rate_hour}/hr</Text>
-          </View>
-        </View>
-
-        <View style={styles.jobFooter}>
-          <View style={styles.weeklyEarnings}>
-            <Text style={styles.weeklyEarningsText}>
-              ${weeklyEarnings.toFixed(2)}/week
-            </Text>
-          </View>
-          <Text style={styles.postedTime}>
-            {new Date(item.created_at).toLocaleDateString()}
+      <View style={styles.container}>
+        <AppHeader
+          title="Analytics"
+          subtitle="Performance insights and metrics"
+        />
+        <View style={styles.errorContainer}>
+          <BarChart3 size={64} color={Colors.gray[300]} />
+          <Text style={styles.errorTitle}>Analytics Not Available</Text>
+          <Text style={styles.errorText}>
+            Analytics dashboard is only available for caregivers. 
+            Family members can view their activity in the Profile section.
           </Text>
         </View>
-      </Card>
+      </View>
     );
-  };
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <AppHeader
+          title="Analytics"
+          subtitle="Performance insights and metrics"
+        />
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner}>
+            <BarChart3 size={48} color={Colors.primary[500]} />
+          </View>
+          <Text style={styles.loadingText}>Loading your analytics...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <AppHeader
-        title={`Search ${user?.role === 'family' ? 'Caregivers' : 'Jobs'}`}
-        subtitle={`Find the perfect ${user?.role === 'family' ? 'caregiver' : 'opportunity'} for you`}
+        title="Analytics Dashboard"
+        subtitle="Track your caregiving performance"
       />
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search size={20} color="#6B7280" style={styles.searchIcon} />
-          <Input
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={`Search by location...`}
-            style={styles.searchInput}
+      <View style={styles.content}>
+        {/* Key Metrics */}
+        <View style={styles.metricsGrid}>
+          <StatCard
+            title="Total Matches"
+            value={analytics.totalMatches}
+            change="+12%"
+            icon={Users}
+            color={Colors.primary[500]}
+          />
+          
+          <StatCard
+            title="Active Jobs"
+            value={analytics.activeJobs}
+            change="+5%"
+            icon={Calendar}
+            color={Colors.secondary[500]}
+          />
+          
+          <StatCard
+            title="Avg Rating"
+            value={analytics.averageRating.toFixed(1)}
+            icon={Star}
+            color={Colors.warning}
+          />
+          
+          <StatCard
+            title="Total Earnings"
+            value={`$${analytics.totalEarnings.toLocaleString()}`}
+            change="+18%"
+            icon={DollarSign}
+            color={Colors.success}
           />
         </View>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowAdvancedFilters(true)}
-        >
-          <Filter size={20} color="#2563EB" />
-        </TouchableOpacity>
-      </View>
 
-      {Object.keys(activeFilters).length > 0 && (
-        <View style={styles.activeFilters}>
-          <Text style={styles.activeFiltersText}>
-            {Object.keys(activeFilters).length} filter(s) applied
-          </Text>
-          <TouchableOpacity onPress={() => setActiveFilters({})}>
-            <Text style={styles.clearFiltersText}>Clear all</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {/* Weekly Performance Chart */}
+        <WeeklyChart />
 
-      <FlatList
-        data={results}
-        renderItem={user?.role === 'family' ? renderCaregiverItem : renderJobItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.resultsList}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Search size={48} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>
-              {loading ? 'Searching...' : 'No results found'}
-            </Text>
-            <Text style={styles.emptyText}>
-              {loading 
-                ? 'Finding the best matches for you...'
-                : 'Try adjusting your search criteria or filters'
-              }
-            </Text>
+        {/* Performance Insights */}
+        <Card style={styles.insightsCard}>
+          <Text style={styles.insightsTitle}>Performance Insights</Text>
+          
+          <View style={styles.insightsList}>
+            <View style={styles.insightItem}>
+              <View style={[styles.insightIcon, { backgroundColor: Colors.success + '15' }]}>
+                <TrendingUp size={16} color={Colors.success} />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>Response Rate</Text>
+                <Text style={styles.insightValue}>{analytics.responseRate}%</Text>
+                <Text style={styles.insightDescription}>
+                  You respond to messages 15% faster than average
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.insightItem}>
+              <View style={[styles.insightIcon, { backgroundColor: Colors.primary[500] + '15' }]}>
+                <Users size={16} color={Colors.primary[500]} />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>Profile Views</Text>
+                <Text style={styles.insightValue}>{analytics.profileViews}</Text>
+                <Text style={styles.insightDescription}>
+                  Your profile was viewed 23 times this week
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.insightItem}>
+              <View style={[styles.insightIcon, { backgroundColor: Colors.warning + '15' }]}>
+                <Award size={16} color={Colors.warning} />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>Completed Jobs</Text>
+                <Text style={styles.insightValue}>{analytics.completedJobs}</Text>
+                <Text style={styles.insightDescription}>
+                  You've successfully completed {analytics.completedJobs} care sessions
+                </Text>
+              </View>
+            </View>
           </View>
-        }
-      />
+        </Card>
 
-      <SearchModal
-        visible={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
-        onSearch={handleApplyFilters}
-        userRole={user?.role || 'family'}
-      />
-
-      <AdvancedFilterModal
-        visible={showAdvancedFilters}
-        onClose={() => setShowAdvancedFilters(false)}
-        onApplyFilters={handleApplyFilters}
-        userRole={user?.role || 'family'}
-      />
-    </View>
+        {/* Quick Actions */}
+        <Card style={styles.actionsCard}>
+          <Text style={styles.actionsTitle}>Quick Actions</Text>
+          
+          <View style={styles.actionsList}>
+            <TouchableOpacity style={styles.actionButton}>
+              <View style={[styles.actionIcon, { backgroundColor: Colors.primary[50] }]}>
+                <TrendingUp size={20} color={Colors.primary[500]} />
+              </View>
+              <Text style={styles.actionText}>View Detailed Report</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionButton}>
+              <View style={[styles.actionIcon, { backgroundColor: Colors.secondary[50] }]}>
+                <Users size={20} color={Colors.secondary[500]} />
+              </View>
+              <Text style={styles.actionText}>Optimize Profile</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionButton}>
+              <View style={[styles.actionIcon, { backgroundColor: Colors.success + '15' }]}>
+                <DollarSign size={20} color={Colors.success} />
+              </View>
+              <Text style={styles.actionText}>Earnings History</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    paddingTop: 20,
+  content: {
     paddingHorizontal: 20,
-    marginBottom: 16,
-    gap: 12,
+    paddingBottom: 40,
   },
-  searchInputContainer: {
+  loadingContainer: {
     flex: 1,
-    position: 'relative',
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: 16,
-    top: 18,
-    zIndex: 1,
-  },
-  searchInput: {
-    paddingLeft: 48,
-  },
-  filterButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
   },
-  activeFilters: {
+  loadingSpinner: {
+    marginBottom: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginTop: 20,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  statCard: {
+    width: (width - 52) / 2,
+    padding: 16,
+  },
+  statHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  activeFiltersText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  clearFiltersText: {
-    fontSize: 14,
-    color: '#2563EB',
-    fontWeight: '600',
-  },
-  resultsList: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  resultCard: {
-    marginBottom: 0,
-  },
-  resultHeader: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 12,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
-  },
-  resultInfo: {
-    flex: 1,
-  },
-  resultName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  rating: {
-    flexDirection: 'row',
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'center',
   },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginLeft: 4,
-  },
-  ratingCount: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 4,
-  },
-  location: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 4,
-  },
-  rateContainer: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  changeIndicator: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 8,
   },
-  rateText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2563EB',
-  },
-  resultBio: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 24,
-    marginBottom: 12,
-  },
-  skills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  skillTag: {
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  skillTagText: {
+  changeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
   },
-  jobHeader: {
-    marginBottom: 12,
-  },
-  jobTitle: {
-    fontSize: 18,
+  statValue: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    color: Colors.text.primary,
+    marginBottom: 4,
   },
-  familyInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  familyAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  familyName: {
+  statTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
+    color: Colors.text.secondary,
   },
-  jobDescription: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 24,
-    marginBottom: 12,
+  chartCard: {
+    marginBottom: 20,
   },
-  jobDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 12,
-  },
-  jobDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  jobDetailText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 4,
-  },
-  jobFooter: {
+  chartHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 20,
   },
-  weeklyEarnings: {
-    backgroundColor: '#D1FAE5',
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+  },
+  timeframeSelector: {
+    flexDirection: 'row',
+    backgroundColor: Colors.gray[100],
+    borderRadius: 8,
+    padding: 2,
+  },
+  timeframeButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 6,
   },
-  weeklyEarningsText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#059669',
+  timeframeButtonActive: {
+    backgroundColor: Colors.background,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  postedTime: {
+  timeframeText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.text.secondary,
+    fontWeight: '500',
   },
-  emptyState: {
+  timeframeTextActive: {
+    color: Colors.text.primary,
+    fontWeight: '600',
+  },
+  chart: {
+    height: 160,
+  },
+  chartBars: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 120,
+    paddingHorizontal: 10,
+  },
+  barContainer: {
     alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
+    flex: 1,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 16,
+  barWrapper: {
+    height: 120,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  emptyText: {
+  bar: {
+    width: 20,
+    borderRadius: 10,
+    minHeight: 4,
+  },
+  barLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginBottom: 2,
+  },
+  barValue: {
+    fontSize: 10,
+    color: Colors.text.tertiary,
+    fontWeight: '500',
+  },
+  insightsCard: {
+    marginBottom: 20,
+  },
+  insightsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  insightsList: {
+    gap: 16,
+  },
+  insightItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  insightIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  insightContent: {
+    flex: 1,
+  },
+  insightTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 2,
+  },
+  insightValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  insightDescription: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    lineHeight: 16,
+  },
+  actionsCard: {
+    marginBottom: 20,
+  },
+  actionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  actionsList: {
+    gap: 12,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.gray[50],
+    borderRadius: 12,
+  },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  actionText: {
     fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
+    fontWeight: '500',
+    color: Colors.text.primary,
   },
 });
