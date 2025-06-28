@@ -75,7 +75,7 @@ export default function TabLayout() {
         options={{
           title: isFamily ? 'Find Care' : 'Browse',
           tabBarIcon: ({ size, color, focused }) => (
-            {isFamily ? (
+            isFamily ? (
               <Heart 
                 size={focused ? size + 2 : size} 
                 color={color} 
@@ -88,7 +88,7 @@ export default function TabLayout() {
                 color={color} 
                 strokeWidth={focused ? 2.5 : 2}
               />
-            )}
+            )
           ),
         }}
       />
