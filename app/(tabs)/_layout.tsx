@@ -4,7 +4,13 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function TabLayout() {
   const { user } = useAuth();
-  const isFamily = user?.role === 'family';
+  
+  // Don't render tabs if user is not loaded yet
+  if (!user) {
+    return null;
+  }
+  
+  const isFamily = user.role === 'family';
 
   return (
     <Tabs

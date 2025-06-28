@@ -37,14 +37,18 @@ export const databaseService = {
       .from('users')
       .select('*')
       .eq('id', userId)
-      .maybeSingle();
+      .single();
 
-    if (error) throw error;
-    if (!data) {
-      const notFoundError = new Error('User not found');
-      (notFoundError as any).code = 'PGRST116';
-      throw notFoundError;
+    if (error) {
+      // Handle the case where user doesn't exist
+      if (error.code === 'PGRST116') {
+        const notFoundError = new Error('User profile not found');
+        (notFoundError as any).code = 'PGRST116';
+        throw notFoundError;
+      }
+      throw error;
     }
+    
     return data;
   },
 

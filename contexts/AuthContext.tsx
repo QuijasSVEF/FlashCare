@@ -24,22 +24,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        authService.getCurrentUser().then(setUser);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          try {
+            const profile = await authService.getCurrentUser();
+            setUser(profile);
+          } catch (profileError) {
+            console.error('Error getting user profile:', profileError);
+            // If profile doesn't exist, user might need to complete signup
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const profile = await authService.getCurrentUser();
-        setUser(profile);
-      } else {
+      try {
+        if (session?.user) {
+          const profile = await authService.getCurrentUser();
+          setUser(profile);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
         setUser(null);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
