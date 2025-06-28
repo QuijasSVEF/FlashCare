@@ -23,11 +23,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
+    // Set a maximum timeout for initialization
+    const initTimeout = setTimeout(() => {
+      if (mounted) {
+        console.log('Auth initialization timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     // Get initial session
     const initializeAuth = async () => {
       try {
         console.log('Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (!mounted) return;
 
         if (error) {
           console.error('Error getting session:', error);
@@ -40,20 +52,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           try {
             const profile = await authService.getCurrentUser();
-            console.log('Profile loaded:', !!profile);
-            setUser(profile);
+            if (mounted) {
+              console.log('Profile loaded:', !!profile);
+              setUser(profile);
+            }
           } catch (profileError) {
             console.error('Error getting user profile:', profileError);
-            setUser(null);
+            if (mounted) {
+              setUser(null);
+            }
           }
         } else {
-          setUser(null);
+          if (mounted) {
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        setUser(null);
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(initTimeout);
+        }
       }
     };
 
@@ -61,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
       console.log('Auth state change:', event, session?.user?.id);
       
       if (event === 'SIGNED_OUT') {
@@ -73,20 +98,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           setLoading(true);
           const profile = await authService.getCurrentUser();
-          console.log('Profile in auth change:', !!profile);
-          setUser(profile);
+          if (mounted) {
+            console.log('Profile in auth change:', !!profile);
+            setUser(profile);
+          }
         } catch (profileError) {
           console.error('Error getting profile in auth change:', profileError);
-          setUser(null);
+          if (mounted) {
+            setUser(null);
+          }
         } finally {
-          setLoading(false);
+          if (mounted) {
+            setLoading(false);
+          }
         }
-      } else {
+      } else if (mounted) {
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(initTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => {
