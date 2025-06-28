@@ -1,26 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { 
-  User, 
-  Settings, 
-  Star, 
-  Shield, 
-  CreditCard, 
-  LogOut, 
-  Edit3, 
-  Phone, 
-  MapPin, 
-  Award, 
-  Bell, 
-  Calendar, 
-  MessageCircle,
-  ChevronDown,
-  ChevronUp,
-  Users,
-  Clock,
-  TrendingUp
-} from 'lucide-react-native';
+import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, Phone, MapPin, Award, Bell, Calendar, MessageCircle, ChevronDown, ChevronUp, Users, Clock, TrendingUp } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
