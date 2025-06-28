@@ -7,6 +7,7 @@ import { SearchModal } from '../../components/SearchModal';
 import { AdvancedFilterModal } from '../../components/AdvancedFilterModal';
 import { CaregiverProfileCard } from '../../components/CaregiverProfileCard';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
 
@@ -138,17 +139,11 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>
-            Search {user?.role === 'family' ? 'Caregivers' : 'Jobs'}
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            Find the perfect {user?.role === 'family' ? 'caregiver' : 'opportunity'} for you
-          </Text>
-        </View>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
-      </View>
+      <AppHeader
+        title={`Search ${user?.role === 'family' ? 'Caregivers' : 'Jobs'}`}
+        subtitle={`Find the perfect ${user?.role === 'family' ? 'caregiver' : 'opportunity'} for you`}
+        emergencyPhone={user?.emergency_phone}
+      />
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
@@ -222,27 +217,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
   },
   searchContainer: {
     flexDirection: 'row',
+    paddingTop: 20,
     paddingHorizontal: 20,
     marginBottom: 16,
     gap: 12,

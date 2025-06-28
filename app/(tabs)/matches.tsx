@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { MessageCircle, Star, Clock } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { PaywallModal } from '../../components/PaywallModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -87,10 +88,10 @@ export default function MatchesScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Matches</Text>
-          <EmergencyButton phoneNumber={user?.emergency_phone} />
-        </View>
+        <AppHeader
+          title="Matches"
+          emergencyPhone={user?.emergency_phone}
+        />
         
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Loading matches...</Text>
@@ -102,10 +103,10 @@ export default function MatchesScreen() {
   if (error) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Matches</Text>
-          <EmergencyButton phoneNumber={user?.emergency_phone} />
-        </View>
+        <AppHeader
+          title="Matches"
+          emergencyPhone={user?.emergency_phone}
+        />
         
         <View style={styles.emptyState}>
           <Text style={styles.errorTitle}>Failed to load matches</Text>
@@ -117,10 +118,10 @@ export default function MatchesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Matches</Text>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
-      </View>
+      <AppHeader
+        title="Matches"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       <FlatList
         data={matches}
@@ -154,19 +155,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
   },
   matchesList: {
     paddingHorizontal: 20,

@@ -5,6 +5,7 @@ import { Plus, MapPin, Clock, DollarSign, Users, CreditCard as Edit3, Trash2 } f
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
 
@@ -149,15 +150,11 @@ export default function MyJobsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>My Job Postings</Text>
-          <Text style={styles.headerSubtitle}>
-            Manage your care job listings
-          </Text>
-        </View>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
-      </View>
+      <AppHeader
+        title="My Job Postings"
+        subtitle="Manage your care job listings"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       <View style={styles.quickActions}>
         <Button
@@ -202,27 +199,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
   },
   quickActions: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     marginBottom: 20,
   },
   createButton: {

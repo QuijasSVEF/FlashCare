@@ -80,6 +80,11 @@ export default function SignInScreen() {
         <View style={styles.logoContainer}>
           <Heart size={24} color="#2563EB" />
           <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
         </View>
       </View>
 
@@ -143,12 +148,19 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
   },
   logo: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#2563EB',
     marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
   },
   content: {
     flex: 1,

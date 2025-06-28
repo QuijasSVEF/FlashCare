@@ -17,6 +17,11 @@ export default function WelcomeScreen() {
             style={styles.logoImage}
             resizeMode="contain"
           />
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>Supporting families and caregivers</Text>
@@ -72,10 +77,18 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginBottom: 32,
+    position: 'relative',
   },
   logoImage: {
     width: 300,
     height: 120,
+  },
+  boltBadge: {
+    position: 'absolute',
+    top: -10,
+    right: 20,
+    width: 50,
+    height: 50,
   },
   title: {
     fontSize: 28,

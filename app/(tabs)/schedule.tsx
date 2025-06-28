@@ -4,6 +4,7 @@ import { Calendar, Clock, User, MapPin } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { PaywallModal } from '../../components/PaywallModal';
 import { EnhancedScheduleModal } from '../../components/EnhancedScheduleModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -132,10 +133,10 @@ export default function ScheduleScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Schedule</Text>
-          <EmergencyButton phoneNumber={user?.emergency_phone} />
-        </View>
+        <AppHeader
+          title="Schedule"
+          emergencyPhone={user?.emergency_phone}
+        />
         
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Loading schedules...</Text>
@@ -146,10 +147,10 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Schedule</Text>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
-      </View>
+      <AppHeader
+        title="Schedule"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       {!isSubscriber ? (
         <View style={styles.upgradePrompt}>
@@ -229,19 +230,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
   },
   quickActions: {
     paddingHorizontal: 20,

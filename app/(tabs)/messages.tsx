@@ -5,6 +5,7 @@ import { MessageCircle } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { PaywallModal } from '../../components/PaywallModal';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -65,10 +66,10 @@ export default function MessagesScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Messages</Text>
-          <EmergencyButton phoneNumber={user?.emergency_phone} />
-        </View>
+        <AppHeader
+          title="Messages"
+          emergencyPhone={user?.emergency_phone}
+        />
         
         <View style={styles.upgradePrompt}>
           <Text style={styles.upgradeTitle}>Loading conversations...</Text>
@@ -79,10 +80,10 @@ export default function MessagesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
-      </View>
+      <AppHeader
+        title="Messages"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       {!isSubscriber && matches.length > 0 ? (
         <View style={styles.upgradePrompt}>
@@ -128,19 +129,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
   },
   upgradePrompt: {
     flex: 1,

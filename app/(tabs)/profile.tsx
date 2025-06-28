@@ -5,6 +5,7 @@ import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, 
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { ProfileEditModal } from '../../components/ProfileEditModal';
 import { ReviewModal } from '../../components/ReviewModal';
 import { NotificationCenter } from '../../components/NotificationCenter';
@@ -106,9 +107,10 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.headerActions}>
+      <AppHeader
+        title="Profile"
+        emergencyPhone={user?.emergency_phone}
+        rightComponent={
           <TouchableOpacity 
             style={styles.notificationButton}
             onPress={() => setShowNotifications(true)}
@@ -118,9 +120,8 @@ export default function ProfileScreen() {
               <Text style={styles.notificationBadgeText}>2</Text>
             </View>
           </TouchableOpacity>
-          <EmergencyButton phoneNumber={user?.emergency_phone} />
-        </View>
-      </View>
+        }
+      />
 
       {/* Profile Info */}
       <Card style={styles.profileCard}>
@@ -287,24 +288,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   notificationButton: {
     position: 'relative',
     padding: 8,
@@ -327,6 +310,7 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 16,
   },
   profileHeader: {

@@ -5,6 +5,7 @@ import { ArrowLeft, DollarSign, Clock, MapPin } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -102,12 +103,11 @@ export default function CreateJobScreen() {
         />
       ))}
       
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Create Job Posting</Text>
-        <Text style={styles.headerSubtitle}>
-          Find the perfect caregiver for your family
-        </Text>
-      </View>
+      <AppHeader
+        title="Create Job Posting"
+        subtitle="Find the perfect caregiver for your family"
+        emergencyPhone={user?.emergency_phone}
+      />
 
       <Card style={styles.formCard}>
         <Input
@@ -211,23 +211,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
   formCard: {
     marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 40,
   },
   descriptionInput: {

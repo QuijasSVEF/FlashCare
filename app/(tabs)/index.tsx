@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { FilterModal } from '../../components/FilterModal';
 import { AdvancedFilterModal } from '../../components/AdvancedFilterModal';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchingService } from '../../lib/matching';
 import { databaseService } from '../../lib/database';
@@ -226,26 +227,19 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>
-            {user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
-          </Text>
-          <View style={styles.location}>
-            <MapPin size={16} color="#6B7280" />
-            <Text style={styles.locationText}>{user?.location || 'San Francisco, CA'}</Text>
-          </View>
-        </View>
-        <View style={styles.headerActions}>
+      <AppHeader
+        title={user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
+        subtitle={`📍 ${user?.location || 'San Francisco, CA'}`}
+        emergencyPhone={user?.emergency_phone}
+        rightComponent={
           <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setShowFilterModal(true)}
           >
             <Filter size={20} color="#2563EB" />
           </TouchableOpacity>
-          <EmergencyButton phoneNumber={user?.emergency_phone} />
-        </View>
-      </View>
+        }
+      />
 
       <View style={styles.cardContainer}>
         {currentIndex < (user?.role === 'family' ? caregivers : jobPosts).length ? (
@@ -324,7 +318,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    paddingTop: 60,
   },
   centered: {
     justifyContent: 'center',
@@ -351,37 +344,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   filterButton: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#EEF2FF',
-  },
-  location: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationText: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginLeft: 4,
   },
   cardContainer: {
     flex: 1,

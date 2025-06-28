@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send, Phone, Video } from 'lucide-react-native';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMessages } from '../../hooks/useMessages';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -147,34 +148,24 @@ export default function ChatScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        
-        <View style={styles.headerInfo}>
-          <Image
-            source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
-            style={styles.headerAvatar}
-          />
-          <View style={styles.headerText}>
-            <Text style={styles.headerName}>{otherUser.name}</Text>
-            <Text style={styles.headerStatus}>
-              {otherUser.role === 'caregiver' ? 'Caregiver' : 'Family Member'}
-            </Text>
+      <AppHeader
+        title={otherUser.name}
+        subtitle={otherUser.role === 'caregiver' ? 'Caregiver' : 'Family Member'}
+        showEmergencyButton={false}
+        rightComponent={
+          <View style={styles.chatActions}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ArrowLeft size={24} color="#374151" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handlePhoneCall} style={styles.actionButton}>
+              <Phone size={20} color="#2563EB" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleVideoCall} style={styles.actionButton}>
+              <Video size={20} color="#2563EB" />
+            </TouchableOpacity>
           </View>
-        </View>
-
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handlePhoneCall} style={styles.headerAction}>
-            <Phone size={20} color="#2563EB" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleVideoCall} style={styles.headerAction}>
-            <Video size={20} color="#2563EB" />
-          </TouchableOpacity>
-        </View>
-      </View>
+        }
+      />
 
       {/* Messages */}
       <FlatList
@@ -258,48 +249,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  header: {
+  chatActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    gap: 12,
   },
   backButton: {
     padding: 8,
-    marginRight: 12,
   },
-  headerInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  headerText: {
-    flex: 1,
-  },
-  headerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  headerStatus: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  headerAction: {
+  actionButton: {
     padding: 8,
   },
   messagesList: {
