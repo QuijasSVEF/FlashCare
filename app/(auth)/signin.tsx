@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
