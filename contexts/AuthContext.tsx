@@ -71,11 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (event === 'SIGNED_OUT') {
         setUser(null);
+        setLoading(false);
         return;
       }
+        setLoading(false);
       
       if (session?.user && event === 'SIGNED_IN') {
         try {
+          setLoading(true);
           const profile = await Promise.race([
             authService.getCurrentUser(),
             new Promise((_, reject) => 
@@ -88,6 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Error getting profile in auth change:', profileError);
           setUser(null);
         }
+      } finally {
+        setLoading(false);
       }
     });
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { View, StyleSheet, ActivityIndicator, Text, Platform } from 'react-native';
 
@@ -7,6 +7,7 @@ export default function Index() {
   const { user, loading } = useAuth();
   const [timeoutReached, setTimeoutReached] = useState(false);
   const [forceRedirect, setForceRedirect] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   // Add a timeout to prevent infinite loading
   useEffect(() => {
@@ -32,6 +33,18 @@ export default function Index() {
     return () => clearTimeout(forceTimeout);
   }, [loading, user]);
 
+  // Handle navigation when user state changes
+  useEffect(() => {
+    if (!loading && user && !hasNavigated) {
+      console.log('User authenticated, navigating to tabs...');
+      setHasNavigated(true);
+      // Use router.replace instead of Redirect for more reliable navigation
+      router.replace('/(tabs)');
+    } else if (!loading && !user && !hasNavigated) {
+      console.log('No user found, staying on welcome...');
+    }
+  }, [user, loading, hasNavigated]);
+
   // Show loading screen while checking auth state
   if (loading && !timeoutReached && !forceRedirect) {
     return (
@@ -48,7 +61,7 @@ export default function Index() {
   }
 
   // If user exists, go to main app
-  if (user) {
+  if (user && !hasNavigated) {
     return <Redirect href="/(tabs)" />;
   }
 
