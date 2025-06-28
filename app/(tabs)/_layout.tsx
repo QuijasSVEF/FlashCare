@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search } from 'lucide-react-native';
+import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search, FileText } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 import { Platform } from 'react-native';
@@ -171,7 +171,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="edit-job"
         options={{
-          href: null, // This hides it from the tab bar
+          href: null,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="file-demo"
+        options={{
+          title: "File Demo",
+          tabBarIcon: ({ size, color, focused }) => (
+            <FileText 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
         }}
       />
       

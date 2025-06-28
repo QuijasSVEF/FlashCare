@@ -1,184 +1,134 @@
-# Storage Setup - Manual Configuration Required
+# Storage Bucket Policies - Manual Setup Required
 
-Since storage policies cannot be created through SQL migrations, you need to set them up manually in the Supabase Dashboard.
+## Important: Manual Configuration Required
 
-## 🚨 Important: Manual Setup Required
+The storage bucket policies **cannot** be created through SQL migrations due to permission restrictions. You must set them up manually through the Supabase Dashboard.
 
-The storage policies need to be created through the Supabase Dashboard because they require special permissions that migrations don't have.
+## Step-by-Step Instructions
 
-## 📋 Step-by-Step Setup
+### 1. Create Storage Buckets
 
-### 1. Go to Supabase Dashboard
-- Navigate to your project
-- Go to **Storage** → **Policies**
+First, create these three buckets in the Supabase Dashboard:
 
-### 2. Enable RLS on storage.objects
-If not already enabled, run this in the SQL Editor:
-```sql
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-```
+1. **avatars** (Public bucket)
+   - File size limit: 5MB
+   - Allowed MIME types: image/jpeg, image/png, image/gif, image/webp
 
-### 3. Create Policies for Each Bucket
+2. **attachments** (Private bucket)
+   - File size limit: 10MB
+   - Allowed MIME types: image/jpeg, image/png, image/gif, image/webp, application/pdf, text/plain
 
-#### Avatars Bucket (Public)
-Create these 4 policies:
+3. **documents** (Private bucket)
+   - File size limit: 10MB
+   - Allowed MIME types: application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, text/plain, image/jpeg, image/png
 
-**Policy 1: Public Read**
-```sql
-CREATE POLICY "Avatar images are publicly accessible"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'avatars');
-```
+### 2. Create Storage Policies
 
-**Policy 2: User Upload**
-```sql
-CREATE POLICY "Users can upload their own avatar"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'avatars' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+Go to **Storage** → **Policies** in the Supabase Dashboard and create the following policies:
 
-**Policy 3: User Update**
-```sql
-CREATE POLICY "Users can update their own avatar"
-  ON storage.objects FOR UPDATE
-  TO authenticated
-  USING (
-    bucket_id = 'avatars' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+#### For "avatars" Bucket:
 
-**Policy 4: User Delete**
-```sql
-CREATE POLICY "Users can delete their own avatar"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (
-    bucket_id = 'avatars' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+1. **Public Read Policy**
+   - Policy name: "Avatar images are publicly accessible"
+   - Operation: SELECT
+   - Target roles: public
+   - Policy definition: `bucket_id = 'avatars'`
 
-#### Attachments Bucket (Private)
-Create these 3 policies:
+2. **User Upload Policy**
+   - Policy name: "Users can upload their own avatar"
+   - Operation: INSERT
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-**Policy 1: Match-based Read**
-```sql
-CREATE POLICY "Users can view attachments in their matches"
-  ON storage.objects FOR SELECT
-  TO authenticated
-  USING (
-    bucket_id = 'attachments' AND
-    (
-      auth.uid()::text = (storage.foldername(name))[1] OR
-      EXISTS (
-        SELECT 1 FROM matches m
-        WHERE (m.family_id = auth.uid() OR m.caregiver_id = auth.uid())
-        AND (m.family_id::text = (storage.foldername(name))[1] OR m.caregiver_id::text = (storage.foldername(name))[1])
-      )
-    )
-  );
-```
+3. **User Update Policy**
+   - Policy name: "Users can update their own avatar"
+   - Operation: UPDATE
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-**Policy 2: User Upload**
-```sql
-CREATE POLICY "Users can upload attachments"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'attachments' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+4. **User Delete Policy**
+   - Policy name: "Users can delete their own avatar"
+   - Operation: DELETE
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-**Policy 3: User Delete**
-```sql
-CREATE POLICY "Users can delete their own attachments"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (
-    bucket_id = 'attachments' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+#### For "attachments" Bucket:
 
-#### Documents Bucket (Private)
-Create these 4 policies:
+1. **Match-based Read Policy**
+   - Policy name: "Users can view attachments in their matches"
+   - Operation: SELECT
+   - Target roles: authenticated
+   - Policy definition:
+     ```sql
+     bucket_id = 'attachments' AND
+     (
+       auth.uid()::text = (storage.foldername(name))[1] OR
+       EXISTS (
+         SELECT 1 FROM matches m
+         WHERE (m.family_id = auth.uid() OR m.caregiver_id = auth.uid())
+         AND (m.family_id::text = (storage.foldername(name))[1] OR m.caregiver_id::text = (storage.foldername(name))[1])
+       )
+     )
+     ```
 
-**Policy 1: User Read**
-```sql
-CREATE POLICY "Users can view their own documents"
-  ON storage.objects FOR SELECT
-  TO authenticated
-  USING (
-    bucket_id = 'documents' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+2. **User Upload Policy**
+   - Policy name: "Users can upload attachments"
+   - Operation: INSERT
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'attachments' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-**Policy 2: User Upload**
-```sql
-CREATE POLICY "Users can upload their own documents"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'documents' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+3. **User Delete Policy**
+   - Policy name: "Users can delete their own attachments"
+   - Operation: DELETE
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'attachments' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-**Policy 3: User Update**
-```sql
-CREATE POLICY "Users can update their own documents"
-  ON storage.objects FOR UPDATE
-  TO authenticated
-  USING (
-    bucket_id = 'documents' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+#### For "documents" Bucket:
 
-**Policy 4: User Delete**
-```sql
-CREATE POLICY "Users can delete their own documents"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (
-    bucket_id = 'documents' AND
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-```
+1. **User Read Policy**
+   - Policy name: "Users can view their own documents"
+   - Operation: SELECT
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-## ✅ Verification
+2. **User Upload Policy**
+   - Policy name: "Users can upload their own documents"
+   - Operation: INSERT
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-After creating all policies, test the setup:
+3. **User Update Policy**
+   - Policy name: "Users can update their own documents"
+   - Operation: UPDATE
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-1. **Upload a file** to each bucket
-2. **Verify access controls** work correctly
-3. **Test file deletion** permissions
+4. **User Delete Policy**
+   - Policy name: "Users can delete their own documents"
+   - Operation: DELETE
+   - Target roles: authenticated
+   - Policy definition: `bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]`
 
-## 🔧 Alternative: Use Supabase CLI
+## Verification
 
-If you prefer command line:
+After creating all policies, verify they work correctly:
 
-```bash
-# Install Supabase CLI
-npm install -g supabase
+1. Sign in to your app
+2. Try uploading a profile photo
+3. Try sending an image in a chat
+4. Try uploading a document
 
-# Login to your project
-supabase login
+## Troubleshooting
 
-# Apply policies via CLI
-supabase db push
-```
+If you encounter issues:
 
-## 📝 Notes
+1. Check that RLS is enabled on the `storage.objects` table
+2. Verify all policies are correctly created with the exact policy definitions
+3. Ensure the bucket names match exactly (`avatars`, `attachments`, `documents`)
+4. Test with a simple file upload first before trying more complex operations
 
-- Storage policies require special database permissions
-- They cannot be created through standard SQL migrations
-- Manual setup ensures proper security configuration
-- Test thoroughly before deploying to production
+## Security Notes
+
+- The `avatars` bucket is public to allow profile photos to be visible to all users
+- The `attachments` bucket allows matched users to see each other's files
+- The `documents` bucket is strictly private - only the owner can access files
