@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase } from 'lucide-react-native';
+import { Chrome as Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase, CreditCard } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function TabLayout() {
@@ -97,6 +97,16 @@ export default function TabLayout() {
           title: 'Schedule',
           tabBarIcon: ({ size, color }) => (
             <Calendar size={size} color={color} />
+          ),
+        }}
+      />
+      
+      <Tabs.Screen
+        name="billing"
+        options={{
+          title: 'Billing',
+          tabBarIcon: ({ size, color }) => (
+            <CreditCard size={size} color={color} />
           ),
         }}
       />
