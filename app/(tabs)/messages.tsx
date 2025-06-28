@@ -81,8 +81,6 @@ export default function MessagesScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Messages"
-        emergencyPhone={user?.emergency_phone}
       />
 
       {!isSubscriber && matches.length > 0 ? (

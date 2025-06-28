@@ -153,7 +153,6 @@ export default function MyJobsScreen() {
       <AppHeader
         title="My Job Postings"
         subtitle="Manage your care job listings"
-        emergencyPhone={user?.emergency_phone}
       />
 
       <View style={styles.quickActions}>

@@ -149,8 +149,6 @@ export default function ScheduleScreen() {
     <View style={styles.container}>
       <AppHeader
         title="Schedule"
-        emergencyPhone={user?.emergency_phone}
-      />
 
       {!isSubscriber ? (
         <View style={styles.upgradePrompt}>

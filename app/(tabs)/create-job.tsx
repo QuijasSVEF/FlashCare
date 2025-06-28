@@ -106,7 +106,6 @@ export default function CreateJobScreen() {
       <AppHeader
         title="Create Job Posting"
         subtitle="Find the perfect caregiver for your family"
-        emergencyPhone={user?.emergency_phone}
       />
 
       <Card style={styles.formCard}>

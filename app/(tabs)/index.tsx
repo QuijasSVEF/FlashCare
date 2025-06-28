@@ -261,7 +261,6 @@ export default function HomeScreen() {
       <AppHeader
         title={user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
         subtitle={`📍 ${user?.location || 'San Francisco, CA'}`}
-        emergencyPhone={user?.emergency_phone}
         rightComponent={
           <View style={styles.headerActions}>
             <TouchableOpacity

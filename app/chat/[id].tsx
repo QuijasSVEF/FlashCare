@@ -173,7 +173,6 @@ export default function ChatScreen() {
       <AppHeader
         title={otherUser.name}
         subtitle={otherUser.role === 'caregiver' ? 'Caregiver' : 'Family Member'}
-        showEmergencyButton={false}
         rightComponent={
           <View style={styles.chatActions}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>

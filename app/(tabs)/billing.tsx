@@ -42,7 +42,6 @@ export default function BillingScreen() {
       <AppHeader
         title="Billing & Subscription"
         subtitle="Manage your FlashCare subscription"
-        emergencyPhone={user?.emergency_phone}
       />
 
       <View style={styles.content}>

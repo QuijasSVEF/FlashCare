@@ -1,23 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import { LogOut, Menu } from 'lucide-react-native';
-import { EmergencyButton } from './EmergencyButton';
+import { LogOut, Menu, Phone } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { router } from 'expo-router';
 
 interface AppHeaderProps {
   title: string;
   subtitle?: string;
-  showEmergencyButton?: boolean;
-  emergencyPhone?: string;
   rightComponent?: React.ReactNode;
 }
 
 export function AppHeader({ 
   title, 
   subtitle, 
-  showEmergencyButton = true, 
-  emergencyPhone,
   rightComponent 
 }: AppHeaderProps) {
   const { signOut } = useAuth();
@@ -82,9 +77,6 @@ export function AppHeader({
         
         <View style={styles.rightSection}>
           {rightComponent}
-          {showEmergencyButton && (
-            <EmergencyButton phoneNumber={emergencyPhone} />
-          )}
         </View>
       </View>
     </View>
@@ -166,7 +158,7 @@ const styles = StyleSheet.create({
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
     flexShrink: 0,
   },
 });

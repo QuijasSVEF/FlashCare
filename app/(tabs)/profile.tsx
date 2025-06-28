@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Linking, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, Phone, MapPin, Award, Bell, Calendar, MessageCircle, ChevronDown, ChevronUp, Users, Clock, TrendingUp } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
@@ -156,7 +156,6 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <AppHeader
         title="Profile"
-        emergencyPhone={user?.emergency_phone}
         rightComponent={
           <TouchableOpacity 
             style={styles.notificationButton}
@@ -347,6 +346,23 @@ export default function ProfileScreen() {
         {/* Settings */}
         <CollapsibleSection title="Settings & Support" icon={Settings} defaultExpanded={false}>
           <View style={styles.settingsList}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => {
+                const number = user?.emergency_phone || '911';
+                const url = Platform.OS === 'ios' ? `tel:${number}` : `tel:${number}`;
+                Linking.openURL(url).catch((err) => {
+                  console.error('Error making emergency call:', err);
+                });
+              }}
+            >
+              <Phone size={20} color="#DC2626" />
+              <Text style={[styles.settingText, styles.emergencyText]}>Emergency Call</Text>
+              <Text style={styles.emergencyNumber}>
+                {user?.emergency_phone || '911'}
+              </Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity style={styles.settingItem}>
               <Settings size={20} color="#6B7280" />
               <Text style={styles.settingText}>App Settings</Text>
@@ -685,6 +701,15 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginLeft: 12,
     flex: 1,
+  },
+  emergencyText: {
+    color: '#DC2626',
+    fontWeight: '600',
+  },
+  emergencyNumber: {
+    fontSize: 14,
+    color: '#DC2626',
+    fontWeight: '500',
   },
   accountActions: {
     gap: 12,

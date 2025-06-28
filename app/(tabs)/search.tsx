@@ -142,7 +142,6 @@ export default function SearchScreen() {
       <AppHeader
         title={`Search ${user?.role === 'family' ? 'Caregivers' : 'Jobs'}`}
         subtitle={`Find the perfect ${user?.role === 'family' ? 'caregiver' : 'opportunity'} for you`}
-        emergencyPhone={user?.emergency_phone}
       />
 
       <View style={styles.searchContainer}>
