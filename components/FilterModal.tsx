@@ -10,7 +10,6 @@ import {
 import { X, MapPin, DollarSign, Clock, Star } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Colors } from '../constants/Colors';
 
 interface FilterModalProps {
   visible: boolean;

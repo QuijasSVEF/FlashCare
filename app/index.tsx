@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { View, StyleSheet, ActivityIndicator, Text, Platform } from 'react-native';
@@ -7,20 +7,11 @@ export default function Index() {
   const { user, loading } = useAuth();
   const [timeoutReached, setTimeoutReached] = useState(false);
   const [forceRedirect, setForceRedirect] = useState(false);
-  const isMountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   // Add a timeout to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (isMountedRef.current) {
-        setTimeoutReached(true);
-      }
+      setTimeoutReached(true);
     }, 5000); // 5 second timeout (reduced from 10)
 
     return () => clearTimeout(timeout);
@@ -29,9 +20,7 @@ export default function Index() {
   // Force redirect after a longer timeout
   useEffect(() => {
     const forceTimeout = setTimeout(() => {
-      if (isMountedRef.current) {
-        setForceRedirect(true);
-      }
+      setForceRedirect(true);
     }, 8000); // 8 second force timeout
 
     return () => clearTimeout(forceTimeout);

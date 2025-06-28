@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart, Mail, Lock } from 'lucide-react-native';
+import { ArrowLeft, Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import { authService } from '../../lib/auth';
 
 export default function SignInScreen() {
   const [formData, setFormData] = useState({
@@ -35,20 +35,20 @@ export default function SignInScreen() {
     setErrors({});
     
     try {
-      console.log('SignIn: Attempting signin with:', formData.email);
+      console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
-
-      if (result) {
-        console.log('SignIn: Signin successful, navigating to tabs');
-        router.replace('/(tabs)');
-      }
+      
+      console.log('Signin successful, navigating to tabs');
+      
+      // Navigate immediately since auth context will handle the redirect
+      router.replace('/(tabs)');
+      
     } catch (error: any) {
-      console.error('SignIn error:', error.message || 'Unknown error');
+      console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
       
       if (error.message?.includes('Invalid login credentials') || 
-          error.message?.includes('invalid_credentials') ||
-          error.message?.includes('Invalid email or password')) {
+                 error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = 'Please check your email and click the confirmation link before signing in.';
@@ -60,6 +60,10 @@ export default function SignInScreen() {
         errorMessage = error.message;
       }
       
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
       Alert.alert('Sign In Error', errorMessage);
     } finally {
       setLoading(false);
@@ -68,76 +72,55 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        onPress={() => router.back()} 
-        style={[styles.backButton, { top: Platform.OS === 'ios' ? 60 : 40 }]}
-      >
-        <ArrowLeft size={24} color={Colors.text.primary} />
-      </TouchableOpacity>
-      
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/images/logo (2).png')}
-          style={styles.logoImage}
-          resizeMode="contain"
-        />
-        <Image
-          source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-          style={styles.boltBadge}
-          resizeMode="contain"
-        />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color="#2563EB" />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
       </View>
 
-      <View style={styles.formContainer}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
-        </View>
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
-        <View style={styles.inputContainer}>
-          <View style={styles.inputIconContainer}>
-            <Mail size={20} color={Colors.text.secondary} />
-          </View>
-          <Input
-            value={formData.email}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={errors.email}
-            style={styles.input}
-          />
-        </View>
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          error={errors.email}
+        />
 
-        <View style={styles.inputContainer}>
-          <View style={styles.inputIconContainer}>
-            <Lock size={20} color={Colors.text.secondary} />
-          </View>
-          <Input
-            value={formData.password}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-            placeholder="Enter your password"
-            secureTextEntry
-            error={errors.password}
-            style={styles.input}
-          />
-        </View>
-
-        <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-        </TouchableOpacity>
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          error={errors.password}
+        />
 
         <Button
           title={loading ? "Signing in..." : "Sign In"}
           onPress={handleSignIn}
           disabled={loading}
           size="large"
-          style={[styles.signInButton, { backgroundColor: Colors.primary[500] }]}
+          style={styles.signInButton}
         />
 
         <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
           <Text style={styles.signUpText}>
-            Don't have an account? <Text style={[styles.signUpLink, { color: Colors.primary[500] }]}>Sign up</Text>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -148,80 +131,64 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 20,
+    backgroundColor: '#F9FAFB',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   backButton: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    zIndex: 10,
-    padding: 10,
+    padding: 8,
+    marginRight: 16,
   },
   logoContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 80,
-    marginBottom: 40,
+    position: 'relative',
   },
-  logoImage: {
-    width: 200,
-    height: 80,
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2563EB',
+    marginLeft: 8,
+    position: 'relative',
   },
   boltBadge: {
     position: 'absolute',
-    top: -10,
-    right: 20,
-    width: 40,
-    height: 40,
+    right: -60,
+    width: 30,
+    height: 30,
   },
-  formContainer: {
-    width: '100%',
-  },
-  titleContainer: {
-    marginBottom: 30,
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: '#111827',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.text.secondary,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    position: 'relative',
-  },
-  inputIconContainer: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 1,
-  },
-  input: {
-    paddingLeft: 48,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    fontWeight: '500',
+    color: '#6B7280',
+    marginBottom: 32,
   },
   signInButton: {
+    marginTop: 16,
     marginBottom: 24,
   },
   signUpText: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: '#6B7280',
     textAlign: 'center',
   },
   signUpLink: {
+    color: '#2563EB',
     fontWeight: '600',
   },
 });

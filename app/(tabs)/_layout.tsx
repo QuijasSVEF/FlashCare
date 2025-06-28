@@ -21,15 +21,15 @@ export default function TabLayout() {
           style: 'destructive', 
           onPress: async () => {
             try {
-              console.log('TabLayout: Starting sign out...');
+              console.log('Tabs: Starting sign out...');
               const success = await signOut();
               
               if (success) {
-                console.log('TabLayout: Sign out successful, navigating...');
+                console.log('Tabs: Sign out successful, navigating...');
                 router.replace('/(auth)/welcome');
               }
             } catch (error) {
-              console.error('TabLayout: Sign out error:', error instanceof Error ? error.message : 'Unknown error');
+              console.error('Tabs: Sign out error:', error);
               router.replace('/(auth)/welcome');
             }
           }
@@ -47,10 +47,10 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: Colors.background,
           borderTopWidth: 1,
-          borderTopColor: Colors.gray[100],
+          borderTopColor: Colors.gray[200],
           paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           paddingTop: 12,
-          height: Platform.OS === 'ios' ? 90 : 72,
+          height: Platform.OS === 'ios' ? 88 : 72,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.1,
@@ -60,15 +60,15 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 4,
         },
         tabBarItemStyle: {
           paddingVertical: 4,
-          borderRadius: 8,
+          borderRadius: 12,
           marginHorizontal: 2,
         },
         tabBarIconStyle: {
-          marginBottom: 0,
+          marginBottom: 2,
         },
       }}>
       

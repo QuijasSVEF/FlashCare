@@ -12,7 +12,6 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { databaseService } from '../lib/database';
 import { useAuth } from '../contexts/AuthContext';
-import { Colors } from '../constants/Colors';
 
 interface ReviewModalProps {
   visible: boolean;

@@ -12,7 +12,6 @@ import { X, Calendar, Clock, MapPin, DollarSign } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { databaseService } from '../lib/database';
-import { Colors } from '../constants/Colors';
 
 interface EnhancedScheduleModalProps {
   visible: boolean;

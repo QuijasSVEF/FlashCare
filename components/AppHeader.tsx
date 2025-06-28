@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.background,
     paddingTop: 60,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray[200],
@@ -109,17 +109,16 @@ const styles = StyleSheet.create({
   logoContainer: {
     position: 'relative',
     alignItems: 'flex-start',
-    marginLeft: 4,
   },
   flashCareLogo: {
-    width: 150,
+    width: 140,
     height: 45,
   },
   logoAccent: {
     position: 'absolute',
     bottom: -2,
-    left: 10,
-    right: 10,
+    left: 0,
+    right: 0,
     height: 4,
     backgroundColor: Colors.primary[500],
     borderRadius: 2,
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.primary[700],
+    color: Colors.text.primary,
     marginBottom: 4,
     lineHeight: 28,
   },

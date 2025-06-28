@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, User, Users } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
@@ -39,17 +39,17 @@ export default function SignUpScreen() {
     setErrors({});
     
     try {
-      console.log('SignUp: Attempting signup with:', formData.email, formData.role);
+      console.log('Attempting signup with:', formData.email, formData.role);
       await signUp(formData.email, formData.password, {
         name: formData.name,
         role: formData.role as 'family' | 'caregiver',
       });
       
       // Success - go to profile setup
-      console.log('SignUp: Signup successful, navigating to profile setup');
+      console.log('Signup successful, navigating to profile setup');
       router.replace('/(auth)/profile-setup');
     } catch (error: any) {
-      console.error('SignUp error:', error.message || 'Unknown error');
+      console.error('Signup error:', error);
       let errorMessage = 'Failed to create account';
       
       if (error.message?.includes('User already registered') || 
@@ -93,7 +93,7 @@ export default function SignUpScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 40 }]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>

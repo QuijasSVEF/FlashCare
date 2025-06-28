@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { MapPin, Star, Clock, Award, Shield, MessageCircle } from 'lucide-react-native';
 import { Card } from './ui/Card';
-import { Colors } from '../constants/Colors';
 
 interface CaregiverProfileCardProps {
   caregiver: {

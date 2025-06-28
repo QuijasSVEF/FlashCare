@@ -1,6 +1,5 @@
 import React from 'react';
 import { TextInput, Text, View, StyleSheet, TextInputProps } from 'react-native';
-import { Colors } from '../../constants/Colors';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -17,7 +16,7 @@ export function Input({ label, error, style, ...props }: InputProps) {
           error && styles.inputError,
           style,
         ]}
-        placeholderTextColor={Colors.text.tertiary}
+        placeholderTextColor="#9CA3AF"
         {...props}
       />
       {error && <Text style={styles.error}>{error}</Text>}
@@ -28,29 +27,27 @@ export function Input({ label, error, style, ...props }: InputProps) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
-    width: '100%',
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: '#374151',
     marginBottom: 8,
   },
   input: {
     borderWidth: 2,
-    borderColor: Colors.gray[200],
-    borderRadius: 16,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: Colors.gray[50],
-    color: Colors.text.primary,
+    backgroundColor: '#FFFFFF',
   },
   inputError: {
-    borderColor: Colors.error,
+    borderColor: '#DC2626',
   },
   error: {
-    color: Colors.error,
+    color: '#DC2626',
     fontSize: 14,
     marginTop: 4,
   },

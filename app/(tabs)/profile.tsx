@@ -119,7 +119,7 @@ export default function ProfileScreen() {
   const handleSignOut = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out of FlashCare?',
+      'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -194,7 +194,7 @@ export default function ProfileScreen() {
               <View style={styles.nameContainer}>
                 <Text style={styles.profileName}>{user?.name}</Text>
                 <TouchableOpacity onPress={handleEditProfile} style={styles.editButton}>
-                  <Edit3 size={18} color={Colors.primary[500]} />
+                  <Edit3 size={18} color="#2563EB" />
                 </TouchableOpacity>
               </View>
               
@@ -204,28 +204,30 @@ export default function ProfileScreen() {
               
               {isSubscriber && (
                 <View style={styles.subscriberBadge}>
-                  <Shield size={16} color={Colors.primary[600]} />
-                  <Text style={styles.subscriberText}>FlashCare Plus Member</Text>
+                  <Shield size={16} color="#059669" />
+                  <Text style={styles.subscriberText}>FlashCare Plus</Text>
                 </View>
               )}
             </View>
           </View>
 
-          <View style={styles.bioContainer}>
-            <Text style={styles.bioLabel}>About</Text>
-            <Text style={styles.profileBio}>{user.bio || "No bio provided yet. Tap the edit button to add information about yourself."}</Text>
-          </View>
+          {user?.bio && (
+            <View style={styles.bioContainer}>
+              <Text style={styles.bioLabel}>About</Text>
+              <Text style={styles.profileBio}>{user.bio}</Text>
+            </View>
+          )}
 
           <View style={styles.contactDetails}>
             {user?.phone && (
               <View style={styles.detailItem}>
-                <Phone size={16} color={Colors.primary[500]} />
+                <Phone size={16} color="#6B7280" />
                 <Text style={styles.detailText}>{user.phone}</Text>
               </View>
             )}
             {user?.location && (
               <View style={styles.detailItem}>
-                <MapPin size={16} color={Colors.primary[500]} />
+                <MapPin size={16} color="#6B7280" />
                 <Text style={styles.detailText}>{user.location}</Text>
               </View>
             )}
@@ -237,7 +239,7 @@ export default function ProfileScreen() {
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <View style={[styles.statIconContainer, { backgroundColor: '#EEF2FF' }]}>
-                <Users size={20} color={Colors.primary[500]} />
+                <Users size={20} color="#2563EB" />
               </View>
               <Text style={styles.statValue}>{userStats.totalMatches}</Text>
               <Text style={styles.statLabel}>Total Matches</Text>
@@ -245,7 +247,7 @@ export default function ProfileScreen() {
             
             <View style={styles.statItem}>
               <View style={[styles.statIconContainer, { backgroundColor: '#F0FDF4' }]}>
-                <MessageCircle size={20} color={Colors.primary[600]} />
+                <MessageCircle size={20} color="#059669" />
               </View>
               <Text style={styles.statValue}>{userStats.activeChats}</Text>
               <Text style={styles.statLabel}>Active Chats</Text>
@@ -253,7 +255,7 @@ export default function ProfileScreen() {
             
             <View style={styles.statItem}>
               <View style={[styles.statIconContainer, { backgroundColor: '#FEF3C7' }]}>
-                <Calendar size={20} color={Colors.secondary[500]} />
+                <Calendar size={20} color="#D97706" />
               </View>
               <Text style={styles.statValue}>{userStats.upcomingSchedules}</Text>
               <Text style={styles.statLabel}>Upcoming</Text>
@@ -282,7 +284,7 @@ export default function ProfileScreen() {
           <View style={styles.actionsList}>
             <TouchableOpacity style={styles.actionItem}>
               <View style={styles.actionIconContainer}>
-                <Calendar size={20} color={Colors.primary[500]} />
+                <Calendar size={20} color="#2563EB" />
               </View>
               <Text style={styles.actionText}>View Schedule</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
@@ -290,7 +292,7 @@ export default function ProfileScreen() {
             
             <TouchableOpacity style={styles.actionItem}>
               <View style={styles.actionIconContainer}>
-                <MessageCircle size={20} color={Colors.primary[500]} />
+                <MessageCircle size={20} color="#2563EB" />
               </View>
               <Text style={styles.actionText}>Messages</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
@@ -298,7 +300,7 @@ export default function ProfileScreen() {
             
             <TouchableOpacity style={styles.actionItem}>
               <View style={styles.actionIconContainer}>
-                <Star size={20} color={Colors.primary[500]} />
+                <Star size={20} color="#2563EB" />
               </View>
               <Text style={styles.actionText}>Reviews</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
@@ -306,9 +308,9 @@ export default function ProfileScreen() {
             
             <TouchableOpacity style={styles.actionItem}>
               <View style={styles.actionIconContainer}>
-                <CreditCard size={20} color={Colors.primary[500]} />
+                <CreditCard size={20} color="#2563EB" />
               </View>
-              <Text style={styles.actionText}>Billing</Text>
+              <Text style={styles.actionText}>Billing & Subscription</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
             </TouchableOpacity>
           </View>
@@ -351,11 +353,19 @@ export default function ProfileScreen() {
           <View style={styles.settingsList}>
             <TouchableOpacity 
               style={styles.settingItem}
-              onPress={() => router.push('/(tabs)/billing')}
+              onPress={() => {
+                const number = user?.emergency_phone || '911';
+                const url = Platform.OS === 'ios' ? `tel:${number}` : `tel:${number}`;
+                Linking.openURL(url).catch((err) => {
+                  console.error('Error making emergency call:', err);
+                });
+              }}
             >
-              <CreditCard size={20} color={Colors.primary[500]} />
-              <Text style={styles.settingText}>Subscription & Billing</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+              <Phone size={20} color="#DC2626" />
+              <Text style={[styles.settingText, styles.emergencyText]}>Emergency Call</Text>
+              <Text style={styles.emergencyNumber}>
+                {user?.emergency_phone || '911'}
+              </Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.settingItem}>
@@ -365,7 +375,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.settingItem}>
-              <Shield size={20} color={Colors.primary[500]} />
+              <Shield size={20} color="#6B7280" />
               <Text style={styles.settingText}>Privacy & Safety</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
             </TouchableOpacity>
@@ -377,26 +387,6 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </CollapsibleSection>
-        
-        {/* Emergency Call */}
-        <Card style={[styles.emergencyCard, { backgroundColor: '#FEF2F2' }]}>
-          <TouchableOpacity 
-            style={styles.emergencyButton}
-            onPress={() => {
-              const number = user?.emergency_phone || '911';
-              const url = Platform.OS === 'ios' ? `tel:${number}` : `tel:${number}`;
-              Linking.openURL(url).catch((err) => {
-                console.error('Error making emergency call:', err);
-              });
-            }}
-          >
-            <Phone size={24} color="#DC2626" />
-            <View style={styles.emergencyContent}>
-              <Text style={styles.emergencyTitle}>Emergency Call</Text>
-              <Text style={styles.emergencyNumber}>{user?.emergency_phone || '911'}</Text>
-            </View>
-          </TouchableOpacity>
-        </Card>
 
         {/* Sign Out */}
         <CollapsibleSection title="Account Actions" icon={LogOut} defaultExpanded={false}>
@@ -436,7 +426,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: '#F9FAFB',
   },
   content: {
     paddingHorizontal: 20,
@@ -449,8 +439,8 @@ const styles = StyleSheet.create({
   notificationBadge: {
     position: 'absolute',
     top: 4,
-    right: 2,
-    backgroundColor: Colors.error,
+    right: 4,
+    backgroundColor: '#DC2626',
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -480,8 +470,8 @@ const styles = StyleSheet.create({
   sectionIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: Colors.primary[50],
+    borderRadius: 18,
+    backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -489,7 +479,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: '#111827',
   },
   chevronContainer: {
     padding: 4,
@@ -535,7 +525,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: '#111827',
     flex: 1,
   },
   editButton: {
@@ -543,13 +533,13 @@ const styles = StyleSheet.create({
   },
   profileRole: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: '#6B7280',
     marginBottom: 8,
   },
   subscriberBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primary[50],
+    backgroundColor: '#D1FAE5',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -558,7 +548,7 @@ const styles = StyleSheet.create({
   subscriberText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.primary[600],
+    color: '#059669',
     marginLeft: 4,
   },
   bioContainer: {
@@ -567,12 +557,12 @@ const styles = StyleSheet.create({
   bioLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: '#374151',
     marginBottom: 8,
   },
   profileBio: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: '#374151',
     lineHeight: 24,
   },
   contactDetails: {
@@ -584,7 +574,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: '#6B7280',
     marginLeft: 8,
   },
   statsGrid: {
@@ -607,12 +597,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: '#111827',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: '#6B7280',
     textAlign: 'center',
   },
   ratingContainer: {
@@ -632,11 +622,11 @@ const styles = StyleSheet.create({
   ratingValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: '#111827',
   },
   ratingLabel: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: '#6B7280',
   },
   actionsList: {
     gap: 0,
@@ -644,28 +634,28 @@ const styles = StyleSheet.create({
   actionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[100],
+    borderBottomColor: '#F3F4F6',
   },
   actionIconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 10,
-    backgroundColor: Colors.primary[50],
+    borderRadius: 16,
+    backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   actionText: {
     fontSize: 16,
-    color: Colors.text.primary,
+    color: '#374151',
     flex: 1,
   },
   reviewItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[100],
+    borderBottomColor: '#F3F4F6',
   },
   reviewHeader: {
     flexDirection: 'row',
@@ -676,7 +666,7 @@ const styles = StyleSheet.create({
   reviewerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: '#111827',
   },
   reviewRating: {
     flexDirection: 'row',
@@ -684,13 +674,13 @@ const styles = StyleSheet.create({
   },
   reviewComment: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: '#6B7280',
     lineHeight: 20,
     marginBottom: 8,
   },
   reviewDate: {
     fontSize: 12,
-    color: Colors.text.tertiary,
+    color: '#9CA3AF',
   },
   viewAllButton: {
     paddingVertical: 12,
@@ -698,7 +688,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    color: Colors.primary[500],
+    color: '#2563EB',
     fontWeight: '600',
   },
   settingsList: {
@@ -707,43 +697,24 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[100],
+    borderBottomColor: '#F3F4F6',
   },
   settingText: {
     fontSize: 16,
-    color: Colors.text.primary,
+    color: '#374151',
     marginLeft: 12,
     flex: 1,
   },
   emergencyText: {
-    color: Colors.error,
+    color: '#DC2626',
     fontWeight: '600',
   },
   emergencyNumber: {
     fontSize: 14,
-    color: Colors.error,
+    color: '#DC2626',
     fontWeight: '500',
-  },
-  emergencyCard: {
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  emergencyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-  },
-  emergencyContent: {
-    marginLeft: 12,
-  },
-  emergencyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.error,
-    marginBottom: 4,
   },
   accountActions: {
     gap: 12,
@@ -751,17 +722,16 @@ const styles = StyleSheet.create({
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: Colors.error + '15',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    backgroundColor: '#FEE2E2',
     borderRadius: 12,
   },
   signOutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.error,
-    marginLeft: 12,
+    color: '#DC2626',
+    marginLeft: 8,
   },
   deleteAccountButton: {
     alignItems: 'center',
@@ -769,7 +739,7 @@ const styles = StyleSheet.create({
   },
   deleteAccountText: {
     fontSize: 14,
-    color: Colors.text.tertiary,
+    color: '#9CA3AF',
     textDecorationLine: 'underline',
   },
   footer: {
@@ -778,11 +748,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: Colors.text.tertiary,
+    color: '#9CA3AF',
     marginBottom: 4,
   },
   versionText: {
     fontSize: 12,
-    color: Colors.gray[300],
+    color: '#D1D5DB',
   },
 });

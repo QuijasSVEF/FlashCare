@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { MapPin, Clock, DollarSign, User } from 'lucide-react-native';
 import { Card } from './ui/Card';
-import { Colors } from '../constants/Colors';
 
 interface JobCardProps {
   job: {

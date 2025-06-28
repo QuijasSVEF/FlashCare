@@ -3,7 +3,6 @@ import { View, Text, Modal, StyleSheet, TouchableOpacity, Platform } from 'react
 import { X, Crown, Check } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import { Colors } from '../constants/Colors';
 
 interface PaywallModalProps {
   visible: boolean;

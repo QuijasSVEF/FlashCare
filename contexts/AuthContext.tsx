@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { authService } from '../lib/auth';
@@ -21,13 +21,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const isMountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     // Get initial session
@@ -37,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error.message);
+          console.error('Error getting session:', error);
           setLoading(false);
           return;
         }
@@ -53,32 +46,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               )
             ]);
             console.log('Profile loaded:', !!profile);
-            if (isMountedRef.current) {
-              setUser(profile);
-            }
+            setUser(profile);
           } catch (profileError) {
-            console.error('Error getting user profile:', profileError instanceof Error ? profileError.message : 'Unknown error');
+            console.error('Error getting user profile:', profileError);
             // If profile fetch fails, sign out and redirect to auth
             await supabase.auth.signOut();
-            if (isMountedRef.current) {
-              setUser(null);
-            }
+            setUser(null);
           }
         } else {
           // No session, user is not authenticated
-          if (isMountedRef.current) {
-            setUser(null);
-          }
+          setUser(null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        if (isMountedRef.current) {
-          setUser(null);
-        }
+        setUser(null);
       } finally {
-        if (isMountedRef.current) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
@@ -98,27 +81,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               )
             ]);
             console.log('Profile in auth change:', !!profile);
-            if (isMountedRef.current) {
-              setUser(profile);
-            }
+            setUser(profile);
           } catch (profileError) {
-            console.error('Error getting profile in auth change:', profileError instanceof Error ? profileError.message : 'Unknown error');
-            if (isMountedRef.current) {
-              setUser(null);
-            }
-          }
-        } else {
-          if (isMountedRef.current) {
+            console.error('Error getting profile in auth change:', profileError);
             setUser(null);
           }
-        }
-      } catch (error) {
-        console.error('Error in auth state change:', error instanceof Error ? error.message : 'Unknown error');
-        if (isMountedRef.current) {
+        } else {
           setUser(null);
         }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        setUser(null);
       }
     });
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -130,30 +106,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('AuthContext: Starting signin for:', email);
+      console.log('Starting signin for:', email);
       
       // Clear any existing user state first
-      if (isMountedRef.current) {
-        setUser(null);
-      }
+      setUser(null);
       
       const result = await authService.signIn(email, password);
       
-      console.log('AuthContext: Auth service signin successful, getting profile...');
+      if (!result.user || !result.session) {
+        throw new Error('Sign in failed - invalid response from server');
+      }
+      
+      console.log('Auth service signin successful, getting profile...');
       
       // Get user profile after successful signin
       try {
         const profile = await authService.getCurrentUser();
         if (profile) {
-          if (isMountedRef.current) {
-            setUser(profile);
-          }
-          console.log('AuthContext: Profile loaded successfully');
+          setUser(profile);
+          console.log('Profile loaded successfully');
         } else {
           throw new Error('Failed to load user profile');
         }
       } catch (profileError) {
-        console.error('Error loading profile after signin:', profileError instanceof Error ? profileError.message : 'Unknown error');
+        console.error('Error loading profile after signin:', profileError);
         // Sign out if profile loading fails
         await authService.signOut();
         throw new Error('Failed to load user profile. Please try again.');
@@ -161,55 +137,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error) {
-      console.error('AuthContext SignIn error:', error instanceof Error ? error.message : 'Unknown error');
-      if (isMountedRef.current) {
-        setUser(null);
-      }
+      console.error('SignIn error in context:', error);
+      setUser(null);
       throw error;
     }
   };
 
   const signOut = async () => {
     try {
-      console.log('AuthContext: Starting sign out process...');
+      console.log('Starting sign out process...');
       
       // Sign out from Supabase
       await authService.signOut();
       
       // Clear user state after successful sign out
-      if (isMountedRef.current) {
-        setUser(null);
-      }
+      setUser(null);
       
       // Clear subscription state if on mobile
       if (Platform.OS !== 'web') {
         try {
           await subscriptionService.logOut();
         } catch (subscriptionError) {
-          console.error('Error clearing subscription state:', subscriptionError instanceof Error ? subscriptionError.message : 'Unknown error');
+          console.error('Error clearing subscription state:', subscriptionError);
           // Don't throw - we still want to complete the sign out
         }
       }
       
-      console.log('AuthContext: Sign out completed successfully');
+      console.log('Sign out completed successfully');
       
       // Force navigation to welcome screen
       return true;
     } catch (error) {
-      console.error('AuthContext: Error during sign out:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error during sign out:', error);
       // Even if there's an error, clear the user state
-      if (isMountedRef.current) {
-        setUser(null);
-      }
+      setUser(null);
       return true;
     }
   };
 
   const updateProfile = async (updates: Database['public']['Tables']['users']['Update']) => {
     const updatedUser = await authService.updateProfile(updates);
-    if (isMountedRef.current) {
-      setUser(updatedUser);
-    }
+    setUser(updatedUser);
   };
 
   return (

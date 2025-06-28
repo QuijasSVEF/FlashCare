@@ -163,7 +163,10 @@ export default function HomeScreen() {
         );
 
         if (direction === 'like' && result.isMatch) {
-          showSuccess('🎉 It\'s a Match!', `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`);
+          showSuccess(
+            '🎉 It\'s a Match!',
+            `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`
+          );
         }
       } else if (user?.role === 'caregiver') {
         const currentJob = currentItem;
@@ -175,7 +178,10 @@ export default function HomeScreen() {
         );
 
         if (direction === 'like' && result.isMatch) {
-          showSuccess('🎉 It\'s a Match!', `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`);
+          showSuccess(
+            '🎉 It\'s a Match!',
+            `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`
+          );
         }
       }
 
@@ -183,7 +189,7 @@ export default function HomeScreen() {
       setCurrentIndex(prev => prev + 1);
 
     } catch (error) {
-      console.error('HomeScreen: Error saving swipe:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error saving swipe:', error);
       
       let errorMessage = 'Failed to process swipe. Please try again.';
       if (error instanceof Error) {
@@ -474,8 +480,8 @@ const styles = StyleSheet.create({
   cardContainer: {
     flex: 1,
     justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingTop: 30,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -487,7 +493,7 @@ const styles = StyleSheet.create({
   actionButton: {
     width: 68,
     height: 68,
-    borderRadius: 24,
+    borderRadius: 34,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -498,11 +504,9 @@ const styles = StyleSheet.create({
   },
   passButton: {
     backgroundColor: Colors.error,
-    transform: [{ rotate: '8deg' }],
   },
   likeButton: {
     backgroundColor: Colors.primary[500],
-    transform: [{ rotate: '-8deg' }],
   },
   noMoreCards: {
     alignItems: 'center',
