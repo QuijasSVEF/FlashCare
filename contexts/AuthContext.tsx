@@ -130,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Starting signin for:', email);
+      setLoading(true);
 
       const result = await authService.signIn(email, password);
 
@@ -137,15 +138,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Sign in failed - invalid response from server');
       }
 
-      console.log('Auth service signin successful, profile will be loaded by auth state change');
+      console.log('Auth service signin successful, loading profile');
+      
+      // Load profile immediately after successful signin
+      try {
+        const profile = await authService.getCurrentUser();
+        if (profile) {
+          setUser(profile);
+          console.log('Profile loaded successfully after signin');
+        }
+      } catch (profileError) {
+        console.error('Error loading profile after signin:', profileError);
+        // Don't throw here, let the auth state change handle it
+      }
 
-      // Force navigation to tabs after successful sign in
-      // Note: Navigation is now handled directly in the signin.tsx component
+      setLoading(false);
 
       return result;
     } catch (error) {
       console.error('SignIn error in context:', error);
       setUser(null);
+      setLoading(false);
       throw error;
     }
   };

@@ -128,16 +128,7 @@ export const authService = {
       console.log('Found authenticated user:', data.user.id);
 
       try {
-        // Simplified profile fetch with shorter timeout
-        const profile = await Promise.race([
-          databaseService.getUserSafe(data.user.id),
-          new Promise<null>((resolve) => {
-            setTimeout(() => {
-              console.log('Profile fetch timeout reached');
-              resolve(null);
-            }, 1500); // Shorter timeout
-          })
-        ]);
+        const profile = await databaseService.getUserSafe(data.user.id);
       
         if (!profile) {
           console.log('No profile found for user:', data.user.id, '- returning null');
