@@ -112,15 +112,7 @@ export const authService = {
   async getCurrentUser(): Promise<User | null> {
     try {
       console.log('Getting current user...');
-      
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 3000);
-      });
-
-      const userPromise = supabase.auth.getUser();
-      
-      const { data, error } = await Promise.race([userPromise, timeoutPromise]);
+      const { data, error } = await supabase.auth.getUser();
       
       if (error) {
         console.error('Error getting auth user:', error);
@@ -135,13 +127,24 @@ export const authService = {
       console.log('Found authenticated user:', data.user.id);
 
       try {
-        const profilePromise = databaseService.getUserSafe(data.user.id);
-        const profile = await Promise.race([
-          profilePromise,
-          new Promise<null>((_, reject) => {
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 2000);
-          })
-        ]);
+        // Add timeout to prevent hanging
+        const profilePromise = new Promise<User | null>(async (resolve, reject) => {
+          try {
+            const profile = await databaseService.getUserSafe(data.user.id);
+            resolve(profile);
+          } catch (error) {
+            reject(error);
+          }
+        });
+        
+        const timeoutPromise = new Promise<null>((resolve) => {
+          setTimeout(() => {
+            console.log('Profile fetch timeout reached');
+            resolve(null);
+          }, 2000);
+        });
+        
+        const profile = await Promise.race([profilePromise, timeoutPromise]);
       
         if (!profile) {
           console.log('No profile found for user:', data.user.id, '- returning null');

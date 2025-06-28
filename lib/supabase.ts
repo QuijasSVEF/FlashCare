@@ -2,8 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+// Get environment variables or use defaults
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Log configuration for debugging
+console.log('Supabase URL configured:', supabaseUrl ? 'Yes' : 'No');
+console.log('Supabase Anon Key configured:', supabaseAnonKey ? 'Yes' : 'No');
 
 // Use localStorage for web, AsyncStorage for native platforms
 const storage = Platform.OS === 'web' 
@@ -26,9 +31,24 @@ const storage = Platform.OS === 'web'
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: storage,
-    autoRefreshToken: true,
+    autoRefreshToken: true, 
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: Platform.OS === 'web',
+  },
+  global: {
+    fetch: (...args) => {
+      // Add timeout to all fetch requests
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Request timed out'));
+        }, 10000); // 10 second timeout
+        
+        fetch(...args)
+          .then(resolve)
+          .catch(reject)
+          .finally(() => clearTimeout(timeout));
+      });
+    }
   },
 });
 

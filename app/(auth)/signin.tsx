@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-na
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext'; 
 import { Colors } from '../../constants/Colors';
 
@@ -12,7 +12,7 @@ export default function SignInScreen() {
     email: '',
     password: '',
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { signIn } = useAuth();
@@ -34,13 +34,18 @@ export default function SignInScreen() {
     setLoading(true);
     setErrors({});
     
+    let redirectTimer: NodeJS.Timeout;
+    
     try {
       console.log('Attempting signin with:', formData.email);
       await signIn(formData.email, formData.password);
       console.log('Signin request sent successfully');
       
-      // Don't manually navigate - let the auth state change handle it
-      // The useAuth hook will update the user state and trigger navigation
+      // Set a timer to force navigation if auth state change doesn't trigger it
+      redirectTimer = setTimeout(() => {
+        console.log('Signin redirect timer triggered');
+        router.replace('/(tabs)');
+      }, 2000);
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
@@ -65,6 +70,9 @@ export default function SignInScreen() {
       Alert.alert('Sign In Error', errorMessage);
     } finally {
       setLoading(false);
+      
+      // Clear the timer if we get here before it fires
+      if (redirectTimer) clearTimeout(redirectTimer);
     }
   };
 

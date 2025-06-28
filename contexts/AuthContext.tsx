@@ -132,14 +132,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Starting signin for:', email);
-      
+
       const result = await authService.signIn(email, password);
-      
+
       if (!result.user || !result.session) {
         throw new Error('Sign in failed - invalid response from server');
       }
-      
+
       console.log('Auth service signin successful, profile will be loaded by auth state change');
+
+      // Force navigation to tabs after successful sign in
+      if (Platform.OS === 'web') {
+        setTimeout(() => {
+          window.location.href = '/(tabs)';
+        }, 500);
+      }
+
       return result;
     } catch (error) {
       console.error('SignIn error in context:', error);
@@ -150,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async (): Promise<boolean> => {
     try {
-      console.log('Starting sign out process...');
+      console.log('Starting sign out process');
 
       // Clear user state first to prevent UI flashing
       setUser(null);
@@ -158,14 +166,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Then sign out from Supabase
       await authService.signOut();
             
-      // Clear subscription state if on mobile
-      if (Platform.OS !== 'web') {
-        try {
-          await subscriptionService.logOut();
-        } catch (subscriptionError) {
-          console.error('Error clearing subscription state:', subscriptionError);
-          // Don't throw - we still want to complete the sign out
-        }
+      // Force navigation to welcome screen after sign out
+      if (Platform.OS === 'web') {
+        setTimeout(() => {
+          window.location.href = '/(auth)/welcome';
+        }, 500);
       }
       
       console.log('Sign out completed successfully');
