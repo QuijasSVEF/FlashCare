@@ -37,61 +37,50 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      const { data, error } = await signUp(formData.email, formData.password, {
+      await signUp(formData.email, formData.password, {
         name: formData.name,
         role: formData.role as 'family' | 'caregiver',
       });
       
-      // Handle known errors without throwing
-      if (error) {
-        let errorMessage = 'Failed to create account';
-        
-        if (error.message?.includes('User already registered') || 
-            error.message?.includes('user_already_exists') ||
-            error.code === 'user_already_exists') {
-          Alert.alert(
-            'Account Already Exists',
-            'An account with this email already exists. Would you like to sign in instead or try a different email?',
-            [
-              {
-                text: 'Try Different Email',
-                onPress: () => {
-                  setFormData(prev => ({ ...prev, email: '' }));
-                  setErrors(prev => ({ ...prev, email: '' }));
-                }
-              },
-              {
-                text: 'Sign In',
-                onPress: () => router.push('/(auth)/signin'),
-                style: 'default'
-              }
-            ]
-          );
-          setLoading(false);
-          return;
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        Alert.alert('Sign Up Error', errorMessage);
-        setLoading(false);
-        return;
-      }
+      // Success - go to profile setup
+      router.replace('/(auth)/profile-setup');
+    } catch (error: any) {
+      let errorMessage = 'Failed to create account';
       
-      // Check if user needs email confirmation
-      if (data?.user && !data?.session) {
+      if (error.message?.includes('User already registered') || 
+          error.message?.includes('user_already_exists') ||
+          error.code === 'user_already_exists') {
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email already exists. Would you like to sign in instead or try a different email?',
+          [
+            {
+              text: 'Try Different Email',
+              onPress: () => {
+                setFormData(prev => ({ ...prev, email: '' }));
+                setErrors(prev => ({ ...prev, email: '' }));
+              }
+            },
+            {
+              text: 'Sign In',
+              onPress: () => router.push('/(auth)/signin'),
+              style: 'default'
+            }
+          ]
+        );
+        return;
+      } else if (error.message?.includes('Email not confirmed')) {
         Alert.alert(
           'Check Your Email',
           'Please check your email and click the confirmation link to complete your registration.',
           [{ text: 'OK' }]
         );
-      } else {
-        // User is signed up and confirmed, go to profile setup
-        router.replace('/(auth)/profile-setup');
+        return;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
-    } catch (error: any) {
-      // Handle unexpected errors that were thrown
-      Alert.alert('Sign Up Error', error.message || 'An unexpected error occurred');
+      
+      Alert.alert('Sign Up Error', errorMessage);
     } finally {
       setLoading(false);
     }

@@ -10,7 +10,7 @@ type User = Database['public']['Tables']['users']['Row'];
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => Promise<{ data: any; error: any }>;
+  signUp: (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Database['public']['Tables']['users']['Update']) => Promise<void>;
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => {
-    return await authService.signUp(email, password, userData);
+    await authService.signUp(email, password, userData);
   };
 
   const signIn = async (email: string, password: string) => {

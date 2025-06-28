@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { databaseService } from '../../lib/database';
 
 export default function ProfileSetupScreen() {
   const [formData, setFormData] = useState({

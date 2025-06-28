@@ -37,10 +37,8 @@ export default function SignInScreen() {
     try {
       await signIn(formData.email, formData.password);
       
-      // Wait a moment for auth state to update
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 500);
+      // Navigate immediately - auth state will handle the rest
+      router.replace('/(tabs)');
       
     } catch (error: any) {
       console.error('Sign in error:', error);
