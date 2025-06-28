@@ -276,4 +276,87 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  jobBrowsingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  jobCard: {
+    width: '100%',
+    maxWidth: 350,
+    alignSelf: 'center',
+  },
+  jobCardHeader: {
+    marginBottom: 16,
+  },
+  jobCardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  familyInfo: {
+    marginBottom: 8,
+  },
+  familyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  jobLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  jobLocationText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  jobCardDescription: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  jobCardDetails: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 16,
+  },
+  jobDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  jobDetailText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  jobCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  weeklyEarnings: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  weeklyEarningsText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#059669',
+  },
+  postedTime: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
 });
