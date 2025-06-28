@@ -21,15 +21,15 @@ export default function TabLayout() {
           style: 'destructive', 
           onPress: async () => {
             try {
-              console.log('Tabs: Starting sign out...');
+              console.log('TabLayout: Starting sign out...');
               const success = await signOut();
               
               if (success) {
-                console.log('Tabs: Sign out successful, navigating...');
+                console.log('TabLayout: Sign out successful, navigating...');
                 router.replace('/(auth)/welcome');
               }
             } catch (error) {
-              console.error('Tabs: Sign out error:', error);
+              console.error('TabLayout: Sign out error:', error instanceof Error ? error.message : 'Unknown error');
               router.replace('/(auth)/welcome');
             }
           }

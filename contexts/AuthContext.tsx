@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('Error getting session:', error.message);
           setLoading(false);
           return;
         }
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('Profile loaded:', !!profile);
             setUser(profile);
           } catch (profileError) {
-            console.error('Error getting user profile:', profileError);
+            console.error('Error getting user profile:', profileError instanceof Error ? profileError.message : 'Unknown error');
             // If profile fetch fails, sign out and redirect to auth
             await supabase.auth.signOut();
             setUser(null);
@@ -83,18 +83,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('Profile in auth change:', !!profile);
             setUser(profile);
           } catch (profileError) {
-            console.error('Error getting profile in auth change:', profileError);
+            console.error('Error getting profile in auth change:', profileError instanceof Error ? profileError.message : 'Unknown error');
             setUser(null);
           }
         } else {
           setUser(null);
         }
       } catch (error) {
-        console.error('Error in auth state change:', error);
+        console.error('Error in auth state change:', error instanceof Error ? error.message : 'Unknown error');
         setUser(null);
       }
     });
-
+      console.error('Error initializing auth:', error instanceof Error ? error.message : 'Unknown error');
     return () => subscription.unsubscribe();
   }, []);
 
@@ -106,30 +106,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Starting signin for:', email);
+      console.log('AuthContext: Starting signin for:', email);
       
       // Clear any existing user state first
       setUser(null);
       
       const result = await authService.signIn(email, password);
       
-      if (!result.user || !result.session) {
-        throw new Error('Sign in failed - invalid response from server');
-      }
-      
-      console.log('Auth service signin successful, getting profile...');
+      console.log('AuthContext: Auth service signin successful, getting profile...');
       
       // Get user profile after successful signin
       try {
         const profile = await authService.getCurrentUser();
         if (profile) {
           setUser(profile);
-          console.log('Profile loaded successfully');
+          console.log('AuthContext: Profile loaded successfully');
         } else {
           throw new Error('Failed to load user profile');
         }
       } catch (profileError) {
-        console.error('Error loading profile after signin:', profileError);
+        console.error('Error loading profile after signin:', profileError instanceof Error ? profileError.message : 'Unknown error');
         // Sign out if profile loading fails
         await authService.signOut();
         throw new Error('Failed to load user profile. Please try again.');
@@ -137,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error) {
-      console.error('SignIn error in context:', error);
+      console.error('AuthContext SignIn error:', error instanceof Error ? error.message : 'Unknown error');
       setUser(null);
       throw error;
     }
@@ -145,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      console.log('Starting sign out process...');
+      console.log('AuthContext: Starting sign out process...');
       
       // Sign out from Supabase
       await authService.signOut();
@@ -158,17 +154,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           await subscriptionService.logOut();
         } catch (subscriptionError) {
-          console.error('Error clearing subscription state:', subscriptionError);
+          console.error('Error clearing subscription state:', subscriptionError instanceof Error ? subscriptionError.message : 'Unknown error');
           // Don't throw - we still want to complete the sign out
         }
       }
       
-      console.log('Sign out completed successfully');
+      console.log('AuthContext: Sign out completed successfully');
       
       // Force navigation to welcome screen
       return true;
     } catch (error) {
-      console.error('Error during sign out:', error);
+      console.error('AuthContext: Error during sign out:', error instanceof Error ? error.message : 'Unknown error');
       // Even if there's an error, clear the user state
       setUser(null);
       return true;

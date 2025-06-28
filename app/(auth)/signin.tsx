@@ -35,19 +35,20 @@ export default function SignInScreen() {
     setErrors({});
     
     try {
-      console.log('Attempting signin with:', formData.email);
+      console.log('SignIn: Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
 
       if (result) {
-        console.log('Signin successful, navigating to tabs');
+        console.log('SignIn: Signin successful, navigating to tabs');
         router.replace('/(tabs)');
       }
     } catch (error: any) {
-      console.error('Signin error:', error);
+      console.error('SignIn error:', error.message || 'Unknown error');
       let errorMessage = 'Failed to sign in';
       
       if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
+          error.message?.includes('invalid_credentials') ||
+          error.message?.includes('Invalid email or password')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = 'Please check your email and click the confirmation link before signing in.';
@@ -57,10 +58,6 @@ export default function SignInScreen() {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
-      }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
       Alert.alert('Sign In Error', errorMessage);

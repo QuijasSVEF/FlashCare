@@ -76,7 +76,7 @@ export const authService = {
       console.log('Supabase signin successful for user:', data.user.id);
       return data;
     } catch (error: any) {
-      console.error('SignIn error:', error);
+      console.error('SignIn error:', error.message);
       
       // Enhance error messages for better user experience
       if (error.message?.includes('Invalid login credentials')) {
@@ -92,7 +92,7 @@ export const authService = {
 
   async signOut() {
     try {
-      console.log('Signing out from Supabase...');
+      console.log('Auth service: Signing out from Supabase...');
       
       // Clear any cached session data first
       await supabase.auth.refreshSession();
@@ -101,13 +101,13 @@ export const authService = {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('Supabase sign out error:', error);
+        console.error('Supabase sign out error:', error.message);
         // Log error but don't throw - we want to clear local state
       }
       
-      console.log('Supabase sign out completed');
+      console.log('Auth service: Supabase sign out completed');
     } catch (error) {
-      console.error('Error in auth service sign out:', error);
+      console.error('Error in auth service sign out:', error instanceof Error ? error.message : 'Unknown error');
       // Don't throw - we want to proceed with clearing local state
     }
   },
@@ -134,7 +134,7 @@ export const authService = {
       console.log('Profile loaded successfully');
       return profile;
     } catch (error) {
-      console.error('Error getting current user:', error);
+      console.error('Error getting current user:', error instanceof Error ? error.message : 'Unknown error');
       return null;
     }
   },
