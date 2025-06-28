@@ -11,6 +11,7 @@ import {
 import { X, Filter, MapPin, DollarSign, Clock, Star, Award } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Colors } from '../constants/Colors';
 
 interface AdvancedFilterModalProps {
   visible: boolean;

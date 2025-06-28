@@ -12,6 +12,7 @@ import { X, Camera, Save } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { useAuth } from '../contexts/AuthContext';
+import { Colors } from '../constants/Colors';
 
 interface ProfileEditModalProps {
   visible: boolean;

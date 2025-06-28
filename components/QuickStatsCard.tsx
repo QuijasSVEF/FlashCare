@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Star, Users, Calendar, Award } from 'lucide-react-native';
 import { Card } from './ui/Card';
+import { Colors } from '../constants/Colors';
 
 interface QuickStatsCardProps {
   userRole: 'family' | 'caregiver';

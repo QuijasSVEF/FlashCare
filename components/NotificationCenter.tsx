@@ -10,6 +10,7 @@ import {
 import { Bell, MessageCircle, Calendar, Heart, User, X } from 'lucide-react-native';
 import { Card } from './ui/Card';
 import { useAuth } from '../contexts/AuthContext';
+import { Colors } from '../constants/Colors';
 
 interface Notification {
   id: string;

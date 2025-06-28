@@ -11,6 +11,7 @@ import {
 import { X, Star, MapPin, Phone, Award, Shield } from 'lucide-react-native';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { Colors } from '../constants/Colors';
 
 interface ProfileModalProps {
   visible: boolean;

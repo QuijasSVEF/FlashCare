@@ -12,6 +12,7 @@ import { X, Calendar, Clock } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { databaseService } from '../lib/database';
+import { Colors } from '../constants/Colors';
 
 interface ScheduleModalProps {
   visible: boolean;
