@@ -7,7 +7,7 @@ import {
   Image,
   Alert 
 } from 'react-native';
-import { Camera, Edit3 } from 'lucide-react-native';
+import { Camera, CreditCard as Edit3 } from 'lucide-react-native';
 import { ImageUploadModal } from './ImageUploadModal';
 import { Colors } from '../constants/Colors';
 
