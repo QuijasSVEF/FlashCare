@@ -142,11 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Auth service signin successful, profile will be loaded by auth state change');
 
       // Force navigation to tabs after successful sign in
-      if (Platform.OS === 'web') {
-        setTimeout(() => {
-          window.location.replace('/(tabs)');
-        }, 500);
-      }
+      // Note: Navigation is now handled directly in the signin.tsx component
 
       return result;
     } catch (error) {

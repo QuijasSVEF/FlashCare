@@ -31,19 +31,22 @@ export default function Index() {
   // Force a redirect after a delay on web platform
   useEffect(() => {
     if (Platform.OS === 'web') {
+      // Increase timeout for more reliable navigation
       const forceRedirectTimer = setTimeout(() => {
-        if (!user && !loading) {
-          console.log('Forcing redirect to welcome after timeout');
-          window.location.href = '/(auth)/welcome';
-        } else if (user) {
-          console.log('Forcing redirect to tabs after timeout');
-          window.location.href = '/(tabs)';
+        console.log('Force redirect timer triggered');
+        
+        if (user) {
+          console.log('User exists, forcing redirect to tabs');
+          window.location.replace('/(tabs)');
+        } else {
+          console.log('No user, forcing redirect to welcome');
+          window.location.replace('/(auth)/welcome');
         }
-      }, 3000); // 3 seconds
+      }, 1500); // 1.5 seconds
       
       return () => clearTimeout(forceRedirectTimer);
     }
-  }, []);
+  }, [user, loading]);
 
   // Show loading screen while auth is initializing
   if (!shouldRedirect || loading) {

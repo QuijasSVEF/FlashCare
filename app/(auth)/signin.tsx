@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button'; 
@@ -15,12 +15,14 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const routerInstance = useRouter();
   const { signIn, user } = useAuth();
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
     if (user) {
-      router.replace('/(tabs)');
+      console.log('User already signed in, redirecting to tabs');
+      routerInstance.replace('/(tabs)');
     }
   }, [user]);
 
@@ -45,14 +47,19 @@ export default function SignInScreen() {
     
     try {
       console.log('Attempting signin with:', formData.email);
-      await signIn(formData.email, formData.password);
+      const result = await signIn(formData.email, formData.password);
       console.log('Signin request sent successfully');
       
-      // Set a timer to force navigation if auth state change doesn't trigger it
-      redirectTimer = setTimeout(() => {
-        console.log('Signin redirect timer triggered');
-        window.location.href = '/(tabs)';
-      }, 2000);
+      if (result && result.user) {
+        console.log('Sign-in successful, forcing navigation');
+        
+        // Force immediate navigation
+        if (Platform.OS === 'web') {
+          window.location.href = '/(tabs)';
+        } else {
+          routerInstance.replace('/(tabs)');
+        }
+      }
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
@@ -78,8 +85,9 @@ export default function SignInScreen() {
     } finally {
       setLoading(false);
       
-      // Clear the timer if we get here before it fires
-      if (redirectTimer) clearTimeout(redirectTimer);
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
     }
   };
 

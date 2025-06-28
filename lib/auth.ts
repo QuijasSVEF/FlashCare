@@ -74,13 +74,7 @@ export const authService = {
       }
       
       console.log('Supabase signin successful for user:', data.user.id);
-      
-      // Force a page reload on web to ensure navigation works
-      if (Platform.OS === 'web') {
-        setTimeout(() => {
-          window.location.href = '/(tabs)';
-        }, 500);
-      }
+
       return data;
     } catch (error: any) {
       console.error('SignIn error:', error);
