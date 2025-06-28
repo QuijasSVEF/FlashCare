@@ -13,7 +13,7 @@ import { QuickStatsCard } from '../../components/QuickStatsCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { databaseService } from '../../lib/database';
-import { Colors } from '../constants/Colors';
+import { Colors } from '../../constants/Colors';
 
 interface CollapsibleSectionProps {
   title: string;
