@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
-import { Heart, X, MapPin } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Image } from 'react-native';
+import { Heart, X, MapPin, Clock, DollarSign, User } from 'lucide-react-native';
 import { CaregiverCard } from '../../components/CaregiverCard';
+import { Card } from '../../components/ui/Card';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchingService } from '../../lib/matching';
@@ -12,13 +13,16 @@ const { width: screenWidth } = Dimensions.get('window');
 export default function HomeScreen() {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [cards, setCards] = useState<any[]>([]);
+  const [caregivers, setCaregivers] = useState<any[]>([]);
+  const [jobPosts, setJobPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (user?.role === 'family') {
       loadCaregivers();
+    } else if (user?.role === 'caregiver') {
+      loadJobPosts();
     }
   }, [user]);
 
@@ -31,7 +35,7 @@ export default function HomeScreen() {
         user.id,
         user.location || undefined
       );
-      setCards(caregivers);
+      setCaregivers(caregivers);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load caregivers');
     } finally {
@@ -39,13 +43,29 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSwipe = async (direction: 'like' | 'pass') => {
-    if (currentIndex >= cards.length) return;
+  const loadJobPosts = async () => {
+    if (!user?.id) return;
 
-    const currentCaregiver = cards[currentIndex];
+    try {
+      setLoading(true);
+      const jobs = await databaseService.getJobPosts(20);
+      setJobPosts(jobs);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load job posts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSwipe = async (direction: 'like' | 'pass') => {
+    const items = user?.role === 'family' ? caregivers : jobPosts;
+    if (currentIndex >= items.length) return;
+
+    const currentItem = items[currentIndex];
 
     try {
       if (user?.role === 'family') {
+        const currentCaregiver = currentItem;
         const result = await matchingService.handleSwipe(
           user.id,
           currentCaregiver.id,
@@ -61,6 +81,24 @@ export default function HomeScreen() {
             );
           }
         }
+      } else if (user?.role === 'caregiver') {
+        const currentJob = currentItem;
+        const result = await matchingService.handleJobSwipe(
+          user.id,
+          currentJob.family_id,
+          currentJob.id,
+          direction
+        );
+
+        if (direction === 'like') {
+          if (result.isMatch) {
+            Alert.alert(
+              '🎉 It\'s a Match!', 
+              `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`,
+              [{ text: 'Great!', style: 'default' }]
+            );
+          }
+        }
       }
 
       setCurrentIndex(prev => prev + 1);
@@ -72,7 +110,7 @@ export default function HomeScreen() {
     setCurrentIndex(prev => prev + 1);
   };
 
-  const currentCaregiver = cards[currentIndex];
+  const currentItem = user?.role === 'family' ? caregivers[currentIndex] : jobPosts[currentIndex];
 
   if (loading) {
     return (
@@ -82,43 +120,92 @@ export default function HomeScreen() {
     );
   }
 
-  if (user?.role === 'caregiver') {
+  const renderJobCard = (job: any) => {
+    const weeklyEarnings = job.hours_per_week * job.rate_hour;
+    const timeAgo = new Date(job.created_at);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - timeAgo.getTime()) / (1000 * 60 * 60));
+    
+    let timeText = '';
+    if (diffInHours < 1) timeText = 'Just posted';
+    else if (diffInHours < 24) timeText = `${diffInHours}h ago`;
+    else timeText = `${Math.floor(diffInHours / 24)}d ago`;
+
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Available Jobs</Text>
-          <EmergencyButton phoneNumber={user.emergency_phone} />
+      <Card style={styles.jobCard}>
+        <View style={styles.jobCardHeader}>
+          <Text style={styles.jobCardTitle}>{job.title}</Text>
+          
+          <View style={styles.familyInfo}>
+            <View style={styles.familyHeader}>
+              <Image
+                source={{ 
+                  uri: job.family?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
+                }}
+                style={styles.familyAvatar}
+              />
+              <View>
+                <Text style={styles.familyName}>{job.family?.name || 'Family Member'}</Text>
+                <View style={styles.jobLocation}>
+                  <MapPin size={14} color="#6B7280" />
+                  <Text style={styles.jobLocationText}>{job.location}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
         </View>
-        
-        <View style={styles.comingSoon}>
-          <Text style={styles.comingSoonTitle}>Job Listings Coming Soon!</Text>
-          <Text style={styles.comingSoonText}>
-            We're working on the job browsing feature for caregivers. 
-            You'll be able to see and apply to family job posts here.
-          </Text>
+
+        <Text style={styles.jobCardDescription} numberOfLines={4}>
+          {job.description}
+        </Text>
+
+        <View style={styles.jobCardDetails}>
+          <View style={styles.jobDetailItem}>
+            <Clock size={16} color="#6B7280" />
+            <Text style={styles.jobDetailText}>{job.hours_per_week} hrs/week</Text>
+          </View>
+          <View style={styles.jobDetailItem}>
+            <DollarSign size={16} color="#6B7280" />
+            <Text style={styles.jobDetailText}>${job.rate_hour}/hour</Text>
+          </View>
         </View>
-      </View>
+
+        <View style={styles.jobCardFooter}>
+          <View style={styles.weeklyEarnings}>
+            <Text style={styles.weeklyEarningsText}>
+              ${weeklyEarnings.toFixed(2)}/week
+            </Text>
+          </View>
+          <Text style={styles.postedTime}>{timeText}</Text>
+        </View>
+      </Card>
     );
-  }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Find Caregivers</Text>
+          <Text style={styles.headerTitle}>
+            {user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
+          </Text>
           <View style={styles.location}>
             <MapPin size={16} color="#6B7280" />
-            <Text style={styles.locationText}>San Francisco, CA</Text>
+            <Text style={styles.locationText}>{user?.location || 'San Francisco, CA'}</Text>
           </View>
         </View>
         <EmergencyButton phoneNumber={user?.emergency_phone} />
       </View>
 
       <View style={styles.cardContainer}>
-        {currentIndex < cards.length ? (
+        {currentIndex < (user?.role === 'family' ? caregivers : jobPosts).length ? (
           <>
             <View style={styles.cardWrapper}>
-              <CaregiverCard caregiver={currentCaregiver} />
+              {user?.role === 'family' ? (
+                <CaregiverCard caregiver={currentItem} />
+              ) : (
+                renderJobCard(currentItem)
+              )}
             </View>
 
             <View style={styles.actionButtons}>
@@ -139,15 +226,20 @@ export default function HomeScreen() {
           </>
         ) : (
           <View style={styles.noMoreCards}>
-            <Text style={styles.noMoreTitle}>No more caregivers nearby</Text>
+            <Text style={styles.noMoreTitle}>
+              {user?.role === 'family' ? 'No more caregivers nearby' : 'No more jobs available'}
+            </Text>
             <Text style={styles.noMoreText}>
-              Check back later for new caregivers in your area, or expand your search radius.
+              {user?.role === 'family' 
+                ? 'Check back later for new caregivers in your area, or expand your search radius.'
+                : 'Check back later for new job postings in your area.'
+              }
             </Text>
             <TouchableOpacity
               style={styles.resetButton}
               onPress={() => {
                 setCurrentIndex(0);
-                loadCaregivers();
+                user?.role === 'family' ? loadCaregivers() : loadJobPosts();
               }}
             >
               <Text style={styles.resetButtonText}>Start Over</Text>
@@ -275,6 +367,16 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  familyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  familyAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
   },
   jobBrowsingContainer: {
     flex: 1,

@@ -49,6 +49,51 @@ export const matchingService = {
     }
   },
 
+  async handleJobSwipe(
+    caregiverId: string,
+    familyId: string,
+    jobId: string,
+    direction: 'like' | 'pass'
+  ) {
+    try {
+      // Create swipe record (caregiver swiping on family's job)
+      const swipeData = {
+        family_id: familyId,
+        caregiver_id: caregiverId,
+        job_id: jobId,
+        direction,
+      };
+
+      await databaseService.createSwipe(swipeData);
+
+      // If it's a like, check for mutual match
+      if (direction === 'like') {
+        const isMatch = await databaseService.checkForMatch(
+          familyId,
+          caregiverId,
+          jobId
+        );
+
+        if (isMatch) {
+          // Create match
+          const matchData = {
+            family_id: familyId,
+            caregiver_id: caregiverId,
+            job_id: jobId,
+          };
+
+          const match = await databaseService.createMatch(matchData);
+          return { isMatch: true, match };
+        }
+      }
+
+      return { isMatch: false };
+    } catch (error) {
+      console.error('Error handling job swipe:', error);
+      throw error;
+    }
+  },
+
   async getRecommendedCaregivers(
     familyUserId: string,
     location?: string,
