@@ -60,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error initializing auth:', error);
         setUser(null);
-    };
+          };
+    }
 
     initializeAuth();
 
