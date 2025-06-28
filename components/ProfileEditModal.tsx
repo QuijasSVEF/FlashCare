@@ -9,7 +9,7 @@ import {
   Alert,
   Image
 } from 'react-native';
-import { X, Camera, Save, Edit3 } from 'lucide-react-native';
+import { X, Camera, Save, CreditCard as Edit3 } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { ImageUploadModal } from './ImageUploadModal';
