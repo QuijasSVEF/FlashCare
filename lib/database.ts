@@ -1,603 +1,218 @@
-import { supabase } from './supabase';
-import { Database } from './supabase';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-type User = Database['public']['Tables']['users']['Row'];
-type JobPost = Database['public']['Tables']['job_posts']['Row'];
-type Swipe = Database['public']['Tables']['swipes']['Row'];
-type Match = Database['public']['Tables']['matches']['Row'];
-type Message = Database['public']['Tables']['messages']['Row'];
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-export const databaseService = {
-  // User operations
-  async createUser(userData: Database['public']['Tables']['users']['Insert']) {
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
+      }
+    };
+    
+    handleAutoSignIn();
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
     try {
-      console.log('Creating user with data:', userData);
-      // First check if user already exists
-      const existingUser = await this.getUser(userData.id);
-      if (existingUser) {
-        console.log('User already exists, returning existing user');
-        return existingUser;
-      }
-
-      // Create new user
-      const { data, error } = await supabase
-        .from('users')
-        .insert(userData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating user:', error);
-        throw error;
-      }
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
       
-      console.log('User created successfully:', data);
-      return data;
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     } catch (error: any) {
-      console.error('CreateUser error:', error);
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
       
-      // If it's a duplicate key error, try to get the existing user
-      if (error.message?.includes('duplicate key') || 
-          error.code === '23505') {
-        const existingUser = await this.getUser(userData.id);
-        if (existingUser) {
-          return existingUser;
-        }
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      throw error;
-    }
-  },
-
-  async updateUser(userId: string, updates: Database['public']['Tables']['users']['Update']) {
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getUser(userId: string) {
-    try {
-      console.log('Fetching user profile for:', userId);
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Database error getting user:', error);
-        throw error;
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
-      console.log('Database: User profile fetched:', !!data);
-      return data;
-    } catch (error) {
-      console.error('Database: Error getting user:', error);
-      throw error;
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
+
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.surface,
   },
-
-  async getUserSafe(userId: string) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Database error getting user safe:', error);
-      return null;
-    }
-    
-    console.log('Database getUserSafe result:', !!data);
-    return data;
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-
-  async getCaregivers(excludeUserId?: string, limit = 10) {
-    let query = supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'caregiver')
-      .limit(limit);
-
-    if (excludeUserId) {
-      query = query.neq('id', excludeUserId);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+  backButton: {
+    padding: 8,
+    marginRight: 16,
   },
-
-  // Expose supabase client for advanced queries
-  supabase,
-
-  // Document management
-  async createUserDocument(documentData: {
-    user_id: string;
-    file_name: string;
-    file_url: string;
-    file_path: string;
-    file_type?: string;
-    file_size?: number;
-    document_type?: string;
-  }) {
-    const { data, error } = await supabase
-      .from('user_documents')
-      .insert(documentData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
   },
-
-  async getUserDocuments(userId: string, documentType?: string) {
-    let query = supabase
-      .from('user_documents')
-      .select('*')
-      .eq('user_id', userId)
-      .order('uploaded_at', { ascending: false });
-
-    if (documentType) {
-      query = query.eq('document_type', documentType);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
   },
-
-  async deleteUserDocument(documentId: string) {
-    const { error } = await supabase
-      .from('user_documents')
-      .delete()
-      .eq('id', documentId);
-
-    if (error) throw error;
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
   },
-
-  // Swipe operations
-  async createSwipe(swipeData: Database['public']['Tables']['swipes']['Insert']) {
-    const { data, error } = await supabase
-      .from('swipes')
-      .insert(swipeData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
   },
-
-  async checkForMatch(familyId: string, caregiverId: string, jobId: string) {
-    // Check if both users have liked each other for this job
-    const { data: swipes } = await supabase
-      .from('swipes')
-      .select('*')
-      .eq('family_id', familyId)
-      .eq('caregiver_id', caregiverId)
-      .eq('job_id', jobId)
-      .eq('direction', 'like');
-
-    // We need exactly 2 likes (one from family, one from caregiver) for a match
-    return swipes && swipes.length >= 2;
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
   },
-
-  async createMatch(matchData: Database['public']['Tables']['matches']['Insert']) {
-    // Check if match already exists
-    const { data: existingMatch } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('family_id', matchData.family_id)
-      .eq('caregiver_id', matchData.caregiver_id)
-      .eq('job_id', matchData.job_id)
-      .single();
-
-    if (existingMatch) {
-      return existingMatch;
-    }
-
-    const { data, error } = await supabase
-      .from('matches')
-      .insert(matchData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
   },
-
-  // Match operations
-  async getUserMatches(userId: string) {
-    const { data, error } = await supabase
-      .from('matches')
-      .select(`
-        *,
-        caregiver:users!matches_caregiver_id_fkey(*),
-        family:users!matches_family_id_fkey(*)
-      `)
-      .or(`caregiver_id.eq.${userId},family_id.eq.${userId}`)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
   },
-
-  // Message operations
-  async getMatchMessages(matchId: string) {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('match_id', matchId)
-      .order('sent_at', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
   },
-
-  async sendMessage(messageData: Database['public']['Tables']['messages']['Insert']) {
-    // Verify the sender is part of the match
-    const { data: match } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('id', messageData.match_id)
-      .single();
-
-    if (!match) {
-      throw new Error('Match not found');
-    }
-
-    if (match.family_id !== messageData.sender_id && match.caregiver_id !== messageData.sender_id) {
-      throw new Error('Unauthorized to send message to this match');
-    }
-
-    const { data, error } = await supabase
-      .from('messages')
-      .insert(messageData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
   },
-
-  // Job post operations
-  async createJobPost(jobData: Database['public']['Tables']['job_posts']['Insert']) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .insert(jobData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getJobPosts(limit = 10) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .select(`
-        *,
-        family:users!job_posts_family_id_fkey(*)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async getJobPostById(jobId: string) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .select(`
-        *,
-        family:users!job_posts_family_id_fkey(*)
-      `)
-      .eq('id', jobId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getUserJobPosts(familyId: string) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .select('*')
-      .eq('family_id', familyId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async updateJobPost(jobId: string, updates: Database['public']['Tables']['job_posts']['Update']) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .update(updates)
-      .eq('id', jobId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async deleteJobPost(jobId: string) {
-    const { error } = await supabase
-      .from('job_posts')
-      .delete()
-      .eq('id', jobId);
-
-    if (error) throw error;
-  },
-
-  async getJobPostApplicants(jobId: string) {
-    const { data, error } = await supabase
-      .from('swipes')
-      .select(`
-        *,
-        caregiver:users!swipes_caregiver_id_fkey(*)
-      `)
-      .eq('job_id', jobId)
-      .eq('direction', 'like')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  // Enhanced search and filtering
-  async searchCaregivers(filters: {
-    location?: string;
-    minRating?: number;
-    experience?: string;
-    skills?: string[];
-    availability?: string;
-    maxDistance?: number;
-  }, limit = 20) {
-    let query = supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'caregiver')
-      .limit(limit);
-
-    if (filters.location) {
-      query = query.ilike('location', `%${filters.location}%`);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    // TODO: Add more sophisticated filtering based on ratings, skills, etc.
-    return data || [];
-  },
-
-  async searchJobPosts(filters: {
-    location?: string;
-    minRate?: number;
-    maxRate?: number;
-    minHours?: number;
-    maxHours?: number;
-    jobType?: string;
-  }, limit = 20) {
-    let query = supabase
-      .from('job_posts')
-      .select(`
-        *,
-        family:users!job_posts_family_id_fkey(*)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (filters.location) {
-      query = query.ilike('location', `%${filters.location}%`);
-    }
-
-    if (filters.minRate) {
-      query = query.gte('rate_hour', filters.minRate);
-    }
-
-    if (filters.maxRate) {
-      query = query.lte('rate_hour', filters.maxRate);
-    }
-
-    if (filters.minHours) {
-      query = query.gte('hours_per_week', filters.minHours);
-    }
-
-    if (filters.maxHours) {
-      query = query.lte('hours_per_week', filters.maxHours);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
-  },
-
-  // Schedule operations
-  async createSchedule(scheduleData: Database['public']['Tables']['schedules']['Insert']) {
-    const { data, error } = await supabase
-      .from('schedules')
-      .insert(scheduleData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getUserSchedules(userId: string) {
-    // First, get all match IDs where the user is either caregiver or family
-    const { data: userMatches, error: matchError } = await supabase
-      .from('matches')
-      .select('id')
-      .or(`caregiver_id.eq.${userId},family_id.eq.${userId}`);
-
-    if (matchError) throw matchError;
-    
-    if (!userMatches || userMatches.length === 0) {
-      return [];
-    }
-
-    const matchIds = userMatches.map(match => match.id);
-
-    // Then get schedules for those matches
-    const { data, error } = await supabase
-      .from('schedules')
-      .select(`
-        *,
-        match:matches!schedules_match_id_fkey(
-          *,
-          caregiver:users!matches_caregiver_id_fkey(*),
-          family:users!matches_family_id_fkey(*)
-        )
-      `)
-      .in('match_id', matchIds)
-      .order('start_ts', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async updateScheduleStatus(scheduleId: string, status: 'pending' | 'confirmed' | 'cancelled') {
-    const { data, error } = await supabase
-      .from('schedules')
-      .update({ status })
-      .eq('id', scheduleId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Review operations
-  async createReview(reviewData: Database['public']['Tables']['reviews']['Insert']) {
-    // Check if review already exists
-    const { data: existingReview } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('reviewer_id', reviewData.reviewer_id)
-      .eq('reviewee_id', reviewData.reviewee_id)
-      .single();
-
-    if (existingReview) {
-      throw new Error('You have already reviewed this person');
-    }
-
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert(reviewData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getUserReviews(userId: string) {
-    const { data, error } = await supabase
-      .from('reviews')
-      .select(`
-        *,
-        reviewer:users!reviews_reviewer_id_fkey(*)
-      `)
-      .eq('reviewee_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async getUserRating(userId: string) {
-    const { data, error } = await supabase
-      .from('reviews')
-      .select('rating_int')
-      .eq('reviewee_id', userId);
-
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-      return { average: 0, count: 0 };
-    }
-
-    const total = data.reduce((sum, review) => sum + review.rating_int, 0);
-    const average = total / data.length;
-    
-    return { average: Math.round(average * 10) / 10, count: data.length };
-  },
-
-  // Notification operations
-  async createNotification(notificationData: {
-    user_id: string;
-    type: string;
-    title: string;
-    message: string;
-    data?: any;
-  }) {
-    // In a real app, you'd have a notifications table
-    // For now, we'll use browser notifications or push notifications
-    console.log('Creating notification:', notificationData);
-  },
-
-  async getUserNotifications(userId: string) {
-    // Mock notifications for demo
-    return [];
-  },
-
-  async markNotificationAsRead(notificationId: string) {
-    // Mark notification as read
-    console.log('Marking notification as read:', notificationId);
-  },
-
-  // Real-time subscriptions
-  subscribeToMessages(matchId: string, callback: (message: Message) => void) {
-    return supabase
-      .channel(`messages_${matchId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `match_id=eq.${matchId}`,
-        },
-        (payload) => {
-          callback(payload.new as Message);
-        }
-      )
-      .subscribe();
-  },
-
-  subscribeToMatches(userId: string, callback: (match: any) => void) {
-    return supabase
-      .channel(`matches_${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'matches',
-          filter: `or(caregiver_id.eq.${userId},family_id.eq.${userId})`,
-        },
-        (payload) => {
-          // Fetch the complete match data with user info
-          this.getUserMatches(userId).then(matches => {
-            const newMatch = matches.find(m => m.id === payload.new.id);
-            if (newMatch) {
-              callback(newMatch);
-            }
-          });
-        }
-      )
-      .subscribe();
-  }
-};
+});

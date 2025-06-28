@@ -1,105 +1,122 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Heart, User, Users, Star, MapPin } from 'lucide-react-native';
-import { Colors } from '../constants/Colors';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-const demoAccounts = [
-  {
-    id: 'family1',
-    type: 'family',
-    name: 'Sarah Johnson',
-    location: 'San Francisco, CA',
-    avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-    description: 'Mother of 2, looking for reliable childcare',
-    rating: 4.8,
-    jobsPosted: 12
-  },
-  {
-    id: 'family2',
-    type: 'family',
-    name: 'Michael Chen',
-    location: 'Austin, TX',
-    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-    description: 'Single dad, needs evening care for 8-year-old',
-    rating: 4.9,
-    jobsPosted: 8
-  },
-  {
-    id: 'caregiver1',
-    type: 'caregiver',
-    name: 'Emma Rodriguez',
-    location: 'Los Angeles, CA',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-    description: 'Certified childcare provider with 5+ years experience',
-    rating: 4.9,
-    completedJobs: 47
-  },
-  {
-    id: 'caregiver2',
-    type: 'caregiver',
-    name: 'David Kim',
-    location: 'Seattle, WA',
-    avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-    description: 'Male caregiver specializing in special needs care',
-    rating: 4.7,
-    completedJobs: 23
-  }
-];
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-export default function DemoAccountSelection() {
-  const router = useRouter();
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
+      }
+    };
+    
+    handleAutoSignIn();
+  }, [user]);
 
-  const handleAccountSelect = (accountId: string) => {
-    setSelectedAccount(accountId);
-    // Navigate to the main app with the selected demo account
-    setTimeout(() => {
-      router.replace('/(tabs)');
-    }, 500);
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const renderAccountCard = (account: typeof demoAccounts[0]) => (
-    <TouchableOpacity
-      key={account.id}
-      style={[
-        styles.accountCard,
-        selectedAccount === account.id && styles.selectedCard
-      ]}
-      onPress={() => handleAccountSelect(account.id)}
-    >
-      <View style={styles.cardHeader}>
-        <Image source={{ uri: account.avatar }} style={styles.avatar} />
-        <View style={styles.accountInfo}>
-          <Text style={styles.accountName}>{account.name}</Text>
-          <View style={styles.locationRow}>
-            <MapPin size={14} color={Colors.text.secondary} />
-            <Text style={styles.location}>{account.location}</Text>
-          </View>
-          <View style={styles.ratingRow}>
-            <Star size={14} color="#FFD700" />
-            <Text style={styles.rating}>{account.rating}</Text>
-            <Text style={styles.statText}>
-              {account.type === 'family' 
-                ? `• ${account.jobsPosted} jobs posted`
-                : `• ${account.completedJobs} jobs completed`
-              }
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.typeBadge, account.type === 'family' ? styles.familyBadge : styles.caregiverBadge]}>
-          {account.type === 'family' ? <Users size={16} color="white" /> : <User size={16} color="white" />}
-        </View>
-      </View>
-      <Text style={styles.description}>{account.description}</Text>
-    </TouchableOpacity>
-  );
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+        name: account.name,
+        role: account.type as 'family' | 'caregiver',
+        avatar_url: account.avatar,
+        location: account.location,
+        bio: account.description,
+        phone: '+1 (555) 123-4567',
+        emergency_phone: '+1 (555) 911-0000',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+    
+      
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Heart size={28} color={Colors.primary[500]} />
+          <Heart size={24} color={Colors.primary[500]} />
           <Text style={styles.logo}>FlashCare</Text>
           <Image
             source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
@@ -110,24 +127,44 @@ export default function DemoAccountSelection() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Choose Demo Account</Text>
-        <Text style={styles.subtitle}>
-          Select an account type to explore FlashCare's features
-        </Text>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
-        <ScrollView style={styles.accountsList} showsVerticalScrollIndicator={false}>
-          <View style={styles.sectionHeader}>
-            <Users size={20} color={Colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Family Accounts</Text>
-          </View>
-          {demoAccounts.filter(account => account.type === 'family').map(renderAccountCard)}
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
 
-          <View style={[styles.sectionHeader, styles.caregiverSection]}>
-            <User size={20} color={Colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Caregiver Accounts</Text>
-          </View>
-          {demoAccounts.filter(account => account.type === 'caregiver').map(renderAccountCard)}
-        </ScrollView>
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -139,10 +176,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -150,7 +192,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   logo: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: Colors.primary[500],
     marginLeft: 8,
@@ -158,125 +200,36 @@ const styles = StyleSheet.create({
   boltBadge: {
     position: 'absolute',
     right: -60,
-    width: 35,
-    height: 35,
+    width: 30,
+    height: 30,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 40,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.text.secondary,
-    textAlign: 'center',
     marginBottom: 32,
   },
-  accountsList: {
-    flex: 1,
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  caregiverSection: {
-    marginTop: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginLeft: 8,
-  },
-  accountCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  selectedCard: {
-    borderColor: Colors.primary[500],
-    backgroundColor: Colors.primary[50],
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
-  },
-  accountInfo: {
-    flex: 1,
-  },
-  accountName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 4,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  location: {
-    fontSize: 14,
+  signUpText: {
+    fontSize: 16,
     color: Colors.text.secondary,
-    marginLeft: 4,
+    textAlign: 'center',
   },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rating: {
-    fontSize: 14,
+  signUpLink: {
+    color: Colors.primary[500],
     fontWeight: '600',
-    color: Colors.text.primary,
-    marginLeft: 4,
-  },
-  statText: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginLeft: 4,
-  },
-  typeBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  familyBadge: {
-    backgroundColor: Colors.primary[500],
-  },
-  caregiverBadge: {
-    backgroundColor: '#10B981',
-  },
-  description: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    lineHeight: 20,
   },
 });

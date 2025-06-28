@@ -1,272 +1,218 @@
-import { databaseService } from './database';
-import { Database } from './supabase';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-type User = Database['public']['Tables']['users']['Row'];
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-export const matchingService = {
-  async handleSwipe(
-    swiperId: string,
-    targetUserId: string,
-    direction: 'like' | 'pass',
-    jobId?: string
-  ) {
-    try {
-      // For family swiping on caregivers, we need a job context
-      if (!jobId) {
-        // Get the family's most recent job post as default
-        const familyJobs = await databaseService.getUserJobPosts(swiperId);
-        if (familyJobs.length === 0) {
-          throw new Error('No job posts found. Please create a job posting first.');
-        }
-        jobId = familyJobs[0].id;
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
       }
-
-      // Check if swipe already exists
-      const existingSwipe = await this.getExistingSwipe(swiperId, targetUserId, jobId);
-      if (existingSwipe) {
-        console.log('Swipe already exists');
-        return { isMatch: false, alreadySwiped: true };
-      }
-
-      // Create swipe record
-      const swipeData = {
-        family_id: swiperId,
-        caregiver_id: targetUserId,
-        job_id: jobId,
-        direction,
-      };
-
-      await databaseService.createSwipe(swipeData);
-
-      // If it's a like, check for mutual match
-      if (direction === 'like') {
-        const isMatch = await databaseService.checkForMatch(
-          swiperId,
-          targetUserId,
-          jobId
-        );
-
-        if (isMatch) {
-          // Create match
-          const matchData = {
-            family_id: swiperId,
-            caregiver_id: targetUserId,
-            job_id: jobId,
-          };
-
-          const match = await databaseService.createMatch(matchData);
-          return { isMatch: true, match };
-        }
-      }
-
-      return { isMatch: false };
-    } catch (error) {
-      console.error('Error handling swipe:', error);
-      throw error;
-    }
-  },
-
-  async handleJobSwipe(
-    caregiverId: string,
-    familyId: string,
-    jobId: string,
-    direction: 'like' | 'pass'
-  ) {
-    try {
-      // Check if swipe already exists
-      const existingSwipe = await this.getExistingSwipe(familyId, caregiverId, jobId);
-      if (existingSwipe) {
-        console.log('Swipe already exists');
-        return { isMatch: false, alreadySwiped: true };
-      }
-
-      // Create swipe record (caregiver swiping on family's job)
-      const swipeData = {
-        family_id: familyId,
-        caregiver_id: caregiverId,
-        job_id: jobId,
-        direction,
-      };
-
-      await databaseService.createSwipe(swipeData);
-
-      // If it's a like, check for mutual match
-      if (direction === 'like') {
-        const isMatch = await databaseService.checkForMatch(
-          familyId,
-          caregiverId,
-          jobId
-        );
-
-        if (isMatch) {
-          // Create match
-          const matchData = {
-            family_id: familyId,
-            caregiver_id: caregiverId,
-            job_id: jobId,
-          };
-
-          const match = await databaseService.createMatch(matchData);
-          return { isMatch: true, match };
-        }
-      }
-
-      return { isMatch: false };
-    } catch (error) {
-      console.error('Error handling job swipe:', error);
-      throw error;
-    }
-  },
-
-  async getExistingSwipe(familyId: string, caregiverId: string, jobId: string) {
-    try {
-      const { data, error } = await databaseService.supabase
-        .from('swipes')
-        .select('*')
-        .eq('family_id', familyId)
-        .eq('caregiver_id', caregiverId)
-        .eq('job_id', jobId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error checking existing swipe:', error);
-      return null;
-    }
-  },
-
-  async getRecommendedCaregivers(
-    familyUserId: string,
-    location?: string,
-    limit = 10
-  ) {
-    try {
-      // Get caregivers that haven't been swiped on yet
-      const { data: swipedCaregivers } = await databaseService.supabase
-        .from('swipes')
-        .select('caregiver_id')
-        .eq('family_id', familyUserId);
-
-      const swipedIds = swipedCaregivers?.map(s => s.caregiver_id) || [];
-
-      let query = databaseService.supabase
-        .from('users')
-        .select('*')
-        .eq('role', 'caregiver')
-        .limit(limit);
-
-      if (swipedIds.length > 0) {
-        query = query.not('id', 'in', `(${swipedIds.join(',')})`);
-      }
-
-      if (location) {
-        // Simple location matching - in production, use geolocation
-        query = query.ilike('location', `%${location.split(',')[0]}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return data || [];
-    } catch (error) {
-      console.error('Error getting recommended caregivers:', error);
-      throw error;
-    }
-  },
-
-  async getRecommendedJobs(
-    caregiverId: string,
-    location?: string,
-    limit = 10
-  ) {
-    try {
-      // Get jobs that haven't been swiped on yet
-      const { data: swipedJobs } = await databaseService.supabase
-        .from('swipes')
-        .select('job_id')
-        .eq('caregiver_id', caregiverId);
-
-      const swipedJobIds = swipedJobs?.map(s => s.job_id) || [];
-
-      let query = databaseService.supabase
-        .from('job_posts')
-        .select(`
-          *,
-          family:users!job_posts_family_id_fkey(*)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (swipedJobIds.length > 0) {
-        query = query.not('id', 'in', `(${swipedJobIds.join(',')})`);
-      }
-
-      if (location) {
-        query = query.ilike('location', `%${location.split(',')[0]}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return data || [];
-    } catch (error) {
-      console.error('Error getting recommended jobs:', error);
-      throw error;
-    }
-  },
-
-  async calculateCompatibilityScore(
-    familyUser: User,
-    caregiverUser: User
-  ): Promise<number> {
-    let score = 0;
-
-    // Location proximity (if both have location)
-    if (familyUser.location && caregiverUser.location) {
-      // Simple string match for now - in production, use geolocation
-      if (familyUser.location === caregiverUser.location) {
-        score += 30;
-      } else if (
-        familyUser.location.split(',')[1]?.trim() === 
-        caregiverUser.location.split(',')[1]?.trim()
-      ) {
-        // Same state/region
-        score += 15;
-      }
-    }
-
-    // Profile completeness
-    const familyCompleteness = this.calculateProfileCompleteness(familyUser);
-    const caregiverCompleteness = this.calculateProfileCompleteness(caregiverUser);
-    score += (familyCompleteness + caregiverCompleteness) / 2 * 0.2;
-
-    // Get caregiver rating
-    try {
-      const rating = await databaseService.getUserRating(caregiverUser.id);
-      if (rating.count > 0) {
-        score += (rating.average / 5) * 40; // Max 40 points for perfect rating
-      }
-    } catch (error) {
-      console.error('Error getting rating:', error);
-    }
-
-    return Math.min(100, Math.max(0, score));
-  },
-
-  calculateProfileCompleteness(user: User): number {
-    let completeness = 0;
-    const fields = ['name', 'bio', 'phone', 'location'];
+    };
     
-    fields.forEach(field => {
-      if (user[field as keyof User]) {
-        completeness += 25;
-      }
-    });
+    handleAutoSignIn();
+  }, [user]);
 
-    return completeness;
-  }
-};
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
+
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
+  },
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+});
