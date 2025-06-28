@@ -22,20 +22,23 @@ The following storage buckets need to be created manually in the Supabase Dashbo
 
 ### Storage Policies
 
-After creating the buckets, add these RLS policies in the Supabase Dashboard:
+After creating the buckets, you need to add RLS policies. See the detailed setup guide:
 
-#### Avatars Bucket
-- **Public read**: Allow anyone to view avatar images
-- **Authenticated upload**: Users can upload to their own folder (user_id/filename)
-- **Owner update/delete**: Users can modify their own avatars
+📖 **[Complete Storage Setup Guide](./docs/STORAGE_SETUP.md)**
 
-#### Attachments Bucket  
-- **Match-based access**: Users can view attachments from their matches
-- **Owner upload/delete**: Users can upload and delete their own attachments
+### Quick Policy Setup
 
-#### Documents Bucket
-- **Owner only**: Users can only access their own documents
-- **Full CRUD**: Users have complete control over their documents
+1. Go to **Supabase Dashboard** → **Storage** → **Policies**
+2. Add the policies listed in the setup guide for each bucket
+3. Test file uploads in the app
+
+### File Upload Features
+
+✅ **Avatar Upload**: Profile photo management  
+✅ **Message Attachments**: Send images in chats  
+✅ **Document Management**: Upload and organize files  
+✅ **Multi-platform Support**: Web and mobile compatibility  
+✅ **Security**: User-based access controls  
 
 ## Development
 
@@ -52,7 +55,25 @@ npm run dev
 - ✅ Real-time messaging
 - ✅ File upload and document management
 - ✅ Scheduling system
+- ✅ Storage and file management
 - ✅ Review and rating system
 - ✅ Subscription management
 - 🔄 Push notifications (in progress)
 - 🔄 Advanced search and filtering (in progress)
+
+## File Upload System
+
+The app includes a comprehensive file upload system with:
+
+- **Avatar Management**: Profile photo upload and management
+- **Message Attachments**: Send images and files in conversations  
+- **Document Storage**: Organize important documents
+- **Security**: User-based access controls and RLS policies
+- **Multi-platform**: Works on web and mobile devices
+
+### Components Available:
+
+- `<AvatarUpload />` - Profile photo management
+- `<ImageUploadModal />` - Image upload interface
+- `<DocumentUpload />` - Document management
+- `<EnhancedMessageInput />` - Message input with attachments
