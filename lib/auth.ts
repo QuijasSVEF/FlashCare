@@ -47,8 +47,12 @@ export const authService = {
     try {
       return await databaseService.getUser(user.id);
     } catch (error) {
+      // If user profile doesn't exist, return null (they may need to complete signup)
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {
+        return null;
+      }
       console.error('Error getting user profile:', error);
-      return null;
+      throw error;
     }
   },
 

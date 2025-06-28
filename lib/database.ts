@@ -37,9 +37,14 @@ export const databaseService = {
       .from('users')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      const notFoundError = new Error('User not found');
+      (notFoundError as any).code = 'PGRST116';
+      throw notFoundError;
+    }
     return data;
   },
 
