@@ -30,7 +30,7 @@ export default function WelcomeScreen() {
         </Text>
 
         <Image
-          source={{ uri: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=800' }}
+          source={{ uri: 'https://images.pexels.com/photos/7551667/pexels-photo-7551667.jpeg?auto=compress&cs=tinysrgb&w=800' }}
           style={styles.heroImage}
         />
 
