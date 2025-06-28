@@ -37,13 +37,30 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      const result = await signUp(formData.email, formData.password, {
+      const { data, error } = await signUp(formData.email, formData.password, {
         name: formData.name,
         role: formData.role as 'family' | 'caregiver',
       });
       
+      // Handle known errors without throwing
+      if (error) {
+        let errorMessage = 'Failed to create account';
+        
+        if (error.message?.includes('User already registered') || 
+            error.message?.includes('user_already_exists') ||
+            error.code === 'user_already_exists') {
+          errorMessage = 'An account with this email already exists. Please sign in instead or use a different email address.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        Alert.alert('Sign Up Error', errorMessage);
+        setLoading(false);
+        return;
+      }
+      
       // Check if user needs email confirmation
-      if (result.user && !result.session) {
+      if (data?.user && !data?.session) {
         Alert.alert(
           'Check Your Email',
           'Please check your email and click the confirmation link to complete your registration.',
@@ -54,30 +71,8 @@ export default function SignUpScreen() {
         router.replace('/(auth)/profile-setup');
       }
     } catch (error: any) {
-      let errorMessage = 'Failed to create account';
-      
-      // Parse Supabase error body if it exists
-      let parsedError = error;
-      if (error.body && typeof error.body === 'string') {
-        try {
-          parsedError = JSON.parse(error.body);
-        } catch (parseError) {
-          // If parsing fails, use the original error
-          parsedError = error;
-        }
-      }
-      
-      if (error.message?.includes('User already registered') || 
-          error.code === 'user_already_exists' || 
-          parsedError.code === 'user_already_exists') {
-        errorMessage = 'An account with this email already exists. Please sign in instead or use a different email address.';
-      } else if (parsedError.message) {
-        errorMessage = parsedError.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      Alert.alert('Sign Up Error', errorMessage);
+      // Handle unexpected errors that were thrown
+      Alert.alert('Sign Up Error', error.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }

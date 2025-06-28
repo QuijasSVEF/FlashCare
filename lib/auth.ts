@@ -4,14 +4,27 @@ import { Database } from './supabase';
 
 type User = Database['public']['Tables']['users']['Row'];
 
+interface AuthResult {
+  data: { user: any; session: any } | null;
+  error: any | null;
+}
 export const authService = {
-  async signUp(email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) {
+  async signUp(email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }): Promise<AuthResult> {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      // Return structured result for known, handleable errors instead of throwing
+      if (authError.message?.includes('User already registered') || 
+          authError.message?.includes('user_already_exists') ||
+          authError.code === 'user_already_exists') {
+        return { data: null, error: authError };
+      }
+      // Still throw for unexpected errors
+      throw authError;
+    }
 
     if (authData.user) {
       try {
@@ -27,7 +40,7 @@ export const authService = {
       }
     }
 
-    return authData;
+    return { data: authData, error: null };
   },
 
   async signIn(email: string, password: string) {
