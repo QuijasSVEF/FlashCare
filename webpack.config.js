@@ -5,7 +5,7 @@ module.exports = async function (env, argv) {
     {
       ...env,
       babel: {
-        dangerouslyAddModulePathsToTranspile: ['react-native-web']
+        dangerouslyAddModulePathsToTranspile: ['react-native-web', 'react-native-reanimated']
       }
     },
     argv
