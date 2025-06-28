@@ -1,421 +1,160 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Linking, Platform } from 'react-native';
-import { router } from 'expo-router';
-import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, Phone, MapPin, Award, Bell, Calendar, MessageCircle, ChevronDown, ChevronUp, Users, Clock, TrendingUp } from 'lucide-react-native';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { EmergencyButton } from '../../components/EmergencyButton';
-import { AppHeader } from '../../components/AppHeader'; 
-import { ProfileEditModal } from '../../components/ProfileEditModal';
-import { ReviewModal } from '../../components/ReviewModal';
-import { NotificationCenter } from '../../components/NotificationCenter';
-import { QuickStatsCard } from '../../components/QuickStatsCard';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
-import { useSubscription } from '../../contexts/SubscriptionContext';
-import { databaseService } from '../../lib/database';
 import { Colors } from '../../constants/Colors';
 
-interface CollapsibleSectionProps {
-  title: string;
-  icon: React.ComponentType<any>;
-  children: React.ReactNode;
-  defaultExpanded?: boolean;
-}
-
-function CollapsibleSection({ title, icon: Icon, children, defaultExpanded = true }: CollapsibleSectionProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
-  return (
-    <Card style={styles.collapsibleCard}>
-      <TouchableOpacity 
-        style={styles.sectionHeader} 
-        onPress={() => setExpanded(!expanded)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.sectionTitleContainer}>
-          <View style={styles.sectionIconContainer}>
-            <Icon size={20} color="#2563EB" />
-          </View>
-          <Text style={styles.sectionTitle}>{title}</Text>
-        </View>
-        <View style={styles.chevronContainer}>
-          {expanded ? (
-            <ChevronUp size={20} color="#6B7280" />
-          ) : (
-            <ChevronDown size={20} color="#6B7280" />
-          )}
-        </View>
-      </TouchableOpacity>
-      
-      {expanded && (
-        <View style={styles.sectionContent}>
-          {children}
-        </View>
-      )}
-    </Card>
-  );
-}
-
-export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
-  const { isSubscriber } = useSubscription();
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [userReviews, setUserReviews] = useState<any[]>([]);
-  const [userRating, setUserRating] = useState({ average: 0, count: 0 });
-  const [userStats, setUserStats] = useState({
-    totalMatches: 0,
-    activeChats: 0,
-    upcomingSchedules: 0,
-    completedJobs: 0,
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
   });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user?.id) {
-      loadUserReviews();
-      loadUserRating();
-      loadUserStats();
-    }
-  }, [user?.id]);
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
+      }
+    };
+    
+    handleAutoSignIn();
+  }, [user]);
 
-  const loadUserReviews = async () => {
-    try {
-      const reviews = await databaseService.getUserReviews(user!.id);
-      setUserReviews(reviews);
-    } catch (error) {
-      console.error('Error loading reviews:', error);
-    }
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const loadUserRating = async () => {
-    try {
-      const rating = await databaseService.getUserRating(user!.id);
-      setUserRating(rating);
-    } catch (error) {
-      console.error('Error loading rating:', error);
-    }
-  };
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
 
-  const loadUserStats = async () => {
+    setLoading(true);
+    setErrors({});
+    
     try {
-      const matches = await databaseService.getUserMatches(user!.id);
-      const schedules = await databaseService.getUserSchedules(user!.id);
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
       
-      setUserStats({
-        totalMatches: matches.length,
-        activeChats: matches.length,
-        upcomingSchedules: schedules.filter(s => 
-          s.status === 'confirmed' && new Date(s.start_ts) > new Date()
-        ).length,
-        completedJobs: schedules.filter(s => 
-          s.status === 'confirmed' && new Date(s.end_ts) < new Date()
-        ).length,
-      });
-    } catch (error) {
-      console.error('Error loading user stats:', error);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of FlashCare?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              console.log('Profile: Starting sign out...');
-              const success = await signOut();
-              
-              console.log('Profile: Sign out successful:', success);
-              // Navigation will happen automatically via the auth state change in index.tsx
-            } catch (error) {
-              console.error('Profile: Sign out error:', error);
-            }
-          }
-        },
-      ]
-    );
-  };
-
-  const handleEditProfile = () => {
-    setShowEditModal(true);
-  };
-
-  const handleProfileSaved = () => {
-    console.log('Profile saved successfully');
-    loadUserReviews();
-    loadUserRating();
-    loadUserStats();
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <AppHeader
-        title="Profile"
-        rightComponent={
-          <TouchableOpacity 
-            style={styles.notificationButton}
-            onPress={() => setShowNotifications(true)}
-          >
-            <Bell size={24} color="#6B7280" />
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>2</Text>
-            </View>
-          </TouchableOpacity>
-        }
-      />
-
-      <View style={styles.content}>
-        {/* Profile Header */}
-        <CollapsibleSection title="Profile Information" icon={User} defaultExpanded={true}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={{ 
-                  uri: user?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-                }}
-                style={styles.avatar}
-              />
-              <TouchableOpacity style={styles.editAvatarButton}>
-                <Edit3 size={16} color="#2563EB" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.profileInfo}>
-              <View style={styles.nameContainer}>
-                <Text style={styles.profileName}>{user?.name}</Text>
-                <TouchableOpacity onPress={handleEditProfile} style={styles.editButton}>
-                  <Edit3 size={18} color="#2563EB" />
-                </TouchableOpacity>
-              </View>
-              
-              <Text style={styles.profileRole}>
-                {user?.role === 'family' ? 'Family Member' : 'Professional Caregiver'}
-              </Text>
-              
-              {isSubscriber && (
-                <View style={styles.subscriberBadge}>
-                  <Shield size={16} color="#059669" />
-                  <Text style={styles.subscriberText}>FlashCare Plus</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {user?.bio && (
-            <View style={styles.bioContainer}>
-              <Text style={styles.bioLabel}>About</Text>
-              <Text style={styles.profileBio}>{user.bio}</Text>
-            </View>
-          )}
-
-          <View style={styles.contactDetails}>
-            {user?.phone && (
-              <View style={styles.detailItem}>
-                <Phone size={16} color="#6B7280" />
-                <Text style={styles.detailText}>{user.phone}</Text>
-              </View>
-            )}
-            {user?.location && (
-              <View style={styles.detailItem}>
-                <MapPin size={16} color="#6B7280" />
-                <Text style={styles.detailText}>{user.location}</Text>
-              </View>
-            )}
-          </View>
-        </CollapsibleSection>
-
-        {/* Performance Stats */}
-        <CollapsibleSection title="Performance Overview" icon={TrendingUp} defaultExpanded={true}>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <View style={[styles.statIconContainer, { backgroundColor: '#EEF2FF' }]}>
-                <Users size={20} color="#2563EB" />
-              </View>
-              <Text style={styles.statValue}>{userStats.totalMatches}</Text>
-              <Text style={styles.statLabel}>Total Matches</Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <View style={[styles.statIconContainer, { backgroundColor: '#F0FDF4' }]}>
-                <MessageCircle size={20} color="#059669" />
-              </View>
-              <Text style={styles.statValue}>{userStats.activeChats}</Text>
-              <Text style={styles.statLabel}>Active Chats</Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <View style={[styles.statIconContainer, { backgroundColor: '#FEF3C7' }]}>
-                <Calendar size={20} color="#D97706" />
-              </View>
-              <Text style={styles.statValue}>{userStats.upcomingSchedules}</Text>
-              <Text style={styles.statLabel}>Upcoming</Text>
-            </View>
-          </View>
-
-          {user?.role === 'caregiver' && (
-            <View style={styles.ratingContainer}>
-              <View style={styles.ratingItem}>
-                <Star size={24} color="#F59E0B" fill="#F59E0B" />
-                <View style={styles.ratingDetails}>
-                  <Text style={styles.ratingValue}>
-                    {userRating.average > 0 ? userRating.average.toFixed(1) : 'N/A'}
-                  </Text>
-                  <Text style={styles.ratingLabel}>
-                    {userRating.count} review{userRating.count !== 1 ? 's' : ''}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-        </CollapsibleSection>
-
-        {/* Quick Actions */}
-        <CollapsibleSection title="Quick Actions" icon={Clock} defaultExpanded={true}>
-          <View style={styles.actionsList}>
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconContainer}>
-                <Calendar size={20} color="#2563EB" />
-              </View>
-              <Text style={styles.actionText}>View Schedule</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconContainer}>
-                <MessageCircle size={20} color="#2563EB" />
-              </View>
-              <Text style={styles.actionText}>Messages</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconContainer}>
-                <Star size={20} color="#2563EB" />
-              </View>
-              <Text style={styles.actionText}>Reviews</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconContainer}>
-                <CreditCard size={20} color="#2563EB" />
-              </View>
-              <Text style={styles.actionText}>Billing & Subscription</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-          </View>
-        </CollapsibleSection>
-
-        {/* Recent Reviews (for caregivers) */}
-        {user?.role === 'caregiver' && userReviews.length > 0 && (
-          <CollapsibleSection title="Recent Reviews" icon={Award} defaultExpanded={false}>
-            {userReviews.slice(0, 3).map((review) => (
-              <View key={review.id} style={styles.reviewItem}>
-                <View style={styles.reviewHeader}>
-                  <Text style={styles.reviewerName}>{review.reviewer.name}</Text>
-                  <View style={styles.reviewRating}>
-                    {[...Array(review.rating_int)].map((_, i) => (
-                      <Star key={i} size={12} color="#F59E0B" fill="#F59E0B" />
-                    ))}
-                  </View>
-                </View>
-                {review.comment_text && (
-                  <Text style={styles.reviewComment} numberOfLines={2}>
-                    {review.comment_text}
-                  </Text>
-                )}
-                <Text style={styles.reviewDate}>
-                  {new Date(review.created_at).toLocaleDateString()}
-                </Text>
-              </View>
-            ))}
-            
-            {userReviews.length > 3 && (
-              <TouchableOpacity style={styles.viewAllButton} onPress={() => setShowReviewModal(true)}>
-                <Text style={styles.viewAllText}>View All Reviews</Text>
-              </TouchableOpacity>
-            )}
-          </CollapsibleSection>
-        )}
-
-        {/* Settings */}
-        <CollapsibleSection title="Settings & Support" icon={Settings} defaultExpanded={false}>
-          <View style={styles.settingsList}>
-            <TouchableOpacity 
-              style={styles.settingItem}
-              onPress={() => {
-                const number = user?.emergency_phone || '911';
-                const url = Platform.OS === 'ios' ? `tel:${number}` : `tel:${number}`;
-                Linking.openURL(url).catch((err) => {
-                  console.error('Error making emergency call:', err);
-                });
-              }}
-            >
-              <Phone size={20} color="#DC2626" />
-              <Text style={[styles.settingText, styles.emergencyText]}>Emergency Call</Text>
-              <Text style={styles.emergencyNumber}>
-                {user?.emergency_phone || '911'}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.settingItem}>
-              <Settings size={20} color="#6B7280" />
-              <Text style={styles.settingText}>App Settings</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.settingItem}>
-              <Shield size={20} color="#6B7280" />
-              <Text style={styles.settingText}>Privacy & Safety</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.settingItem}>
-              <User size={20} color="#6B7280" />
-              <Text style={styles.settingText}>Help & Support</Text>
-              <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-            </TouchableOpacity>
-          </View>
-        </CollapsibleSection>
-
-        {/* Sign Out */}
-        <CollapsibleSection title="Account Actions" icon={LogOut} defaultExpanded={false}>
-          <View style={styles.accountActions}>
-            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-              <LogOut size={20} color="#DC2626" />
-              <Text style={styles.signOutText}>Sign Out of FlashCare</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.deleteAccountButton}>
-              <Text style={styles.deleteAccountText}>Delete Account</Text>
-            </TouchableOpacity>
-          </View>
-        </CollapsibleSection>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Built with Bolt</Text>
-          <Text style={styles.versionText}>FlashCare v1.0.0</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
         </View>
       </View>
 
-      <ProfileEditModal
-        visible={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleProfileSaved}
-      />
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
-      <NotificationCenter
-        visible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
-    </ScrollView>
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -424,331 +163,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-  content: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
-  notificationButton: {
-    position: 'relative',
+  backButton: {
     padding: 8,
-  }, 
-  notificationBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: Colors.error,
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificationBadgeText: {
-    color: Colors.text.inverse,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  collapsibleCard: {
-    marginBottom: 16,
-    overflow: 'hidden', 
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  sectionIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18, 
-    backgroundColor: Colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  chevronContainer: {
-    padding: 4,
-  },
-  sectionContent: {
-    paddingTop: 16,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  avatarContainer: {
-    position: 'relative',
     marginRight: 16,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  editAvatarButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  nameContainer: {
+  logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    position: 'relative',
   },
-  profileName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    flex: 1,
-  },
-  editButton: {
-    padding: 8,
-  },
-  profileRole: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 8,
-  },
-  subscriberBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary[100],
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
-  subscriberText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.primary[600],
-    marginLeft: 4,
-  },
-  bioContainer: {
-    marginBottom: 16,
-  },
-  bioLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  profileBio: {
-    fontSize: 16,
-    color: Colors.text.primary,
-    lineHeight: 24,
-  },
-  contactDetails: {
-    gap: 8,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginLeft: 8,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  statValue: {
+  logo: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 4,
+    color: Colors.primary[500],
+    marginLeft: 8,
   },
-  statLabel: {
-    fontSize: 12,
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
+  },
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
   },
-  ratingContainer: {
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray[100],
-  },
-  ratingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ratingDetails: {
-    marginLeft: 12,
-    alignItems: 'center',
-  },
-  ratingValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  ratingLabel: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
-  actionsList: {
-    gap: 0,
-  },
-  actionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1, 
-    borderBottomColor: Colors.gray[100],
-  },
-  actionIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16, 
-    backgroundColor: Colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  actionText: {
-    fontSize: 16,
-    color: Colors.text.primary,
-    flex: 1,
-  },
-  reviewItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[100],
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  reviewerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.primary,
-  },
-  reviewRating: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-  reviewComment: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  reviewDate: {
-    fontSize: 12,
-    color: Colors.text.tertiary,
-  },
-  viewAllButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  viewAllText: {
-    fontSize: 14,
+  signUpLink: {
     color: Colors.primary[500],
     fontWeight: '600',
-  },
-  settingsList: {
-    gap: 0,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1, 
-    borderBottomColor: Colors.gray[100],
-  },
-  settingText: {
-    fontSize: 16,
-    color: Colors.text.primary,
-    marginLeft: 12,
-    flex: 1,
-  },
-  emergencyText: {
-    color: Colors.error,
-    fontWeight: '600',
-  },
-  emergencyNumber: {
-    fontSize: 14,
-    color: Colors.error,
-    fontWeight: '500',
-  },
-  accountActions: {
-    gap: 12,
-  },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16, 
-    backgroundColor: '#FEE2E2', // Light red
-    borderRadius: 12,
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.error,
-    marginLeft: 8,
-  },
-  deleteAccountButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  deleteAccountText: {
-    fontSize: 14,
-    color: Colors.text.tertiary,
-    textDecorationLine: 'underline',
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  footerText: {
-    fontSize: 14,
-    color: Colors.text.tertiary,
-    marginBottom: 4,
-  },
-  versionText: {
-    fontSize: 12,
-    color: Colors.gray[300],
   },
 });
