@@ -43,7 +43,15 @@ export default function SignUpScreen() {
       });
       router.replace('/(auth)/profile-setup');
     } catch (error: any) {
-      Alert.alert('Sign Up Error', error.message || 'Failed to create account');
+      let errorMessage = 'Failed to create account';
+      
+      if (error.message?.includes('User already registered') || error.code === 'user_already_exists') {
+        errorMessage = 'An account with this email already exists. Please sign in instead or use a different email address.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Sign Up Error', errorMessage);
     } finally {
       setLoading(false);
     }
