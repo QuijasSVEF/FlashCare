@@ -89,10 +89,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (profileError) {
           console.error('Error getting profile in auth change:', profileError);
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-      } finally {
+      } else {
         setLoading(false);
-      }
+        }
     });
 
     return () => subscription.unsubscribe();
