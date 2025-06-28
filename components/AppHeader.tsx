@@ -28,13 +28,15 @@ export function AppHeader({
           style: 'destructive', 
           onPress: async () => {
             try {
-              console.log('Starting sign out from header...');
-              await signOut();
-              console.log('Sign out completed, navigating to welcome...');
-              router.replace('/(auth)/welcome');
+              console.log('Header: Starting sign out...');
+              const success = await signOut();
+              
+              if (success) {
+                console.log('Header: Sign out successful, navigating...');
+                router.replace('/(auth)/welcome');
+              }
             } catch (error) {
-              console.error('Sign out error in header:', error);
-              // Force navigation even if there's an error
+              console.error('Header: Sign out error:', error);
               router.replace('/(auth)/welcome');
             }
           }

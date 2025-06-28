@@ -147,11 +147,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting sign out process...');
       
-      // Clear user state immediately for better UX
-      setUser(null);
-      
       // Sign out from Supabase
       await authService.signOut();
+      
+      // Clear user state after successful sign out
+      setUser(null);
       
       // Clear subscription state if on mobile
       if (Platform.OS !== 'web') {
@@ -164,11 +164,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log('Sign out completed successfully');
+      
+      // Force navigation to welcome screen
+      return true;
     } catch (error) {
       console.error('Error during sign out:', error);
       // Even if there's an error, clear the user state
       setUser(null);
-      // Don't throw the error - we want to complete the sign out process
+      return true;
     }
   };
 

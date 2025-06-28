@@ -127,12 +127,17 @@ export default function ProfileScreen() {
           style: 'destructive', 
           onPress: async () => {
             try {
-              await signOut();
-              // Force navigation to auth screen
-              router.replace('/(auth)/welcome');
+              console.log('Profile: Starting sign out...');
+              const success = await signOut();
+              
+              if (success) {
+                console.log('Profile: Sign out successful, navigating...');
+                // Use replace to prevent going back
+                router.replace('/(auth)/welcome');
+              }
             } catch (error) {
-              console.error('Sign out error:', error);
-              // Force navigation even if there's an error
+              console.error('Profile: Sign out error:', error);
+              // Force navigation even on error
               router.replace('/(auth)/welcome');
             }
           }

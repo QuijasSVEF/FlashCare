@@ -20,13 +20,15 @@ export default function TabLayout() {
           style: 'destructive', 
           onPress: async () => {
             try {
-              console.log('Starting sign out from tabs...');
-              await signOut();
-              console.log('Sign out completed, navigating to welcome...');
-              router.replace('/(auth)/welcome');
+              console.log('Tabs: Starting sign out...');
+              const success = await signOut();
+              
+              if (success) {
+                console.log('Tabs: Sign out successful, navigating...');
+                router.replace('/(auth)/welcome');
+              }
             } catch (error) {
-              console.error('Sign out error in tabs:', error);
-              // Force navigation even if there's an error
+              console.error('Tabs: Sign out error:', error);
               router.replace('/(auth)/welcome');
             }
           }
