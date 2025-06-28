@@ -74,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-        setLoading(false);
       
       if (session?.user && event === 'SIGNED_IN') {
         try {
