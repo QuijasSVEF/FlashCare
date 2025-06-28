@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { Calendar, Clock, User, MapPin, CheckCircle, XCircle, Plus } from 'lucide-react-native';
+import { Calendar, Clock, User, MapPin, CircleCheck as CheckCircle, Circle as XCircle, Plus } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { AppHeader } from '../../components/AppHeader';

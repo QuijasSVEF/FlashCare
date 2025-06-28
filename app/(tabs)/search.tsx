@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { TrendingUp, Users, Calendar, DollarSign, Clock, Star, Award, BarChart3 } from 'lucide-react-native';
+import { TrendingUp, Users, Calendar, DollarSign, Clock, Star, Award, ChartBar as BarChart3 } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
