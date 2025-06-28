@@ -31,25 +31,30 @@ export default function SignInScreen() {
   const handleSignIn = async () => {
     if (!validateForm()) return;
 
-    console.log('📱 SignIn Screen: Starting sign in process');
     setLoading(true);
-    setErrors({}); // Clear any previous errors
+    setErrors({});
     
     try {
-      console.log('📱 SignIn Screen: Calling signIn with:', formData.email);
-      await signIn(formData.email, formData.password);
+      // Add timeout to prevent hanging
+      const signInPromise = signIn(formData.email, formData.password);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Sign in timeout')), 10000)
+      );
       
-      console.log('📱 SignIn Screen: Sign in successful, navigating to tabs');
-      // Navigate immediately - auth state will handle the rest
-      router.replace('/(tabs)');
+      await Promise.race([signInPromise, timeoutPromise]);
+      
+      // Small delay to ensure auth state is updated
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 500);
       
     } catch (error: any) {
-      console.error('📱 SignIn Screen error:', error);
       let errorMessage = 'Failed to sign in';
       
-      // Handle different types of auth errors
-      if (error.message?.includes('Invalid login credentials') || 
-          error.message?.includes('invalid_credentials')) {
+      if (error.message?.includes('timeout')) {
+        errorMessage = 'Sign in is taking too long. Please check your connection and try again.';
+      } else if (error.message?.includes('Invalid login credentials') || 
+                 error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = 'Please check your email and click the confirmation link before signing in.';
@@ -59,6 +64,10 @@ export default function SignInScreen() {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
       Alert.alert('Sign In Error', errorMessage);

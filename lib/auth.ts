@@ -33,31 +33,32 @@ export const authService = {
   },
 
   async signIn(email: string, password: string) {
-    console.log('🔐 Starting sign in process for:', email);
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-    console.log('🔐 Supabase auth response:', { 
-      user: data.user?.id, 
-      session: !!data.session,
-      error: error?.message 
-    });
-
-    if (error) {
-      console.error('Supabase auth error:', error);
+      if (error) {
+        throw error;
+      }
+      
+      if (!data.user || !data.session) {
+        throw new Error('Sign in failed - no user or session returned');
+      }
+      
+      return data;
+    } catch (error: any) {
+      // Enhance error messages for better user experience
+      if (error.message?.includes('Invalid login credentials')) {
+        throw new Error('Invalid email or password');
+      } else if (error.message?.includes('Email not confirmed')) {
+        throw new Error('Please confirm your email before signing in');
+      } else if (error.message?.includes('Too many requests')) {
+        throw new Error('Too many sign-in attempts. Please wait a moment and try again');
+      }
       throw error;
     }
-    
-    if (!data.user) {
-      console.error('🔐 No user returned from sign in');
-      throw new Error('Sign in failed - no user returned');
-    }
-    
-    console.log('🔐 Sign in successful, user ID:', data.user.id);
-    return data;
   },
 
   async signOut() {

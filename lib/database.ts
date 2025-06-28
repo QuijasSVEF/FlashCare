@@ -46,6 +46,29 @@ export const databaseService = {
   },
 
   async getUser(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // User profile doesn't exist yet
+          return null;
+        }
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return null;
+    }
+  },
+
+  async getUserSafe(userId: string) {
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -53,15 +76,8 @@ export const databaseService = {
       .single();
 
     if (error) {
-      // Handle the case where user doesn't exist
-      if (error.code === 'PGRST116') {
-        const notFoundError = new Error('User profile not found');
-        (notFoundError as any).code = 'PGRST116';
-        throw notFoundError;
-      }
       throw error;
     }
-    
     return data;
   },
 
