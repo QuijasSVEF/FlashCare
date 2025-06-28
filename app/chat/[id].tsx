@@ -16,6 +16,7 @@ import { AppHeader } from '../../components/AppHeader';
 import { EnhancedMessageInput } from '../../components/EnhancedMessageInput';
 import { TypingIndicator } from '../../components/TypingIndicator';
 import { MessageAttachment } from '../../components/MessageAttachment';
+import { VideoCallModal } from '../../components/VideoCallModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMessages } from '../../hooks/useMessages';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -31,6 +32,7 @@ export default function ChatScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [otherUser, setOtherUser] = useState<any>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export default function ChatScreen() {
       setShowPaywall(true);
       return;
     }
-    Alert.alert('Video Call', 'Video calling feature coming soon!');
+    setShowVideoCall(true);
   };
 
   const handlePhoneCall = () => {
@@ -221,6 +223,12 @@ export default function ChatScreen() {
         visible={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="messaging and video calls"
+      />
+
+      <VideoCallModal
+        visible={showVideoCall}
+        onClose={() => setShowVideoCall(false)}
+        otherUserName={otherUser?.name || 'User'}
       />
     </KeyboardAvoidingView>
   );

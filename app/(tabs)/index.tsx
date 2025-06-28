@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { Heart, X, MapPin, Clock, DollarSign, User, Filter } from 'lucide-react-native';
-import { CaregiverCard } from '../../components/CaregiverCard';
-import { CaregiverProfileCard } from '../../components/CaregiverProfileCard';
+import { SwipeableCard } from '../../components/SwipeableCard';
 import { Card } from '../../components/ui/Card';
 import { FilterModal } from '../../components/FilterModal';
 import { AdvancedFilterModal } from '../../components/AdvancedFilterModal';
@@ -11,11 +10,14 @@ import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchingService } from '../../lib/matching';
 import { databaseService } from '../../lib/database';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NotificationBanner } from '../../components/NotificationBanner';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const { notifications, showSuccess, showError, hideNotification } = useNotifications();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [caregivers, setCaregivers] = useState<any[]>([]);
   const [jobPosts, setJobPosts] = useState<any[]>([]);
@@ -72,10 +74,12 @@ export default function HomeScreen() {
 
   const handleSwipe = async (direction: 'like' | 'pass') => {
     const items = user?.role === 'family' ? caregivers : jobPosts;
-    if (currentIndex >= items.length || !user?.id) return;
+    if (currentIndex >= items.length || !user?.id) {
+      showError('Error', 'No more items to swipe');
+      return;
+    }
 
     const currentItem = items[currentIndex];
-    setCurrentIndex(prev => prev + 1);
 
     try {
       if (user?.role === 'family') {
@@ -87,10 +91,9 @@ export default function HomeScreen() {
         );
 
         if (direction === 'like' && result.isMatch) {
-          Alert.alert(
-            '🎉 It\'s a Match!', 
-            `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`,
-            [{ text: 'Great!', style: 'default' }]
+          showSuccess(
+            '🎉 It\'s a Match!',
+            `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`
           );
         }
       } else if (user?.role === 'caregiver') {
@@ -103,18 +106,18 @@ export default function HomeScreen() {
         );
 
         if (direction === 'like' && result.isMatch) {
-          Alert.alert(
-            '🎉 It\'s a Match!', 
-            `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`,
-            [{ text: 'Great!', style: 'default' }]
+          showSuccess(
+            '🎉 It\'s a Match!',
+            `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`
           );
         }
       }
 
+      // Move to next item after successful swipe
+      setCurrentIndex(prev => prev + 1);
+
     } catch (error) {
       console.error('Error saving swipe:', error);
-      // Reset index on error
-      setCurrentIndex(prev => prev - 1);
       
       let errorMessage = 'Failed to process swipe. Please try again.';
       if (error instanceof Error) {
@@ -124,7 +127,7 @@ export default function HomeScreen() {
           errorMessage = error.message;
         }
       }
-      Alert.alert('Error', errorMessage);
+      showError('Error', errorMessage);
     }
   };
 
@@ -227,6 +230,17 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {notifications.map((notification) => (
+        <NotificationBanner
+          key={notification.id}
+          visible={notification.visible}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onDismiss={() => hideNotification(notification.id)}
+        />
+      ))}
+      
       <AppHeader
         title={user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
         subtitle={`📍 ${user?.location || 'San Francisco, CA'}`}
@@ -244,18 +258,12 @@ export default function HomeScreen() {
       <View style={styles.cardContainer}>
         {currentIndex < (user?.role === 'family' ? caregivers : jobPosts).length ? (
           <>
-            <View style={styles.cardWrapper}>
-              {user?.role === 'family' ? (
-                <CaregiverProfileCard 
-                  caregiver={currentItem}
-                  onMessage={() => console.log('Message caregiver')}
-                  onViewProfile={() => console.log('View profile')}
-                  showActions={false}
-                />
-              ) : (
-                renderJobCard(currentItem)
-              )}
-            </View>
+            <SwipeableCard
+              data={currentItem}
+              onSwipeLeft={() => handleSwipe('pass')}
+              onSwipeRight={() => handleSwipe('like')}
+              userRole={user?.role || 'family'}
+            />
 
             <View style={styles.actionButtons}>
               <TouchableOpacity
@@ -351,18 +359,15 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 20,
-  },
-  cardWrapper: {
-    width: '100%',
-    marginBottom: 40,
+    paddingTop: 40,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 40,
+    marginTop: 40,
   },
   actionButton: {
     width: 64,
