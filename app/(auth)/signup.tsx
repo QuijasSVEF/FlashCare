@@ -49,7 +49,26 @@ export default function SignUpScreen() {
         if (error.message?.includes('User already registered') || 
             error.message?.includes('user_already_exists') ||
             error.code === 'user_already_exists') {
-          errorMessage = 'An account with this email already exists. Please sign in instead or use a different email address.';
+          Alert.alert(
+            'Account Already Exists',
+            'An account with this email already exists. Would you like to sign in instead or try a different email?',
+            [
+              {
+                text: 'Try Different Email',
+                onPress: () => {
+                  setFormData(prev => ({ ...prev, email: '' }));
+                  setErrors(prev => ({ ...prev, email: '' }));
+                }
+              },
+              {
+                text: 'Sign In',
+                onPress: () => router.push('/(auth)/signin'),
+                style: 'default'
+              }
+            ]
+          );
+          setLoading(false);
+          return;
         } else if (error.message) {
           errorMessage = error.message;
         }
