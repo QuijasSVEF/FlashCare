@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase } from 'lucide-react-native';
+import { Home, MessageCircle, User, Search, Users, Plus, Briefcase, Heart, Settings } from 'lucide-react-native';
 import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { router } from 'expo-router';
@@ -75,11 +75,20 @@ export default function TabLayout() {
         options={{
           title: isFamily ? 'Find Care' : 'Browse',
           tabBarIcon: ({ size, color, focused }) => (
-            <Home 
-              size={focused ? size + 2 : size} 
-              color={color} 
-              strokeWidth={focused ? 2.5 : 2}
-            />
+            {isFamily ? (
+              <Heart 
+                size={focused ? size + 2 : size} 
+                color={color} 
+                strokeWidth={focused ? 2.5 : 2}
+                fill={focused ? color : 'transparent'}
+              />
+            ) : (
+              <Search 
+                size={focused ? size + 2 : size} 
+                color={color} 
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            )}
           ),
         }}
       />
@@ -142,7 +151,7 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color, focused }) => (
             <Users 
               size={focused ? size + 2 : size} 
-              color={color}
+              color={color} 
               strokeWidth={focused ? 2.5 : 2}
             />
           ),
@@ -168,13 +177,12 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ size, color, focused }) => (
-            <User 
+            <Settings 
               size={focused ? size + 2 : size} 
               color={color}
               strokeWidth={focused ? 2.5 : 2}
             />
           ),
-          headerShown: false,
         }}
       />
 
