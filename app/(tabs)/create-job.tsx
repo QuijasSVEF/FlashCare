@@ -199,8 +199,7 @@ export default function CreateJobScreen() {
         />
 
         <Text style={styles.disclaimer}>
-          By posting this job, you agree to our Terms of Service and Community Guidelines. 
-          All caregivers are background checked and verified.
+          By posting this job, you agree to our Terms of Service and Community Guidelines. All caregivers are background checked and verified.
         </Text>
       </Card>
     </ScrollView>

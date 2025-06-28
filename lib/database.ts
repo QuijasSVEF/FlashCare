@@ -272,6 +272,21 @@ export const databaseService = {
   },
 
   async getUserSchedules(userId: string) {
+    // First, get all match IDs where the user is either caregiver or family
+    const { data: userMatches, error: matchError } = await supabase
+      .from('matches')
+      .select('id')
+      .or(`caregiver_id.eq.${userId},family_id.eq.${userId}`);
+
+    if (matchError) throw matchError;
+    
+    if (!userMatches || userMatches.length === 0) {
+      return [];
+    }
+
+    const matchIds = userMatches.map(match => match.id);
+
+    // Then get schedules for those matches
     const { data, error } = await supabase
       .from('schedules')
       .select(`
@@ -282,7 +297,7 @@ export const databaseService = {
           family:users!matches_family_id_fkey(*)
         )
       `)
-      .or(`match.caregiver_id.eq.${userId},match.family_id.eq.${userId}`)
+      .in('match_id', matchIds)
       .order('start_ts', { ascending: true });
 
     if (error) throw error;
