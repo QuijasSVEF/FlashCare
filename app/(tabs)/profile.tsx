@@ -211,10 +211,16 @@ export default function ProfileScreen() {
                 </View>
               ))}
             </Card>
-          )}
-        </>
-      )}
-
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
       {/* Quick Actions */}
       <Card style={styles.actionsCard}>
         <Text style={styles.actionsTitle}>Quick Actions</Text>
