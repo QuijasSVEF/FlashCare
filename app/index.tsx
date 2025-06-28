@@ -1,39 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { View, StyleSheet, ActivityIndicator, Text, Platform } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 
 export default function Index() {
   const { user, loading } = useAuth();
-  const [timeoutReached, setTimeoutReached] = useState(false);
-  const [forceRedirect, setForceRedirect] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // Add a timeout to prevent infinite loading
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading) {
-        setTimeoutReached(true);
-        console.log('Auth loading timeout reached');
-      }
-    }, 3000); // 3 second timeout
+    // Mark initial load as complete after a short delay to ensure auth state is settled
+    const timer = setTimeout(() => {
+      setInitialLoadComplete(true);
+    }, 1000);
 
-    return () => clearTimeout(timeout);
-  }, [loading]);
+    return () => clearTimeout(timer);
+  }, []);
 
-  // Force redirect after a longer timeout
-  useEffect(() => {
-    const forceTimeout = setTimeout(() => {
-      if (loading || !user) {
-        setForceRedirect(true);
-        console.log('Auth force redirect timeout reached');
-      }
-    }, 8000); // 8 second force timeout
-
-    return () => clearTimeout(forceTimeout);
-  }, [loading, user]);
-
-  // Show loading screen while checking auth state
-  if (loading && !timeoutReached && !forceRedirect) {
+  // Show loading screen while auth is initializing
+  if (loading || !initialLoadComplete) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#2563EB" />
@@ -42,17 +26,14 @@ export default function Index() {
     );
   }
 
-  // If timeout reached and still loading, redirect to welcome
-  if ((timeoutReached && loading) || forceRedirect) {
-    return <Redirect href="/(auth)/welcome" />;
-  }
-
-  // If user exists, go to main app
+  // If user exists and initial load is complete, go to main app
   if (user) {
+    console.log('Redirecting to tabs with user:', user.id);
     return <Redirect href="/(tabs)" />;
   }
 
   // Otherwise, go to welcome screen
+  console.log('Redirecting to welcome - no user');
   return <Redirect href="/(auth)/welcome" />;
 }
 
