@@ -44,7 +44,7 @@ export default function MyJobsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: Implement delete job functionality
+              await databaseService.deleteJobPost(jobId);
               Alert.alert('Success', 'Job posting deleted successfully');
               loadJobs();
             } catch (error) {
@@ -54,6 +54,13 @@ export default function MyJobsScreen() {
         },
       ]
     );
+  };
+
+  const handleEditJob = (job: any) => {
+    router.push({
+      pathname: '/(tabs)/edit-job',
+      params: { jobId: job.id }
+    });
   };
 
   const renderJobItem = ({ item }: { item: any }) => {
@@ -72,7 +79,7 @@ export default function MyJobsScreen() {
           <View style={styles.jobActions}>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => console.log('Edit job:', item.id)}
+              onPress={() => handleEditJob(item)}
             >
               <Edit3 size={16} color="#2563EB" />
             </TouchableOpacity>
@@ -109,7 +116,14 @@ export default function MyJobsScreen() {
           
           <View style={styles.applicants}>
             <Users size={16} color="#059669" />
-            <Text style={styles.applicantsText}>0 applicants</Text>
+            <TouchableOpacity
+              onPress={() => router.push({
+                pathname: '/(tabs)/job-applicants',
+                params: { jobId: item.id, jobTitle: item.title }
+              })}
+            >
+              <Text style={styles.applicantsText}>0 applicants</Text>
+            </TouchableOpacity>
           </View>
         </View>
 

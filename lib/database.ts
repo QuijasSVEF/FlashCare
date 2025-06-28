@@ -177,6 +177,42 @@ export const databaseService = {
     return data || [];
   },
 
+  async updateJobPost(jobId: string, updates: Database['public']['Tables']['job_posts']['Update']) {
+    const { data, error } = await supabase
+      .from('job_posts')
+      .update(updates)
+      .eq('id', jobId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteJobPost(jobId: string) {
+    const { error } = await supabase
+      .from('job_posts')
+      .delete()
+      .eq('id', jobId);
+
+    if (error) throw error;
+  },
+
+  async getJobPostApplicants(jobId: string) {
+    const { data, error } = await supabase
+      .from('swipes')
+      .select(`
+        *,
+        caregiver:users!swipes_caregiver_id_fkey(*)
+      `)
+      .eq('job_id', jobId)
+      .eq('direction', 'like')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
   // Schedule operations
   async createSchedule(scheduleData: Database['public']['Tables']['schedules']['Insert']) {
     const { data, error } = await supabase
