@@ -52,7 +52,7 @@ export default function WelcomeScreen() {
         </Link>
         
         <Link href="/(auth)/signin" asChild>
-          <Button title="Sign In" variant="outline" size="large" />
+          <Button title="Sign In" size="large" />
         </Link>
 
         <Text style={styles.terms}>
