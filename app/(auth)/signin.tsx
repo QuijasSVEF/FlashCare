@@ -35,25 +35,20 @@ export default function SignInScreen() {
     setErrors({});
     
     try {
-      // Add timeout to prevent hanging
-      const signInPromise = signIn(formData.email, formData.password);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign in timeout')), 10000)
-      );
-      
-      await Promise.race([signInPromise, timeoutPromise]);
+      console.log('Attempting signin with:', formData.email);
+      await signIn(formData.email, formData.password);
       
       // Small delay to ensure auth state is updated
+      console.log('Signin successful, navigating to tabs');
       setTimeout(() => {
         router.replace('/(tabs)');
-      }, 500);
+      }, 100);
       
     } catch (error: any) {
+      console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
       
-      if (error.message?.includes('timeout')) {
-        errorMessage = 'Sign in is taking too long. Please check your connection and try again.';
-      } else if (error.message?.includes('Invalid login credentials') || 
+      if (error.message?.includes('Invalid login credentials') || 
                  error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (error.message?.includes('Email not confirmed')) {

@@ -10,27 +10,41 @@ type Message = Database['public']['Tables']['messages']['Row'];
 export const databaseService = {
   // User operations
   async createUser(userData: Database['public']['Tables']['users']['Insert']) {
-    // First check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userData.id)
-      .single();
+    try {
+      // First check if user already exists
+      const existingUser = await this.getUser(userData.id);
+      if (existingUser) {
+        console.log('User already exists, returning existing user');
+        return existingUser;
+      }
 
-    if (existingUser) {
-      // User already exists, return existing user data
-      return await this.getUser(userData.id);
+      // Create new user
+      const { data, error } = await supabase
+        .from('users')
+        .insert(userData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating user:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('CreateUser error:', error);
+      
+      // If it's a duplicate key error, try to get the existing user
+      if (error.message?.includes('duplicate key') || 
+          error.code === '23505') {
+        const existingUser = await this.getUser(userData.id);
+        if (existingUser) {
+          return existingUser;
+        }
+      }
+      
+      throw error;
     }
-
-    // Create new user
-    const { data, error } = await supabase
-      .from('users')
-      .insert(userData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
   },
 
   async updateUser(userId: string, updates: Database['public']['Tables']['users']['Update']) {
@@ -54,10 +68,12 @@ export const databaseService = {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
           // User profile doesn't exist yet
+          console.log('User profile not found for:', userId);
           return null;
         }
+        console.error('Error getting user:', error);
         throw error;
       }
       

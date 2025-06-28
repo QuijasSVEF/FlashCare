@@ -36,15 +36,20 @@ export default function SignUpScreen() {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({});
+    
     try {
+      console.log('Attempting signup with:', formData.email, formData.role);
       await signUp(formData.email, formData.password, {
         name: formData.name,
         role: formData.role as 'family' | 'caregiver',
       });
       
       // Success - go to profile setup
+      console.log('Signup successful, navigating to profile setup');
       router.replace('/(auth)/profile-setup');
     } catch (error: any) {
+      console.error('Signup error:', error);
       let errorMessage = 'Failed to create account';
       
       if (error.message?.includes('User already registered') || 

@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -34,9 +35,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        console.log('Session found:', !!session?.user);
         if (session?.user) {
           try {
             const profile = await authService.getCurrentUser();
+            console.log('Profile loaded:', !!profile);
             setUser(profile);
           } catch (profileError) {
             console.error('Error getting user profile:', profileError);
@@ -64,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           try {
             const profile = await authService.getCurrentUser();
+            console.log('Profile in auth change:', !!profile);
             setUser(profile);
           } catch (profileError) {
             console.error('Error getting profile in auth change:', profileError);
@@ -82,14 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => {
+    console.log('Starting signup for:', email);
     await authService.signUp(email, password, userData);
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Clear any existing session first
-      await supabase.auth.signOut();
-      
+      console.log('Starting signin for:', email);
       const result = await authService.signIn(email, password);
       
       if (!result.user || !result.session) {
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error) {
+      console.error('SignIn error in context:', error);
       throw error;
     }
   };
