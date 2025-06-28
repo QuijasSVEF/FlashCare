@@ -315,94 +315,6 @@ const styles = StyleSheet.create({
     right: 4,
     backgroundColor: '#DC2626',
     borderRadius: 8,
-          </View>
-        </Card>
-      )}
-
-      {/* Subscription Status */}
-      <Card style={styles.subscriptionCard}>
-        <View style={styles.subscriptionHeader}>
-          <CreditCard size={24} color="#2563EB" />
-          <Text style={styles.subscriptionTitle}>Subscription</Text>
-        </View>
-        {isSubscriber ? (
-          <View>
-            <Text style={styles.subscriptionStatus}>FlashCare Plus Active</Text>
-            <Text style={styles.subscriptionDetails}>
-              Full access to messaging, video calls, and advanced features
-            </Text>
-          </View>
-        ) : (
-          <View>
-            <Text style={styles.subscriptionStatus}>Free Plan</Text>
-            <Text style={styles.subscriptionDetails}>
-              Upgrade to unlock messaging and premium features
-            </Text>
-            <Button
-              title="Upgrade to Plus"
-              onPress={() => console.log('Upgrade subscription')}
-              style={styles.upgradeButton}
-            />
-          </View>
-        )}
-      </Card>
-
-      {/* Settings Menu */}
-      <Card style={styles.settingsCard}>
-        <TouchableOpacity style={styles.settingItem}>
-          <Settings size={20} color="#6B7280" />
-          <Text style={styles.settingText}>Settings</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <Shield size={20} color="#6B7280" />
-          <Text style={styles.settingText}>Privacy & Safety</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <User size={20} color="#6B7280" />
-          <Text style={styles.settingText}>Help & Support</Text>
-        </TouchableOpacity>
-      </Card>
-
-      {/* Sign Out */}
-      <Card style={styles.signOutCard}>
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <LogOut size={20} color="#DC2626" />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </Card>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Built with Bolt</Text>
-        <Text style={styles.versionText}>FlashCare v1.0.0</Text>
-      </View>
-
-      <ProfileEditModal
-        visible={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleProfileSaved}
-      />
-    </ScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
   },
   profileCard: {
     marginHorizontal: 20,
@@ -571,5 +483,5 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     color: '#D1D5DB',
-  },
+  }
 });
