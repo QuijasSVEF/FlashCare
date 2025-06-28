@@ -7,7 +7,7 @@ import { EmergencyButton } from '../../components/EmergencyButton';
 import { PaywallModal } from '../../components/PaywallModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-import { useSchedules } from '../../hooks/useSchedules';
+import { useSchedules } from '@/hooks/useSchedules';
 import { databaseService } from '../../lib/database';
 
 export default function ScheduleScreen() {
