@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { EmergencyButton } from './EmergencyButton';
-import { Asset } from 'expo-asset';
 
 interface AppHeaderProps {
   title: string;
@@ -22,11 +21,9 @@ export function AppHeader({
     <View style={styles.container}>
       {/* Logo Row */}
       <View style={styles.logoRow}>
-        <Image
-          source={{ uri: Asset.fromModule(require('../assets/images/logo (2).png')).uri }}
-          style={styles.flashCareLogo}
-          resizeMode="contain"
-        />
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>YourLogo</Text>
+        </View>
         <Image
           source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
           style={styles.boltBadge}
@@ -69,9 +66,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  flashCareLogo: {
-    width: 120,
-    height: 40,
+  logoContainer: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  logoText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   boltBadge: {
     width: 40,
