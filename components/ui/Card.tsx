@@ -5,7 +5,7 @@ import { Colors } from '../../constants/Colors';
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  variant?: 'default' | 'elevated' | 'outlined';
+  variant?: 'default' | 'elevated' | 'outlined' | 'gradient';
 }
 
 export function Card({ children, style, variant = 'default' }: CardProps) {
@@ -42,5 +42,15 @@ const styles = StyleSheet.create({
     borderColor: Colors.gray[200],
     shadowOpacity: 0,
     elevation: 0,
+  },
+  gradient: {
+    backgroundColor: Colors.primary[50],
+    borderWidth: 1,
+    borderColor: Colors.primary[200],
+    shadowColor: Colors.primary[300],
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 8,
   },
 });
