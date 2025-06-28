@@ -79,7 +79,11 @@ export default function SignInScreen() {
         </TouchableOpacity>
         <View style={styles.logoContainer}>
           <Heart size={24} color="#2563EB" />
-          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+          source={{ uri: 'https://i.imgur.com/wrJlM2K.png' }}
+          style={styles.customLogo}
+          resizeMode="contain"
+        />
           <Image
             source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
             style={styles.boltBadge}
