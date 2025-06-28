@@ -3,10 +3,11 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  PanGestureHandler, 
-  Animated,
   Dimensions,
-  Image
+  Image,
+  Platform,
+  PanResponder,
+  Animated
 } from 'react-native';
 import { Heart, X, Star, MapPin, Clock } from 'lucide-react-native';
 import { Card } from './ui/Card';
@@ -29,65 +30,72 @@ export function SwipeableCard({
 }: SwipeableCardProps) {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
-  const rotate = useRef(new Animated.Value(0)).current;
   const [isSwipingLeft, setIsSwipingLeft] = useState(false);
   const [isSwipingRight, setIsSwipingRight] = useState(false);
 
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
-    { useNativeDriver: true }
-  );
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return Math.abs(gestureState.dx) > 20 || Math.abs(gestureState.dy) > 20;
+      },
+      onPanResponderGrant: () => {
+        translateX.setOffset(translateX._value);
+        translateY.setOffset(translateY._value);
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        translateX.setValue(gestureState.dx);
+        translateY.setValue(gestureState.dy);
+        
+        const swipeDirection = gestureState.dx > 0 ? 'right' : 'left';
+        setIsSwipingLeft(swipeDirection === 'left' && Math.abs(gestureState.dx) > 50);
+        setIsSwipingRight(swipeDirection === 'right' && Math.abs(gestureState.dx) > 50);
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        translateX.flattenOffset();
+        translateY.flattenOffset();
+        
+        const shouldSwipeLeft = gestureState.dx < -SWIPE_THRESHOLD || gestureState.vx < -0.5;
+        const shouldSwipeRight = gestureState.dx > SWIPE_THRESHOLD || gestureState.vx > 0.5;
 
-  const onHandlerStateChange = (event: any) => {
-    const { translationX, velocityX } = event.nativeEvent;
+        if (shouldSwipeLeft) {
+          Animated.timing(translateX, {
+            toValue: -screenWidth,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            onSwipeLeft();
+            resetCard();
+          });
+        } else if (shouldSwipeRight) {
+          Animated.timing(translateX, {
+            toValue: screenWidth,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            onSwipeRight();
+            resetCard();
+          });
+        } else {
+          // Snap back to center
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
 
-    if (event.nativeEvent.state === 5) { // END state
-      const shouldSwipeLeft = translationX < -SWIPE_THRESHOLD || velocityX < -1000;
-      const shouldSwipeRight = translationX > SWIPE_THRESHOLD || velocityX > 1000;
-
-      if (shouldSwipeLeft) {
-        Animated.timing(translateX, {
-          toValue: -screenWidth,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => {
-          onSwipeLeft();
-          resetCard();
-        });
-      } else if (shouldSwipeRight) {
-        Animated.timing(translateX, {
-          toValue: screenWidth,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => {
-          onSwipeRight();
-          resetCard();
-        });
-      } else {
-        // Snap back to center
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      }
-
-      setIsSwipingLeft(false);
-      setIsSwipingRight(false);
-    } else if (event.nativeEvent.state === 2) { // ACTIVE state
-      const swipeDirection = translationX > 0 ? 'right' : 'left';
-      setIsSwipingLeft(swipeDirection === 'left' && Math.abs(translationX) > 50);
-      setIsSwipingRight(swipeDirection === 'right' && Math.abs(translationX) > 50);
-    }
-  };
+        setIsSwipingLeft(false);
+        setIsSwipingRight(false);
+      },
+    })
+  ).current;
 
   const resetCard = () => {
     translateX.setValue(0);
     translateY.setValue(0);
-    rotate.setValue(0);
   };
 
   const rotateInterpolate = translateX.interpolate({
@@ -177,43 +185,39 @@ export function SwipeableCard({
   );
 
   return (
-    <PanGestureHandler
-      onGestureEvent={onGestureEvent}
-      onHandlerStateChange={onHandlerStateChange}
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [
+            { translateX },
+            { translateY },
+            { rotate: rotateInterpolate },
+          ],
+        },
+      ]}
+      {...panResponder.panHandlers}
     >
-      <Animated.View
-        style={[
-          styles.container,
-          {
-            transform: [
-              { translateX },
-              { translateY },
-              { rotate: rotateInterpolate },
-            ],
-          },
-        ]}
-      >
-        <Card style={[
-          styles.card,
-          isSwipingLeft && styles.swipingLeft,
-          isSwipingRight && styles.swipingRight,
-        ]}>
-          {userRole === 'family' ? renderCaregiverCard() : renderJobCard()}
-        </Card>
+      <Card style={[
+        styles.card,
+        isSwipingLeft && styles.swipingLeft,
+        isSwipingRight && styles.swipingRight,
+      ]}>
+        {userRole === 'family' ? renderCaregiverCard() : renderJobCard()}
+      </Card>
 
-        {/* Swipe Indicators */}
-        {isSwipingLeft && (
-          <View style={[styles.swipeIndicator, styles.passIndicator]}>
-            <X size={32} color="#FFFFFF" />
-          </View>
-        )}
-        {isSwipingRight && (
-          <View style={[styles.swipeIndicator, styles.likeIndicator]}>
-            <Heart size={32} color="#FFFFFF" />
-          </View>
-        )}
-      </Animated.View>
-    </PanGestureHandler>
+      {/* Swipe Indicators */}
+      {isSwipingLeft && (
+        <View style={[styles.swipeIndicator, styles.passIndicator]}>
+          <X size={32} color="#FFFFFF" />
+        </View>
+      )}
+      {isSwipingRight && (
+        <View style={[styles.swipeIndicator, styles.likeIndicator]}>
+          <Heart size={32} color="#FFFFFF" />
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
