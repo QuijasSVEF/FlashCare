@@ -102,7 +102,6 @@ export default function CreateJobScreen() {
           onDismiss={() => hideNotification(notification.id)}
         />
       ))}
-      
       <AppHeader
         title="Create Job Posting"
         subtitle="Find the perfect caregiver for your family"
