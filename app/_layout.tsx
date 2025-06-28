@@ -5,11 +5,9 @@ import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors'
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
-  useFrameworkReady();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -75,6 +73,7 @@ export default function SignInScreen() {
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
+      
       if (error.message?.includes('Invalid login credentials') || 
           error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
