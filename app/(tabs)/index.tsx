@@ -59,15 +59,19 @@ function QuickMenuModal({ visible, onClose, userRole }: QuickMenuModalProps) {
         onPress={onClose}
       >
         <View style={styles.quickMenu}>
-          <Text style={styles.quickMenuTitle}>Quick Actions</Text>
+          <View style={styles.quickMenuHeader}>
+            <Text style={styles.quickMenuTitle}>Quick Actions</Text>
+            <View style={styles.quickMenuAccent} />
+          </View>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
               style={styles.quickMenuItem}
               onPress={item.onPress}
+              activeOpacity={0.7}
             >
               <View style={[styles.quickMenuIcon, { backgroundColor: `${item.color}15` }]}>
-                <item.icon size={24} color={item.color} />
+                <item.icon size={24} color={item.color} strokeWidth={2} />
               </View>
               <View style={styles.quickMenuContent}>
                 <Text style={styles.quickMenuItemTitle}>{item.title}</Text>
@@ -200,7 +204,6 @@ export default function HomeScreen() {
 
   const handleApplyFilters = (filters: any) => {
     setActiveFilters(filters);
-    // TODO: Implement filtering logic
     console.log('Applied filters:', filters);
   };
 
@@ -209,9 +212,16 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>
-          {user?.role === 'family' ? 'Finding caregivers...' : 'Loading job opportunities...'}
-        </Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>
+            {user?.role === 'family' ? 'Finding caregivers...' : 'Loading job opportunities...'}
+          </Text>
+          <View style={styles.loadingDots}>
+            <View style={[styles.dot, styles.dot1]} />
+            <View style={[styles.dot, styles.dot2]} />
+            <View style={[styles.dot, styles.dot3]} />
+          </View>
+        </View>
       </View>
     );
   }
@@ -219,16 +229,18 @@ export default function HomeScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => {
-            setError(null);
-            user?.role === 'family' ? loadCaregivers() : loadJobPosts();
-          }}
-        >
-          <Text style={styles.retryButtonText}>Try Again</Text>
-        </TouchableOpacity>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setError(null);
+              user?.role === 'family' ? loadCaregivers() : loadJobPosts();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -255,14 +267,16 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.quickMenuButton}
               onPress={() => setShowQuickMenu(true)}
+              activeOpacity={0.7}
             >
-              <Menu size={20} color="#2563EB" />
+              <Menu size={20} color="#2563EB" strokeWidth={2} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.filterButton}
               onPress={() => setShowFilterModal(true)}
+              activeOpacity={0.7}
             >
-              <Filter size={20} color="#2563EB" />
+              <Filter size={20} color="#2563EB" strokeWidth={2} />
             </TouchableOpacity>
           </View>
         }
@@ -282,20 +296,25 @@ export default function HomeScreen() {
               <TouchableOpacity
                 style={[styles.actionButton, styles.passButton]}
                 onPress={() => handleSwipe('pass')}
+                activeOpacity={0.8}
               >
-                <X size={32} color="#FFFFFF" />
+                <X size={28} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.actionButton, styles.likeButton]}
                 onPress={() => handleSwipe('like')}
+                activeOpacity={0.8}
               >
-                <Heart size={32} color="#FFFFFF" />
+                <Heart size={28} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
           </>
         ) : (
           <View style={styles.noMoreCards}>
+            <View style={styles.noMoreIcon}>
+              <Search size={48} color="#D1D5DB" strokeWidth={1.5} />
+            </View>
             <Text style={styles.noMoreTitle}>
               {user?.role === 'family' ? 'No more caregivers nearby' : 'No more jobs available'}
             </Text>
@@ -311,6 +330,7 @@ export default function HomeScreen() {
                 setCurrentIndex(0);
                 user?.role === 'family' ? loadCaregivers() : loadJobPosts();
               }}
+              activeOpacity={0.8}
             >
               <Text style={styles.resetButtonText}>Start Over</Text>
             </TouchableOpacity>
@@ -350,21 +370,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
   loadingText: {
     fontSize: 18,
     color: '#6B7280',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#2563EB',
+  },
+  dot1: {
+    opacity: 0.4,
+  },
+  dot2: {
+    opacity: 0.7,
+  },
+  dot3: {
+    opacity: 1,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 40,
   },
   errorText: {
     fontSize: 16,
     color: '#DC2626',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    lineHeight: 24,
   },
   retryButton: {
     backgroundColor: '#2563EB',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   retryButtonText: {
     color: '#FFFFFF',
@@ -376,26 +431,37 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quickMenuButton: {
-    padding: 8,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 10,
     backgroundColor: '#EEF2FF',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterButton: {
-    padding: 8,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 10,
     backgroundColor: '#EEF2FF',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardContainer: {
     flex: 1,
     justifyContent: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingTop: 30,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 40,
-    marginTop: 40,
+    gap: 50,
+    marginTop: 30,
+    paddingBottom: 20,
   },
   actionButton: {
     width: 64,
@@ -404,10 +470,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   passButton: {
     backgroundColor: '#EF4444',
@@ -418,7 +484,10 @@ const styles = StyleSheet.create({
   noMoreCards: {
     alignItems: 'center',
     paddingHorizontal: 40,
-    paddingTop: 100,
+    paddingTop: 80,
+  },
+  noMoreIcon: {
+    marginBottom: 20,
   },
   noMoreTitle: {
     fontSize: 24,
@@ -426,6 +495,7 @@ const styles = StyleSheet.create({
     color: '#111827',
     textAlign: 'center',
     marginBottom: 16,
+    lineHeight: 32,
   },
   noMoreText: {
     fontSize: 16,
@@ -436,9 +506,14 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     backgroundColor: '#2563EB',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
     borderRadius: 12,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   resetButtonText: {
     color: '#FFFFFF',
@@ -453,28 +528,37 @@ const styles = StyleSheet.create({
   },
   quickMenu: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     margin: 20,
-    minWidth: 280,
+    minWidth: 300,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  quickMenuHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   quickMenuTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 16,
-    textAlign: 'center',
+    marginBottom: 8,
+  },
+  quickMenuAccent: {
+    width: 40,
+    height: 3,
+    backgroundColor: '#2563EB',
+    borderRadius: 2,
   },
   quickMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     borderRadius: 12,
     marginBottom: 8,
   },
@@ -493,7 +577,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   quickMenuItemSubtitle: {
     fontSize: 14,

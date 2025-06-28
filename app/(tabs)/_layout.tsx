@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase, LogOut } from 'lucide-react-native';
-import { TouchableOpacity, Alert } from 'react-native';
+import { Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase } from 'lucide-react-native';
+import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { router } from 'expo-router';
 
@@ -39,27 +39,33 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2563EB', // Primary blue from logo
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarActiveTintColor: '#2563EB',
+        tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 70,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingTop: 12,
+          height: Platform.OS === 'ios' ? 88 : 72,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 10,
+          shadowRadius: 12,
+          elevation: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
+          marginTop: 4,
         },
         tabBarItemStyle: {
           paddingVertical: 4,
+          borderRadius: 8,
+          marginHorizontal: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 2,
         },
       }}>
       
@@ -67,9 +73,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: isFamily ? 'Find Care' : 'Browse Jobs',
-          tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+          title: isFamily ? 'Find Care' : 'Browse',
+          tabBarIcon: ({ size, color, focused }) => (
+            <Home 
+              size={focused ? size + 2 : size} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -81,8 +91,12 @@ export default function TabLayout() {
             name="create-job"
             options={{
               title: 'Post Job',
-              tabBarIcon: ({ size, color }) => (
-                <Plus size={size} color={color} />
+              tabBarIcon: ({ size, color, focused }) => (
+                <Plus 
+                  size={focused ? size + 2 : size} 
+                  color={color}
+                  strokeWidth={focused ? 2.5 : 2}
+                />
               ),
             }}
           />
@@ -91,8 +105,12 @@ export default function TabLayout() {
             name="my-jobs"
             options={{
               title: 'My Jobs',
-              tabBarIcon: ({ size, color }) => (
-                <Briefcase size={size} color={color} />
+              tabBarIcon: ({ size, color, focused }) => (
+                <Briefcase 
+                  size={focused ? size + 2 : size} 
+                  color={color}
+                  strokeWidth={focused ? 2.5 : 2}
+                />
               ),
             }}
           />
@@ -105,8 +123,12 @@ export default function TabLayout() {
           name="search"
           options={{
             title: 'Search',
-            tabBarIcon: ({ size, color }) => (
-              <Search size={size} color={color} />
+            tabBarIcon: ({ size, color, focused }) => (
+              <Search 
+                size={focused ? size + 2 : size} 
+                color={color}
+                strokeWidth={focused ? 2.5 : 2}
+              />
             ),
           }}
         />
@@ -117,8 +139,12 @@ export default function TabLayout() {
         name="matches"
         options={{
           title: 'Matches',
-          tabBarIcon: ({ size, color }) => (
-            <Users size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <Users 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -127,8 +153,12 @@ export default function TabLayout() {
         name="messages"
         options={{
           title: 'Messages',
-          tabBarIcon: ({ size, color }) => (
-            <MessageCircle size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <MessageCircle 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -137,8 +167,12 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ size, color }) => (
-            <User size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <User 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
           headerShown: false,
         }}

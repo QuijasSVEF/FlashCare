@@ -18,7 +18,7 @@ export function EmergencyButton({ phoneNumber }: EmergencyButtonProps) {
 
   return (
     <TouchableOpacity style={styles.button} onPress={handleEmergencyCall}>
-      <Phone size={20} color="#FFFFFF" />
+      <Phone size={16} color="#FFFFFF" strokeWidth={2.5} />
       <Text style={styles.text}>Emergency</Text>
     </TouchableOpacity>
   );
@@ -30,19 +30,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: '#DC2626',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    minWidth: 100,
   },
   text: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6,
+    letterSpacing: 0.5,
   },
 });

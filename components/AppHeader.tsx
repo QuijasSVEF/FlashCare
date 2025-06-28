@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import { LogOut } from 'lucide-react-native';
+import { LogOut, Menu } from 'lucide-react-native';
 import { EmergencyButton } from './EmergencyButton';
 import { useAuth } from '../contexts/AuthContext';
 import { router } from 'expo-router';
@@ -54,11 +54,11 @@ export function AppHeader({
       <View style={styles.logoRow}>
         <View style={styles.logoContainer}>
           <Image
-            source={{ uri: 'https://i.imgur.com/wrJlM2K.png' }}
-            style={styles.customLogo}
+            source={require('../assets/images/logo (2).png')}
+            style={styles.flashCareLogo}
             resizeMode="contain"
           />
-          <View style={styles.logoGradient} />
+          <View style={styles.logoAccent} />
         </View>
         <Image
           source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
@@ -70,17 +70,18 @@ export function AppHeader({
       {/* Header Content */}
       <View style={styles.headerContent}>
         <View style={styles.titleSection}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+            {title}
+          </Text>
           {subtitle && (
-            <Text style={styles.subtitle}>{subtitle}</Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {subtitle}
+            </Text>
           )}
         </View>
         
         <View style={styles.rightSection}>
           {rightComponent}
-          <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
-            <LogOut size={20} color="#DC2626" />
-          </TouchableOpacity>
           {showEmergencyButton && (
             <EmergencyButton phoneNumber={emergencyPhone} />
           )}
@@ -100,9 +101,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   logoRow: {
     flexDirection: 'row',
@@ -112,23 +113,34 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     position: 'relative',
+    alignItems: 'flex-start',
   },
-  customLogo: {
+  flashCareLogo: {
     width: 140,
     height: 45,
   },
-  logoGradient: {
+  logoAccent: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -2,
     left: 0,
     right: 0,
     height: 3,
     backgroundColor: '#2563EB',
     borderRadius: 2,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   boltBadge: {
     width: 40,
     height: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerContent: {
     flexDirection: 'row',
@@ -137,30 +149,24 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     flex: 1,
+    marginRight: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#111827',
     marginBottom: 4,
+    lineHeight: 28,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
+    lineHeight: 18,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  logoutButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#FEE2E2',
-    shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    flexShrink: 0,
   },
 });

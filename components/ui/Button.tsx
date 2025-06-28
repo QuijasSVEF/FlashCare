@@ -31,7 +31,7 @@ export function Button({
       ]}
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
       <Text style={[styles.text, styles[`${variant}Text`], styles[`${size}Text`], textStyle]}>
         {title}
@@ -46,10 +46,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primary: {
     backgroundColor: '#2563EB',
@@ -66,22 +66,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   small: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   medium: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
   large: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: 28,
+    paddingVertical: 18,
   },
   disabled: {
     opacity: 0.5,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   text: {
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   primaryText: {
     color: '#FFFFFF',
