@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { Plus, MapPin, Clock, DollarSign, Users, Edit3, Trash2 } from 'lucide-react-native';
+import { Plus, MapPin, Clock, DollarSign, Users, CreditCard as Edit3, Trash2 } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
