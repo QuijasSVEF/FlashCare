@@ -48,9 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }, 30000);
               })
             ]);
+            console.log('Profile loaded:', !!profile);
+            setUser(profile);
+          } catch (profileError) {
             console.error('Error getting user profile:', profileError);
             // Don't sign out on profile error, just set user to null
             setUser(null);
+          }
           }
         } else {
           setUser(null);
