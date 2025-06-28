@@ -65,10 +65,10 @@ export const databaseService = {
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
+        if (error.code === 'PGRST116') {
           // User profile doesn't exist yet
           console.log('User profile not found for:', userId);
           return null;

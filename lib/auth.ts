@@ -99,7 +99,27 @@ export const authService = {
       
       if (!user) return null;
 
+      // Wait a moment for the database trigger to create the profile
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const profile = await databaseService.getUser(user.id);
+      
+      // If profile doesn't exist, try to create it
+      if (!profile) {
+        console.log('Profile not found, attempting to create...');
+        try {
+          const newProfile = await databaseService.createUser({
+            id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            role: user.user_metadata?.role || 'family',
+          });
+          return newProfile;
+        } catch (createError) {
+          console.error('Error creating profile:', createError);
+          return null;
+        }
+      }
+      
       return profile;
     } catch (error) {
       console.error('Error getting current user:', error);
