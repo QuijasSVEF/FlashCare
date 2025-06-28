@@ -5,12 +5,14 @@ import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, 
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { ProfileEditModal } from '../../components/ProfileEditModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { isSubscriber } = useSubscription();
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -24,7 +26,12 @@ export default function ProfileScreen() {
   };
 
   const handleEditProfile = () => {
-    console.log('Edit profile');
+    setShowEditModal(true);
+  };
+
+  const handleProfileSaved = () => {
+    // Refresh profile data if needed
+    console.log('Profile saved successfully');
   };
 
   const profileStats = [
@@ -159,6 +166,12 @@ export default function ProfileScreen() {
         <Text style={styles.footerText}>Built with Bolt</Text>
         <Text style={styles.versionText}>FlashCare v1.0.0</Text>
       </View>
+
+      <ProfileEditModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleProfileSaved}
+      />
     </ScrollView>
   );
 }

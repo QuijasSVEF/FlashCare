@@ -245,6 +245,20 @@ export const databaseService = {
     return data || [];
   },
 
+  async getJobPostById(jobId: string) {
+    const { data, error } = await supabase
+      .from('job_posts')
+      .select(`
+        *,
+        family:users!job_posts_family_id_fkey(*)
+      `)
+      .eq('id', jobId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   async getUserJobPosts(familyId: string) {
     const { data, error } = await supabase
       .from('job_posts')
@@ -288,6 +302,74 @@ export const databaseService = {
       .eq('direction', 'like')
       .order('created_at', { ascending: false });
 
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Enhanced search and filtering
+  async searchCaregivers(filters: {
+    location?: string;
+    minRating?: number;
+    experience?: string;
+    skills?: string[];
+    availability?: string;
+    maxDistance?: number;
+  }, limit = 20) {
+    let query = supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'caregiver')
+      .limit(limit);
+
+    if (filters.location) {
+      query = query.ilike('location', `%${filters.location}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // TODO: Add more sophisticated filtering based on ratings, skills, etc.
+    return data || [];
+  },
+
+  async searchJobPosts(filters: {
+    location?: string;
+    minRate?: number;
+    maxRate?: number;
+    minHours?: number;
+    maxHours?: number;
+    jobType?: string;
+  }, limit = 20) {
+    let query = supabase
+      .from('job_posts')
+      .select(`
+        *,
+        family:users!job_posts_family_id_fkey(*)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (filters.location) {
+      query = query.ilike('location', `%${filters.location}%`);
+    }
+
+    if (filters.minRate) {
+      query = query.gte('rate_hour', filters.minRate);
+    }
+
+    if (filters.maxRate) {
+      query = query.lte('rate_hour', filters.maxRate);
+    }
+
+    if (filters.minHours) {
+      query = query.gte('hours_per_week', filters.minHours);
+    }
+
+    if (filters.maxHours) {
+      query = query.lte('hours_per_week', filters.maxHours);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   },
