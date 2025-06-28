@@ -93,8 +93,18 @@ export const authService = {
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      console.log('Signing out from Supabase...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Supabase sign out error:', error);
+        // Don't throw error - we still want to clear local state
+      }
+      console.log('Supabase sign out completed');
+    } catch (error) {
+      console.error('Error in auth service sign out:', error);
+      // Don't throw - we want to clear local state regardless
+    }
   },
 
   async getCurrentUser(): Promise<User | null> {

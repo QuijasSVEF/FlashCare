@@ -121,11 +121,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await authService.signOut();
-    if (Platform.OS !== 'web') {
-      await subscriptionService.logOut();
+    try {
+      console.log('Starting sign out process...');
+      
+      // Clear user state immediately for better UX
+      setUser(null);
+      
+      // Sign out from Supabase
+      await authService.signOut();
+      
+      // Clear subscription state if on mobile
+      if (Platform.OS !== 'web') {
+        await subscriptionService.logOut();
+      }
+      
+      console.log('Sign out completed successfully');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Even if there's an error, clear the user state
+      setUser(null);
     }
-    setUser(null);
   };
 
   const updateProfile = async (updates: Database['public']['Tables']['users']['Update']) => {

@@ -122,7 +122,21 @@ export default function ProfileScreen() {
       'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', style: 'destructive', onPress: signOut },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await signOut();
+              // Force navigation to auth screen
+              router.replace('/(auth)/welcome');
+            } catch (error) {
+              console.error('Sign out error:', error);
+              // Force navigation even if there's an error
+              router.replace('/(auth)/welcome');
+            }
+          }
+        },
       ]
     );
   };
