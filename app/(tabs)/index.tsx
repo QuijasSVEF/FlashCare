@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Image } from 'react-native';
-import { Heart, X, MapPin, Clock, DollarSign, User } from 'lucide-react-native';
+import { Heart, X, MapPin, Clock, DollarSign, User, Filter } from 'lucide-react-native';
 import { CaregiverCard } from '../../components/CaregiverCard';
 import { Card } from '../../components/ui/Card';
+import { FilterModal } from '../../components/FilterModal';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchingService } from '../../lib/matching';
@@ -17,6 +18,8 @@ export default function HomeScreen() {
   const [jobPosts, setJobPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<any>({});
 
   React.useEffect(() => {
     if (user?.role === 'family') {
@@ -110,6 +113,12 @@ export default function HomeScreen() {
     setCurrentIndex(prev => prev + 1);
   };
 
+  const handleApplyFilters = (filters: any) => {
+    setActiveFilters(filters);
+    // TODO: Implement filtering logic
+    console.log('Applied filters:', filters);
+  };
+
   const currentItem = user?.role === 'family' ? caregivers[currentIndex] : jobPosts[currentIndex];
 
   if (loading) {
@@ -194,7 +203,15 @@ export default function HomeScreen() {
             <Text style={styles.locationText}>{user?.location || 'San Francisco, CA'}</Text>
           </View>
         </View>
-        <EmergencyButton phoneNumber={user?.emergency_phone} />
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setShowFilterModal(true)}
+          >
+            <Filter size={20} color="#2563EB" />
+          </TouchableOpacity>
+          <EmergencyButton phoneNumber={user?.emergency_phone} />
+        </View>
       </View>
 
       <View style={styles.cardContainer}>
@@ -247,6 +264,13 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApplyFilters={handleApplyFilters}
+        userRole={user?.role || 'family'}
+      />
     </View>
   );
 }
@@ -277,6 +301,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111827',
     marginBottom: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  filterButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#EEF2FF',
   },
   location: {
     flexDirection: 'row',

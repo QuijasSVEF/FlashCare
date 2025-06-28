@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, MapPin, MessageCircle, User } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { ProfileModal } from '../../components/ProfileModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
 
@@ -12,6 +13,8 @@ export default function JobApplicantsScreen() {
   const { user } = useAuth();
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     if (jobId) {
@@ -40,6 +43,11 @@ export default function JobApplicantsScreen() {
       `To message ${applicant.caregiver.name}, you need to like them back from the main browsing screen to create a match.`,
       [{ text: 'OK' }]
     );
+  };
+
+  const handleViewProfile = (applicant: any) => {
+    setSelectedProfile(applicant.caregiver);
+    setShowProfileModal(true);
   };
 
   const renderApplicant = ({ item }: { item: any }) => {
@@ -93,7 +101,7 @@ export default function JobApplicantsScreen() {
           
           <Button
             title="View Profile"
-            onPress={() => console.log('View profile:', caregiver.id)}
+            onPress={() => handleViewProfile(item)}
             variant="outline"
             size="small"
           />
@@ -151,6 +159,21 @@ export default function JobApplicantsScreen() {
               </Text>
             </View>
           }
+        />
+      )}
+
+      {selectedProfile && (
+        <ProfileModal
+          visible={showProfileModal}
+          onClose={() => {
+            setShowProfileModal(false);
+            setSelectedProfile(null);
+          }}
+          user={selectedProfile}
+          onStartConversation={() => {
+            setShowProfileModal(false);
+            handleStartConversation({ caregiver: selectedProfile });
+          }}
         />
       )}
     </View>

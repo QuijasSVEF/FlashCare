@@ -7,9 +7,12 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NotificationBanner } from '../../components/NotificationBanner';
 
 export default function CreateJobScreen() {
   const { user } = useAuth();
+  const { notifications, showSuccess, showError, hideNotification } = useNotifications();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -53,30 +56,21 @@ export default function CreateJobScreen() {
 
       await databaseService.createJobPost(jobData);
       
-      Alert.alert(
+      showSuccess(
         'Job Posted Successfully!',
-        'Your job posting is now live and caregivers can start applying.',
-        [
-          {
-            text: 'View My Jobs',
-            onPress: () => router.replace('/(tabs)/my-jobs'),
-          },
-          {
-            text: 'Create Another',
-            onPress: () => {
-              setFormData({
-                title: '',
-                description: '',
-                location: user?.location || '',
-                hours_per_week: '',
-                rate_hour: '',
-              });
-            },
-          },
-        ]
+        'Your job posting is now live and caregivers can start applying.'
       );
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        location: user?.location || '',
+        hours_per_week: '',
+        rate_hour: '',
+      });
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create job posting');
+      showError('Error', error.message || 'Failed to create job posting');
     } finally {
       setLoading(false);
     }
@@ -97,6 +91,17 @@ export default function CreateJobScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {notifications.map((notification) => (
+        <NotificationBanner
+          key={notification.id}
+          visible={notification.visible}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onDismiss={() => hideNotification(notification.id)}
+        />
+      ))}
+      
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create Job Posting</Text>
         <Text style={styles.headerSubtitle}>
