@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { authService } from '../lib/auth';
+import { subscriptionService } from '../lib/subscription';
 import { Database } from '../lib/supabase';
 
 type User = Database['public']['Tables']['users']['Row'];
@@ -53,6 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await authService.signOut();
+    if (Platform.OS !== 'web') {
+      await subscriptionService.logOut();
+    }
     setUser(null);
   };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Modal, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { X, Crown, Check } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -14,6 +14,10 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const { purchaseSubscription, restorePurchases } = useSubscription();
 
   const handlePurchase = async () => {
+    if (Platform.OS === 'web') {
+      alert('Subscriptions are only available on mobile devices. Please use the iOS or Android app.');
+      return;
+    }
     const success = await purchaseSubscription();
     if (success) {
       onClose();
@@ -21,6 +25,10 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   };
 
   const handleRestore = async () => {
+    if (Platform.OS === 'web') {
+      alert('Restore purchases is only available on mobile devices.');
+      return;
+    }
     const success = await restorePurchases();
     if (success) {
       onClose();
