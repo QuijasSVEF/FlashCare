@@ -1,5 +1,6 @@
 import React from 'react';
 import { TextInput, Text, View, StyleSheet, TextInputProps } from 'react-native';
+import { Colors } from '../../constants/Colors';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -30,24 +31,24 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: '500',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   inputError: {
-    borderColor: '#DC2626',
+    borderColor: Colors.error,
   },
   error: {
-    color: '#DC2626',
+    color: Colors.error,
     fontSize: 14,
     marginTop: 4,
   },

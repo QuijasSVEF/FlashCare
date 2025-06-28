@@ -50,7 +50,7 @@ export default function SignUpScreen() {
       console.log('Signup successful, navigating to profile setup');
       router.replace('/(auth)/profile-setup');
     } catch (error: any) {
-      console.error('Signup error:', error);
+      console.error('Signup error:', error.message || error);
       let errorMessage = 'Failed to create account';
       
       if (error.message?.includes('User already registered') || 
@@ -78,7 +78,7 @@ export default function SignUpScreen() {
       } else if (error.message?.includes('Email not confirmed')) {
         Alert.alert(
           'Check Your Email',
-          'Please check your email and click the confirmation link to complete your registration.',
+          'Please check your email to complete your registration.',
           [{ text: 'OK' }]
         );
         return;

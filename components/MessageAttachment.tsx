@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FileText, Download, Eye } from 'lucide-react-native';
+import { Colors } from '../constants/Colors';
 
 interface MessageAttachmentProps {
   type: 'image' | 'file';
@@ -76,22 +77,22 @@ const styles = StyleSheet.create({
   imageOverlay: {
     position: 'absolute',
     top: 8,
-    right: 8,
+    right: 8, 
     width: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center', 
   },
   fileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
     marginVertical: 4,
     maxWidth: 250,
   },
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: Colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -110,12 +111,12 @@ const styles = StyleSheet.create({
   fileName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 2,
   },
   fileSize: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   downloadButton: {
     padding: 8,

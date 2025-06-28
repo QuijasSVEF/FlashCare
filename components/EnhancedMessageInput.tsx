@@ -10,6 +10,7 @@ import {
 import { Send, Paperclip, Camera, Image as ImageIcon, Mic } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { Colors } from '../constants/Colors';
 
 interface EnhancedMessageInputProps {
   value: string;
@@ -202,35 +203,35 @@ const styles = StyleSheet.create({
   attachmentButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    borderRadius: 20, 
+    backgroundColor: Colors.gray[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     maxHeight: 100,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   textInputDisabled: {
-    backgroundColor: '#F3F4F6',
-    color: '#9CA3AF',
+    backgroundColor: Colors.gray[100],
+    color: Colors.gray[400],
   },
   sendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2563EB',
+    backgroundColor: Colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#D1D5DB',
+    backgroundColor: Colors.gray[300],
   },
 });

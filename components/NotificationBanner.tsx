@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { X, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Info } from 'lucide-react-native';
+import { Colors } from '../constants/Colors';
 
 interface NotificationBannerProps {
   visible: boolean;
@@ -69,28 +70,28 @@ export function NotificationBanner({
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#D1FAE5';
+        return Colors.primary[100];
       case 'error':
-        return '#FEE2E2';
+        return '#FEE2E2'; // Light red
       case 'warning':
-        return '#FEF3C7';
+        return '#FEF3C7'; // Light yellow
       case 'info':
       default:
-        return '#DBEAFE';
+        return '#DBEAFE'; // Light blue
     }
   };
 
   const getBorderColor = () => {
     switch (type) {
       case 'success':
-        return '#059669';
+        return Colors.primary[500];
       case 'error':
-        return '#DC2626';
+        return Colors.error;
       case 'warning':
-        return '#D97706';
+        return Colors.warning;
       case 'info':
       default:
-        return '#2563EB';
+        return Colors.info;
     }
   };
 

@@ -14,14 +14,15 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send, Phone, Video } from 'lucide-react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { EnhancedMessageInput } from '../../components/EnhancedMessageInput';
-import { TypingIndicator } from '../../components/TypingIndicator';
-import { MessageAttachment } from '../../components/MessageAttachment';
-import { VideoCallModal } from '../../components/VideoCallModal';
+import { TypingIndicator } from '../../components/TypingIndicator'; 
+import { MessageAttachment } from '../../components/MessageAttachment'; 
+import { VideoCallModal } from '../../components/VideoCallModal'; 
 import { useAuth } from '../../contexts/AuthContext';
 import { useMessages } from '../../hooks/useMessages';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { PaywallModal } from '../../components/PaywallModal';
 import { databaseService } from '../../lib/database';
+import { Colors } from '../../constants/Colors';
 
 export default function ChatScreen() {
   const { id: matchId } = useLocalSearchParams<{ id: string }>();
@@ -236,7 +237,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   centered: {
     justifyContent: 'center',
@@ -244,22 +245,22 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   errorText: {
     fontSize: 16,
-    color: '#DC2626',
+    color: Colors.error,
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: Colors.primary[500],
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -289,13 +290,13 @@ const styles = StyleSheet.create({
   },
   ownMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#2563EB',
+    backgroundColor: Colors.primary[500],
   },
   otherMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
   },
   messageText: {
     fontSize: 16,
@@ -303,20 +304,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   ownMessageText: {
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
   },
   otherMessageText: {
-    color: '#111827',
+    color: Colors.text.primary,
   },
   messageTime: {
     fontSize: 12,
   },
   ownMessageTime: {
-    color: '#DBEAFE',
+    color: Colors.primary[100],
     textAlign: 'right',
   },
   otherMessageTime: {
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
   },
   emptyMessages: {
     flex: 1,
@@ -327,12 +328,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
   },

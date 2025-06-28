@@ -58,7 +58,13 @@ export const authService = {
   async signIn(email: string, password: string) {
     try {
       console.log('Auth service: Starting signin for:', email);
+
+      // Clear any existing session first to prevent conflicts
+      await supabase.auth.signOut();
       
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -93,10 +99,7 @@ export const authService = {
   async signOut() {
     try {
       console.log('Signing out from Supabase...');
-      
-      // Clear any cached session data first
-      await supabase.auth.refreshSession();
-      
+            
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
@@ -115,7 +118,12 @@ export const authService = {
   async getCurrentUser(): Promise<User | null> {
     try {
       console.log('Getting current user...');
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Error getting auth user:', error);
+        return null;
+      }
       
       if (!user) {
         console.log('No authenticated user found');
@@ -124,7 +132,7 @@ export const authService = {
 
       console.log('Found authenticated user:', user.id);
 
-      const profile = await databaseService.getUser(user.id);
+      const profile = await databaseService.getUserSafe(user.id);
       
       if (!profile) {
         console.log('No profile found for user:', user.id, '- returning null');

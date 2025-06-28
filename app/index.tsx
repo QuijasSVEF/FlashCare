@@ -11,20 +11,26 @@ export default function Index() {
   // Add a timeout to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setTimeoutReached(true);
-    }, 5000); // 5 second timeout (reduced from 10)
+      if (loading) {
+        setTimeoutReached(true);
+        console.log('Auth loading timeout reached');
+      }
+    }, 3000); // 3 second timeout
 
     return () => clearTimeout(timeout);
-  }, []);
+  }, [loading]);
 
   // Force redirect after a longer timeout
   useEffect(() => {
     const forceTimeout = setTimeout(() => {
-      setForceRedirect(true);
-    }, 8000); // 8 second force timeout
+      if (loading) {
+        setForceRedirect(true);
+        console.log('Auth force redirect timeout reached');
+      }
+    }, 5000); // 5 second force timeout
 
     return () => clearTimeout(forceTimeout);
-  }, []);
+  }, [loading]);
 
   // Show loading screen while checking auth state
   if (loading && !timeoutReached && !forceRedirect) {

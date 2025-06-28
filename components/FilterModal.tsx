@@ -10,6 +10,7 @@ import {
 import { X, MapPin, DollarSign, Clock, Star } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Colors } from '../constants/Colors';
 
 interface FilterModalProps {
   visible: boolean;
@@ -202,7 +203,7 @@ export function FilterModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -211,14 +212,14 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   closeButton: {
     padding: 8,
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 12,
   },
   row: {
@@ -254,28 +255,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.gray[200],
+    backgroundColor: Colors.background,
   },
   optionButtonSelected: {
-    borderColor: '#2563EB',
-    backgroundColor: '#EEF2FF',
+    borderColor: Colors.primary[500],
+    backgroundColor: Colors.primary[50],
   },
   optionText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   optionTextSelected: {
-    color: '#2563EB',
+    color: Colors.primary[500],
     fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: Colors.gray[200],
     gap: 12,
   },
   clearButton: {

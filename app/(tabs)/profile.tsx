@@ -5,7 +5,7 @@ import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, 
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
-import { AppHeader } from '../../components/AppHeader';
+import { AppHeader } from '../../components/AppHeader'; 
 import { ProfileEditModal } from '../../components/ProfileEditModal';
 import { ReviewModal } from '../../components/ReviewModal';
 import { NotificationCenter } from '../../components/NotificationCenter';
@@ -13,6 +13,7 @@ import { QuickStatsCard } from '../../components/QuickStatsCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { databaseService } from '../../lib/database';
+import { Colors } from '../constants/Colors';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -119,7 +120,7 @@ export default function ProfileScreen() {
   const handleSignOut = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out?',
+      'Are you sure you want to sign out of FlashCare?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -130,15 +131,10 @@ export default function ProfileScreen() {
               console.log('Profile: Starting sign out...');
               const success = await signOut();
               
-              if (success) {
-                console.log('Profile: Sign out successful, navigating...');
-                // Use replace to prevent going back
-                router.replace('/(auth)/welcome');
-              }
+              console.log('Profile: Sign out successful:', success);
+              // Navigation will happen automatically via the auth state change in index.tsx
             } catch (error) {
               console.error('Profile: Sign out error:', error);
-              // Force navigation even on error
-              router.replace('/(auth)/welcome');
             }
           }
         },
@@ -426,7 +422,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   content: {
     paddingHorizontal: 20,
@@ -435,12 +431,12 @@ const styles = StyleSheet.create({
   notificationButton: {
     position: 'relative',
     padding: 8,
-  },
+  }, 
   notificationBadge: {
     position: 'absolute',
     top: 4,
     right: 4,
-    backgroundColor: '#DC2626',
+    backgroundColor: Colors.error,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -448,13 +444,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notificationBadgeText: {
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
     fontSize: 10,
     fontWeight: 'bold',
   },
   collapsibleCard: {
     marginBottom: 16,
-    overflow: 'hidden',
+    overflow: 'hidden', 
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -470,8 +466,8 @@ const styles = StyleSheet.create({
   sectionIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EEF2FF',
+    borderRadius: 18, 
+    backgroundColor: Colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -479,7 +475,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   chevronContainer: {
     padding: 4,
@@ -525,7 +521,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     flex: 1,
   },
   editButton: {
@@ -533,13 +529,13 @@ const styles = StyleSheet.create({
   },
   profileRole: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 8,
   },
   subscriberBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: Colors.primary[100],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -548,7 +544,7 @@ const styles = StyleSheet.create({
   subscriberText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
+    color: Colors.primary[600],
     marginLeft: 4,
   },
   bioContainer: {
@@ -557,12 +553,12 @@ const styles = StyleSheet.create({
   bioLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   profileBio: {
     fontSize: 16,
-    color: '#374151',
+    color: Colors.text.primary,
     lineHeight: 24,
   },
   contactDetails: {
@@ -574,7 +570,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginLeft: 8,
   },
   statsGrid: {
@@ -597,18 +593,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
   },
   ratingContainer: {
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: Colors.gray[100],
   },
   ratingItem: {
     flexDirection: 'row',
@@ -622,11 +618,11 @@ const styles = StyleSheet.create({
   ratingValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   ratingLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   actionsList: {
     gap: 0,
@@ -635,27 +631,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomWidth: 1, 
+    borderBottomColor: Colors.gray[100],
   },
   actionIconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#EEF2FF',
+    borderRadius: 16, 
+    backgroundColor: Colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   actionText: {
     fontSize: 16,
-    color: '#374151',
+    color: Colors.text.primary,
     flex: 1,
   },
   reviewItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Colors.gray[100],
   },
   reviewHeader: {
     flexDirection: 'row',
@@ -666,7 +662,7 @@ const styles = StyleSheet.create({
   reviewerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   reviewRating: {
     flexDirection: 'row',
@@ -674,13 +670,13 @@ const styles = StyleSheet.create({
   },
   reviewComment: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     lineHeight: 20,
     marginBottom: 8,
   },
   reviewDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
   },
   viewAllButton: {
     paddingVertical: 12,
@@ -688,7 +684,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    color: '#2563EB',
+    color: Colors.primary[500],
     fontWeight: '600',
   },
   settingsList: {
@@ -698,22 +694,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomWidth: 1, 
+    borderBottomColor: Colors.gray[100],
   },
   settingText: {
     fontSize: 16,
-    color: '#374151',
+    color: Colors.text.primary,
     marginLeft: 12,
     flex: 1,
   },
   emergencyText: {
-    color: '#DC2626',
+    color: Colors.error,
     fontWeight: '600',
   },
   emergencyNumber: {
     fontSize: 14,
-    color: '#DC2626',
+    color: Colors.error,
     fontWeight: '500',
   },
   accountActions: {
@@ -723,14 +719,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    backgroundColor: '#FEE2E2',
+    paddingVertical: 16, 
+    backgroundColor: '#FEE2E2', // Light red
     borderRadius: 12,
   },
   signOutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#DC2626',
+    color: Colors.error,
     marginLeft: 8,
   },
   deleteAccountButton: {
@@ -739,7 +735,7 @@ const styles = StyleSheet.create({
   },
   deleteAccountText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
     textDecorationLine: 'underline',
   },
   footer: {
@@ -748,11 +744,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
     marginBottom: 4,
   },
   versionText: {
     fontSize: 12,
-    color: '#D1D5DB',
+    color: Colors.gray[300],
   },
 });

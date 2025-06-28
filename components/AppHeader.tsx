@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import { LogOut, Menu, Phone } from 'lucide-react-native';
+import { Menu, Phone } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { router } from 'expo-router';
 import { Colors } from '../constants/Colors';
@@ -17,34 +17,6 @@ export function AppHeader({
   rightComponent 
 }: AppHeaderProps) {
   const { signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              console.log('Header: Starting sign out...');
-              const success = await signOut();
-              
-              if (success) {
-                console.log('Header: Sign out successful, navigating...');
-                router.replace('/(auth)/welcome');
-              }
-            } catch (error) {
-              console.error('Header: Sign out error:', error);
-              router.replace('/(auth)/welcome');
-            }
-          }
-        },
-      ]
-    );
-  };
 
   return (
     <View style={styles.container}>

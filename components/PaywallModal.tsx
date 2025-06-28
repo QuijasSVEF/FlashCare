@@ -3,6 +3,7 @@ import { View, Text, Modal, StyleSheet, TouchableOpacity, Platform } from 'react
 import { X, Crown, Check } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { Colors } from '../constants/Colors';
 
 interface PaywallModalProps {
   visible: boolean;
@@ -101,7 +102,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   header: {
     paddingTop: 60,
@@ -121,8 +122,8 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FEF3C7',
+    borderRadius: 40, 
+    backgroundColor: Colors.secondary[100],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -130,13 +131,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -147,11 +148,11 @@ const styles = StyleSheet.create({
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 16, 
   },
   featureText: {
     fontSize: 16,
-    color: '#374151',
+    color: Colors.text.primary,
     marginLeft: 12,
     flex: 1,
   },
@@ -163,11 +164,11 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   period: {
     fontSize: 18,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginLeft: 8,
   },
   purchaseButton: {
@@ -180,12 +181,12 @@ const styles = StyleSheet.create({
   },
   restoreText: {
     fontSize: 16,
-    color: '#2563EB',
+    color: Colors.primary[500],
     textAlign: 'center',
   },
   terms: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
     textAlign: 'center',
     lineHeight: 20,
   },

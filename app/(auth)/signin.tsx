@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { ArrowLeft, Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext'; 
 import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
@@ -37,10 +37,8 @@ export default function SignInScreen() {
     try {
       console.log('Attempting signin with:', formData.email);
       await signIn(formData.email, formData.password);
-      
-      console.log('Signin successful, navigating to tabs');
-      router.replace('/(tabs)');
-      
+      // Navigation will happen automatically via the auth state change in index.tsx
+      console.log('Signin successful');
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';

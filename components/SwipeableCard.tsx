@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Heart, X, Star, MapPin, Clock, DollarSign } from 'lucide-react-native';
 import { Card } from './ui/Card';
-import { Colors } from '../constants/Colors';
+import { Colors } from '../constants/Colors'; 
 
 const { width: screenWidth } = Dimensions.get('window');
 const SWIPE_THRESHOLD = screenWidth * 0.25;
@@ -34,12 +34,42 @@ export function SwipeableCard({
   const [isSwipingLeft, setIsSwipingLeft] = useState(false);
   const [isSwipingRight, setIsSwipingRight] = useState(false);
 
+  const handleSwipe = (direction: 'left' | 'right') => {
+    Animated.timing(translateX, {
+      toValue: direction === 'left' ? -screenWidth : screenWidth,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      if (direction === 'left') {
+        onSwipeLeft();
+      } else {
+        onSwipeRight();
+      }
+      setTimeout(resetCard, 50);
+    });
+  };
+
+  const resetCard = () => {
+    // Snap back to center
+    Animated.spring(translateX, {
+      toValue: 0,
+      useNativeDriver: true, 
+    }).start();
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
+
+    setIsSwipingLeft(false);
+    setIsSwipingRight(false); 
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         return Math.abs(gestureState.dx) > 20 || Math.abs(gestureState.dy) > 20;
       },
-      onPanResponderGrant: () => {
+      onPanResponderGrant: () => { 
         translateX.setOffset(translateX._value);
         translateY.setOffset(translateY._value);
       },
@@ -47,7 +77,7 @@ export function SwipeableCard({
         translateX.setValue(gestureState.dx);
         translateY.setValue(gestureState.dy);
         
-        const swipeDirection = gestureState.dx > 0 ? 'right' : 'left';
+        const swipeDirection = gestureState.dx > 0 ? 'right' : 'left'; 
         setIsSwipingLeft(swipeDirection === 'left' && Math.abs(gestureState.dx) > 50);
         setIsSwipingRight(swipeDirection === 'right' && Math.abs(gestureState.dx) > 50);
       },
@@ -55,49 +85,19 @@ export function SwipeableCard({
         translateX.flattenOffset();
         translateY.flattenOffset();
         
-        const shouldSwipeLeft = gestureState.dx < -SWIPE_THRESHOLD || gestureState.vx < -0.5;
+        const shouldSwipeLeft = gestureState.dx < -SWIPE_THRESHOLD || gestureState.vx < -0.5; 
         const shouldSwipeRight = gestureState.dx > SWIPE_THRESHOLD || gestureState.vx > 0.5;
 
         if (shouldSwipeLeft) {
-          Animated.timing(translateX, {
-            toValue: -screenWidth,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            onSwipeLeft();
-            resetCard();
-          });
+          handleSwipe('left');
         } else if (shouldSwipeRight) {
-          Animated.timing(translateX, {
-            toValue: screenWidth,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            onSwipeRight();
-            resetCard();
-          });
+          handleSwipe('right');
         } else {
-          // Snap back to center
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
+          resetCard(); 
         }
-
-        setIsSwipingLeft(false);
-        setIsSwipingRight(false);
       },
     })
   ).current;
-
-  const resetCard = () => {
-    translateX.setValue(0);
-    translateY.setValue(0);
-  };
 
   const rotateInterpolate = translateX.interpolate({
     inputRange: [-screenWidth, 0, screenWidth],

@@ -102,10 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Starting signin for:', email);
-      
-      // Clear any existing user state first
-      setUser(null);
-      
+            
       const result = await authService.signIn(email, password);
       
       if (!result.user || !result.session) {
@@ -124,13 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async (): Promise<boolean> => {
     try {
       console.log('Starting sign out process...');
-      
-      // Sign out from Supabase first
-      await authService.signOut();
-      
-      // Clear user state
+
+      // Clear user state first to prevent UI flashing
       setUser(null);
-      
+
+      // Then sign out from Supabase
+      await authService.signOut();
+            
       // Clear subscription state if on mobile
       if (Platform.OS !== 'web') {
         try {

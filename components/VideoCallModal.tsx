@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
-  Modal, 
+  Modal,
   StyleSheet, 
   TouchableOpacity,
   Alert,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { X, Video, VideoOff, Mic, MicOff, Phone } from 'lucide-react-native';
 import { Button } from './ui/Button';
+import { Colors } from '../constants/Colors';
 
 interface VideoCallModalProps {
   visible: boolean;
@@ -178,20 +179,20 @@ const styles = StyleSheet.create({
   webNotice: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    backgroundColor: '#FFFFFF',
+    alignItems: 'center', 
+    paddingHorizontal: 40, 
+    backgroundColor: Colors.background,
   },
   webNoticeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginTop: 20,
     marginBottom: 16,
   },
   webNoticeText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -205,13 +206,13 @@ const styles = StyleSheet.create({
   },
   remoteVideo: {
     flex: 1,
-    backgroundColor: '#1F2937',
+    backgroundColor: Colors.gray[800],
     justifyContent: 'center',
     alignItems: 'center',
   },
   videoPlaceholder: {
     fontSize: 18,
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
     textAlign: 'center',
   },
   localVideo: {
@@ -220,14 +221,14 @@ const styles = StyleSheet.create({
     right: 20,
     width: 120,
     height: 160,
-    backgroundColor: '#374151',
+    backgroundColor: Colors.gray[700],
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   localVideoText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
   },
   callInfo: {
     alignItems: 'center',
@@ -236,12 +237,12 @@ const styles = StyleSheet.create({
   callerName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
     marginBottom: 8,
   },
   callStatus: {
     fontSize: 16,
-    color: '#D1D5DB',
+    color: Colors.gray[300],
   },
   controls: {
     flexDirection: 'row',
@@ -253,13 +254,13 @@ const styles = StyleSheet.create({
   controlButton: {
     width: 60,
     height: 60,
-    borderRadius: 30,
-    backgroundColor: '#374151',
+    borderRadius: 30, 
+    backgroundColor: Colors.gray[700],
     justifyContent: 'center',
     alignItems: 'center',
   },
   mutedButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: Colors.error,
   },
   incomingControls: {
     flexDirection: 'row',
@@ -268,16 +269,16 @@ const styles = StyleSheet.create({
   answerButton: {
     width: 70,
     height: 70,
-    borderRadius: 35,
-    backgroundColor: '#059669',
+    borderRadius: 35, 
+    backgroundColor: Colors.success,
     justifyContent: 'center',
     alignItems: 'center',
   },
   declineButton: {
     width: 70,
     height: 70,
-    borderRadius: 35,
-    backgroundColor: '#DC2626',
+    borderRadius: 35, 
+    backgroundColor: Colors.error,
     justifyContent: 'center',
     alignItems: 'center',
     transform: [{ rotate: '135deg' }],
@@ -285,8 +286,8 @@ const styles = StyleSheet.create({
   endCallButton: {
     width: 70,
     height: 70,
-    borderRadius: 35,
-    backgroundColor: '#DC2626',
+    borderRadius: 35, 
+    backgroundColor: Colors.error,
     justifyContent: 'center',
     alignItems: 'center',
     transform: [{ rotate: '135deg' }],

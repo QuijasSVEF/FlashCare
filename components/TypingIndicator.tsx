@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { Colors } from '../constants/Colors';
 
 interface TypingIndicatorProps {
   visible: boolean;
@@ -112,11 +113,11 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingVertical: 8,
-  },
+  }, 
   bubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.gray[100],
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 16,
@@ -125,18 +126,18 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     fontStyle: 'italic',
     marginRight: 8,
   },
   dotsContainer: {
     flexDirection: 'row',
-    gap: 3,
+    gap: 3, 
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#9CA3AF',
+    backgroundColor: Colors.gray[400],
   },
 });

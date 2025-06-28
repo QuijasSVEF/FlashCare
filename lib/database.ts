@@ -86,12 +86,13 @@ export const databaseService = {
   async getUserSafe(userId: string) {
     const { data, error } = await supabase
       .from('users')
-      .select('*')
+      .select('id, name, role, avatar_url, bio, phone, emergency_phone, location, created_at, updated_at')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      throw error;
+      console.error('Database error getting user safe:', error);
+      return null;
     }
     return data;
   },

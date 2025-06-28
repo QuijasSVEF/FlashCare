@@ -11,7 +11,8 @@ import {
 import { X, Camera, Save } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext'; 
+import { Colors } from '../constants/Colors';
 
 interface ProfileEditModalProps {
   visible: boolean;
@@ -180,7 +181,7 @@ export function ProfileEditModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -189,14 +190,14 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   closeButton: {
     padding: 8,
@@ -216,8 +217,8 @@ const styles = StyleSheet.create({
   avatar: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F3F4F6',
+    borderRadius: 50, 
+    backgroundColor: Colors.gray[100],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   },
   changePhotoText: {
     fontSize: 16,
-    color: '#2563EB',
+    color: Colors.primary[500],
     fontWeight: '600',
   },
   section: {
@@ -237,12 +238,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 16,
   },
   bioInput: {
@@ -258,29 +259,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
+    borderWidth: 1, 
+    borderColor: Colors.gray[200],
+    backgroundColor: Colors.background,
   },
   skillButtonSelected: {
-    borderColor: '#059669',
-    backgroundColor: '#D1FAE5',
+    borderColor: Colors.primary[500],
+    backgroundColor: Colors.primary[100],
   },
   skillText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   skillTextSelected: {
-    color: '#059669',
+    color: Colors.primary[600],
     fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: Colors.gray[200],
     gap: 12,
   },
   cancelButton: {
