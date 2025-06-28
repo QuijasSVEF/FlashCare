@@ -7,9 +7,11 @@ import {
   Alert,
   Platform 
 } from 'react-native';
-import { Send, Paperclip, Camera, Image as ImageIcon, Mic } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Send, Paperclip, Camera, Image as ImageIcon, Mic, FileText } from 'lucide-react-native';
+import { ImageUploadModal } from './ImageUploadModal';
+import { storageService } from '../lib/storage';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/Colors';
 
 interface EnhancedMessageInputProps {
@@ -30,7 +32,9 @@ export function EnhancedMessageInput({
   placeholder = "Type a message..."
 }: EnhancedMessageInputProps) {
   const { isSubscriber } = useSubscription();
+  const { user } = useAuth();
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
 
   const handleSend = () => {
     if (value.trim() && !disabled) {
@@ -50,47 +54,45 @@ export function EnhancedMessageInput({
     setShowAttachmentOptions(!showAttachmentOptions);
   };
 
-  const pickImage = async (source: 'camera' | 'library') => {
-    try {
-      let result;
-      
-      if (source === 'camera') {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission needed', 'Camera permission is required to take photos.');
-          return;
-        }
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.8,
-        });
-      } else {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission needed', 'Photo library permission is required to select images.');
-          return;
-        }
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.8,
-        });
-      }
+  const handleImageUpload = () => {
+    setShowAttachmentOptions(false);
+    setShowImageUpload(true);
+  };
 
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        onAttachment?.({
-          type: 'image',
-          uri: asset.uri,
-          name: asset.fileName || 'image.jpg'
-        });
-        setShowAttachmentOptions(false);
+  const handleImageUploaded = (imageUrl: string) => {
+    onAttachment?.({
+      type: 'image',
+      uri: imageUrl,
+      name: 'image.jpg'
+    });
+  };
+
+  const handleDocumentUpload = () => {
+    try {
+      setShowAttachmentOptions(false);
+      
+      if (Platform.OS === 'web') {
+        storageService.createFileInput(async (file) => {
+          try {
+            if (!user?.id) return;
+            
+            const result = await storageService.uploadFileFromInput(file, user.id, 'attachment');
+            if (result) {
+              onAttachment?.({
+                type: 'file',
+                uri: result.url,
+                name: result.fileName
+              });
+            }
+          } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to upload file');
+          }
+        }, 'application/pdf,text/plain,.doc,.docx');
+      } else {
+        Alert.alert('Document Upload', 'Document upload feature coming soon on mobile!');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      Alert.alert('Error', 'Failed to upload document. Please try again.');
     }
   };
 
@@ -113,16 +115,16 @@ export function EnhancedMessageInput({
         <View style={styles.attachmentOptions}>
           <TouchableOpacity 
             style={styles.attachmentOption}
-            onPress={() => pickImage('camera')}
+            onPress={handleImageUpload}
           >
-            <Camera size={20} color="#2563EB" />
+            <ImageIcon size={20} color="#2563EB" />
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.attachmentOption}
-            onPress={() => pickImage('library')}
+            onPress={handleDocumentUpload}
           >
-            <ImageIcon size={20} color="#2563EB" />
+            <FileText size={20} color="#2563EB" />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -167,6 +169,15 @@ export function EnhancedMessageInput({
           <Send size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
+
+      <ImageUploadModal
+        visible={showImageUpload}
+        onClose={() => setShowImageUpload(false)}
+        onImageUploaded={handleImageUploaded}
+        userId={user?.id || ''}
+        type="attachment"
+        title="Send Image"
+      />
     </View>
   );
 }

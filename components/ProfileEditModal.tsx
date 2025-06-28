@@ -9,9 +9,10 @@ import {
   Alert,
   Image
 } from 'react-native';
-import { X, Camera, Save } from 'lucide-react-native';
+import { X, Camera, Save, Edit3 } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { ImageUploadModal } from './ImageUploadModal';
 import { useAuth } from '../contexts/AuthContext'; 
 import { Colors } from '../constants/Colors';
 
@@ -35,11 +36,16 @@ export function ProfileEditModal({
     location: user?.location || '',
   });
   const [loading, setLoading] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
 
   const handleSave = async () => {
     try {
       setLoading(true);
-      await updateProfile(formData);
+      await updateProfile({
+        ...formData,
+        avatar_url: avatarUrl,
+      });
       Alert.alert('Success', 'Profile updated successfully!');
       onSave();
       onClose();
@@ -48,6 +54,10 @@ export function ProfileEditModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAvatarUpdate = (newAvatarUrl: string) => {
+    setAvatarUrl(newAvatarUrl);
   };
 
   const skillOptions = [
@@ -76,10 +86,18 @@ export function ProfileEditModal({
         <ScrollView style={styles.content}>
           <View style={styles.avatarSection}>
             <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Camera size={32} color="#6B7280" />
-              </View>
-              <TouchableOpacity style={styles.changePhotoButton}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Camera size={32} color={Colors.text.secondary} />
+                </View>
+              )}
+              <TouchableOpacity 
+                style={styles.changePhotoButton}
+                onPress={() => setShowImageUpload(true)}
+              >
+                <Edit3 size={16} color={Colors.primary[500]} />
                 <Text style={styles.changePhotoText}>Change Photo</Text>
               </TouchableOpacity>
             </View>
@@ -174,6 +192,15 @@ export function ProfileEditModal({
             style={styles.saveButton}
           />
         </View>
+
+        <ImageUploadModal
+          visible={showImageUpload}
+          onClose={() => setShowImageUpload(false)}
+          onImageUploaded={handleAvatarUpdate}
+          userId={user?.id || ''}
+          type="avatar"
+          title="Update Profile Photo"
+        />
       </View>
     </Modal>
   );
@@ -219,19 +246,27 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50, 
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: Colors.gray[100],
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   changePhotoButton: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    marginTop: 12,
   },
   changePhotoText: {
     fontSize: 16,
     color: Colors.primary[500],
     fontWeight: '600',
+    marginLeft: 6,
   },
   section: {
     marginBottom: 24,
