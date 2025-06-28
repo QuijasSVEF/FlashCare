@@ -5,9 +5,11 @@ import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import { Colors } from '../../constants/Colors'
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 export default function SignInScreen() {
+  useFrameworkReady();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
