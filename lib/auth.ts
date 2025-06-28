@@ -1,212 +1,174 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import { supabase } from './supabase';
+import { databaseService } from './database';
+import { Database } from './supabase';
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+type User = Database['public']['Tables']['users']['Row'];
 
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
-  
-  // If user is already signed in, redirect to tabs
-  useEffect(() => {
-    if (user) {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    }
-  }, [user]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
-    
+export const authService = {
+  async signUp(email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) {
     try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is updated
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+      // First, create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: undefined, // Disable email confirmation for now
+          data: {
+            name: userData.name,
+            role: userData.role,
+          }
+        }
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Wait a moment for the auth user to be fully created
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Then create the user profile
+      try {
+        await databaseService.createUser({
+          id: authData.user.id,
+          name: userData.name,
+          role: userData.role,
+        });
+      } catch (profileError: any) {
+        console.error('Error creating user profile:', profileError);
+        
+        // If profile creation fails due to user already existing, that's okay
+        if (!profileError.message?.includes('duplicate key') && 
+            !profileError.message?.includes('already exists')) {
+          throw new Error('Failed to create user profile: ' + profileError.message);
+        }
+      }
+
+      return authData;
     } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
-      if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
+      console.error('SignUp error:', error);
+      throw error;
     }
-  };
+  },
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
-        </View>
-      </View>
+  async signIn(email: string, password: string) {
+    try {
+      console.log('Auth service: Starting signin for:', email);
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(), 
+        password,
+      });
 
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
+      if (error) {
+        console.error('Supabase signin error:', error);
+        throw error;
+      }
+      
+      if (!data.user || !data.session) {
+        throw new Error('Sign in failed - no user or session returned');
+      }
+      
+      console.log('Supabase signin successful for user:', data.user.id);
 
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
+      return data;
+    } catch (error: any) {
+      console.error('SignIn error:', error);
+      
+      // Enhance error messages for better user experience
+      if (error.message?.includes('Invalid login credentials')) {
+        throw new Error('Invalid email or password');
+      } else if (error.message?.includes('Email not confirmed')) {
+        throw new Error('Please confirm your email before signing in');
+      } else if (error.message?.includes('Too many requests')) {
+        throw new Error('Too many sign-in attempts. Please wait a moment and try again');
+      }
+      throw error;
+    }
+  },
 
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
+  async signOut() {
+    try {
+      console.log('Signing out from Supabase...');
+            
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Supabase sign out error:', error);
+        // Log error but don't throw - we want to clear local state
+      }
+      
+      console.log('Supabase sign out completed');
+    } catch (error) {
+      console.error('Error in auth service sign out:', error);
+      // Don't throw - we want to proceed with clearing local state
+    }
+  },
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      console.log('Getting current user...');
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Error getting auth user:', error);
+        return null;
+      }
+      
+      if (!data.user) {
+        console.log('No authenticated user found');
+        return null;
+      }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
+      console.log('Found authenticated user:', data.user.id);
+
+      try {
+        // Add timeout to prevent hanging
+        const profilePromise = new Promise<User | null>(async (resolve, reject) => {
+          try {
+            const profile = await databaseService.getUserSafe(data.user.id);
+            resolve(profile);
+          } catch (error) {
+            reject(error);
+          }
+        });
+        
+        const timeoutPromise = new Promise<null>((resolve) => {
+          setTimeout(() => {
+            console.log('Profile fetch timeout reached');
+            resolve(null);
+          }, 2000);
+        });
+        
+        const profile = await Promise.race([profilePromise, timeoutPromise]);
+      
+        if (!profile) {
+          console.log('No profile found for user:', data.user.id, '- returning null');
+          return null;
+        }
+      
+        console.log('Profile loaded successfully');
+        return profile;
+      } catch (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-});
+
+  async updateProfile(updates: Database['public']['Tables']['users']['Update']) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('No user found');
+
+    return await databaseService.updateUser(user.id, updates);
+  }
+};

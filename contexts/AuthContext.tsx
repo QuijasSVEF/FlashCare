@@ -1,212 +1,204 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
+import { supabase } from '../lib/supabase';
+import { authService } from '../lib/auth';
+import { subscriptionService } from '../lib/subscription';
+import { Database } from '../lib/supabase';
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+type User = Database['public']['Tables']['users']['Row'];
 
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
-  
-  // If user is already signed in, redirect to tabs
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  signUp: (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<boolean>;
+  updateProfile: (updates: Database['public']['Tables']['users']['Update']) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    if (user) {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
+    let mounted = true;
+    
+    // Set a maximum timeout for initialization
+    const initTimeout = setTimeout(() => {
+      if (mounted) {
+        console.log('Auth initialization timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
+    // Get initial session
+    const initializeAuth = async () => {
+      try {
+        console.log('Initializing auth...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.error('Error getting session:', error);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Session found:', !!session?.user);
+        if (session?.user) {
+          try {
+            const profile = await authService.getCurrentUser();
+            if (mounted) {
+              console.log('Profile loaded:', !!profile);
+              setUser(profile);
+            }
+          } catch (profileError) {
+            console.error('Error getting user profile:', profileError);
+            if (mounted) {
+              setUser(null);
+            }
+          }
+        } else {
+          if (mounted) {
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(initTimeout);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    }
-  }, [user]);
+      console.log('Auth state change:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
+      if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        try {
+          setLoading(true);
+          const profile = await authService.getCurrentUser();
+          if (mounted) {
+            console.log('Profile in auth change:', !!profile);
+            setUser(profile);
+          }
+        } catch (profileError) {
+          console.error('Error getting profile in auth change:', profileError);
+          if (mounted) {
+            setUser(null);
+          }
+        } finally {
+          if (mounted) {
+            setLoading(false);
+          }
+        }
+      } else if (mounted) {
+        setLoading(false);
+      }
+    });
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    return () => {
+      mounted = false;
+      clearTimeout(initTimeout);
+      subscription.unsubscribe();
+    };
+  }, []);
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => {
+    console.log('Starting signup with role:', userData.role);
+    await authService.signUp(email, password, userData);
   };
 
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
-    
+  const signIn = async (email: string, password: string) => {
     try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is updated
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
-      if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      console.log('Starting signin for:', email);
+
+      const result = await authService.signIn(email, password);
+
+      if (!result.user || !result.session) {
+        throw new Error('Sign in failed - invalid response from server');
       }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
+
+      console.log('Auth service signin successful, profile will be loaded by auth state change');
+
+      return result;
+    } catch (error) {
+      console.error('SignIn error in context:', error);
+      setUser(null);
+      throw error;
     }
+  };
+
+  const signOut = async (): Promise<boolean> => {
+    try {
+      console.log('Starting sign out process');
+
+      // Clear user state first to prevent UI flashing
+      setUser(null);
+
+      // Then sign out from Supabase
+      await authService.signOut();
+            
+      // Force navigation to welcome screen after sign out
+      if (Platform.OS === 'web') {
+        setTimeout(() => {
+          window.location.replace('/(auth)/welcome');
+        }, 500);
+      }
+      
+      console.log('Sign out completed successfully');
+      return true;
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Even if there's an error, clear the user state
+      setUser(null);
+      return true;
+    }
+  };
+
+  const updateProfile = async (updates: Database['public']['Tables']['users']['Update']) => {
+    const updatedUser = await authService.updateProfile(updates);
+    setUser(updatedUser);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
-
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
-
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      updateProfile,
+    }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-});
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
