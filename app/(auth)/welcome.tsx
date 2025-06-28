@@ -16,10 +16,10 @@ export default function WelcomeScreen() {
           <Image
             source={require('../../assets/images/logo (2).png')}
             style={styles.logoImage}
-            resizeMode="contain"
+            resizeMode="cover"
           />
           <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
             style={styles.boltBadge}
             resizeMode="contain"
           />

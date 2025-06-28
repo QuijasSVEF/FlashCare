@@ -12,6 +12,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { databaseService } from '../lib/database';
 import { useAuth } from '../contexts/AuthContext';
+import { Colors } from '../constants/Colors';
 
 interface ReviewModalProps {
   visible: boolean;
@@ -82,8 +83,8 @@ export function ReviewModal({
           >
             <Star
               size={32}
-              color={star <= rating ? '#F59E0B' : '#D1D5DB'}
-              fill={star <= rating ? '#F59E0B' : 'transparent'}
+              color={star <= rating ? Colors.warning : Colors.gray[300]}
+              fill={star <= rating ? Colors.warning : 'transparent'}
             />
           </TouchableOpacity>
         ))}
@@ -97,7 +98,7 @@ export function ReviewModal({
         <View style={styles.header}>
           <Text style={styles.title}>Review {revieweeName}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color="#6B7280" />
+            <X size={24} color={Colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
@@ -145,7 +146,7 @@ export function ReviewModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -155,12 +156,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   closeButton: {
     padding: 8,
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 32,
     textAlign: 'center',
   },
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   ratingLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 16,
   },
   starsContainer: {
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   commentInput: {
     height: 100,
@@ -208,7 +209,7 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
     textAlign: 'center',
     lineHeight: 16,
   },

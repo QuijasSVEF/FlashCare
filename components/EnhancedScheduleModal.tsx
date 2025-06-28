@@ -12,6 +12,7 @@ import { X, Calendar, Clock, MapPin, DollarSign } from 'lucide-react-native';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { databaseService } from '../lib/database';
+import { Colors } from '../constants/Colors';
 
 interface EnhancedScheduleModalProps {
   visible: boolean;
@@ -138,11 +139,11 @@ export function EnhancedScheduleModal({
               <Text style={styles.jobTitle}>{jobDetails.title}</Text>
               <View style={styles.jobDetails}>
                 <View style={styles.jobDetail}>
-                  <DollarSign size={16} color="#059669" />
+                  <DollarSign size={16} color={Colors.success} />
                   <Text style={styles.jobDetailText}>${jobDetails.rate_hour}/hour</Text>
                 </View>
                 <View style={styles.jobDetail}>
-                  <MapPin size={16} color="#6B7280" />
+                  <MapPin size={16} color={Colors.text.secondary} />
                   <Text style={styles.jobDetailText}>{jobDetails.location}</Text>
                 </View>
               </View>
@@ -256,7 +257,7 @@ export function EnhancedScheduleModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -266,12 +267,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   closeButton: {
     padding: 8,
@@ -283,20 +284,22 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 24,
     textAlign: 'center',
   },
   jobSummary: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
   },
   jobTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   jobDetails: {
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
   },
   jobDetailText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginLeft: 4,
   },
   section: {
@@ -318,7 +321,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 16,
   },
   timeRow: {
@@ -331,7 +334,7 @@ const styles = StyleSheet.create({
   suggestedLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: Colors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
@@ -344,30 +347,32 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.gray[200],
+    backgroundColor: Colors.background,
     alignItems: 'center',
   },
   timeButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: Colors.text.primary,
     marginBottom: 2,
   },
   timeButtonSubtext: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   summary: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.primary[50],
     padding: 16,
     borderRadius: 12,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: Colors.primary[100],
   },
   summaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 12,
   },
   summaryRow: {
@@ -377,19 +382,19 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
   },
   summaryValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#059669',
+    color: Colors.primary[600],
   },
   createButton: {
     marginBottom: 16,
   },
   note: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 40,

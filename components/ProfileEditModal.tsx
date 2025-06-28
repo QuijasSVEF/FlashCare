@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { 
   View, 
   Text, 
-  Modal, 
+  Modal,
   StyleSheet, 
   TouchableOpacity, 
   ScrollView,
-  Alert 
+  Alert,
+  Image
 } from 'react-native';
 import { X, Camera, Save } from 'lucide-react-native';
 import { Button } from './ui/Button';

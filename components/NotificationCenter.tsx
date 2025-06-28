@@ -5,10 +5,10 @@ import {
   StyleSheet, 
   FlatList, 
   TouchableOpacity,
-  Image 
+  Modal
 } from 'react-native';
 import { Bell, MessageCircle, Calendar, Heart, User, X } from 'lucide-react-native';
-import { Card } from './ui/Card';
+import { Colors } from '../constants/Colors';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
@@ -103,15 +103,15 @@ export function NotificationCenter({ visible, onClose }: NotificationCenterProps
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'match':
-        return <Heart size={20} color="#059669" />;
+        return <Heart size={20} color={Colors.primary[500]} />;
       case 'message':
-        return <MessageCircle size={20} color="#2563EB" />;
+        return <MessageCircle size={20} color={Colors.accent[500]} />;
       case 'schedule':
-        return <Calendar size={20} color="#7C3AED" />;
+        return <Calendar size={20} color={Colors.secondary[500]} />;
       case 'review':
-        return <User size={20} color="#F59E0B" />;
+        return <User size={20} color={Colors.warning} />;
       default:
-        return <Bell size={20} color="#6B7280" />;
+        return <Bell size={20} color={Colors.text.secondary} />;
     }
   };
 
@@ -134,7 +134,10 @@ export function NotificationCenter({ visible, onClose }: NotificationCenterProps
         !item.read && styles.unreadNotification
       ]}
     >
-      <View style={styles.notificationIcon}>
+      <View style={[
+        styles.notificationIcon,
+        { backgroundColor: getIconBackgroundColor(item.type) }
+      ]}>
         {getNotificationIcon(item.type)}
       </View>
       
@@ -150,41 +153,63 @@ export function NotificationCenter({ visible, onClose }: NotificationCenterProps
     </TouchableOpacity>
   );
 
+  const getIconBackgroundColor = (type: string) => {
+    switch (type) {
+      case 'match':
+        return Colors.primary[50];
+      case 'message':
+        return Colors.accent[50];
+      case 'schedule':
+        return Colors.secondary[50];
+      case 'review':
+        return `${Colors.warning}15`;
+      default:
+        return Colors.gray[100];
+    }
+  };
+
   if (!visible) return null;
 
   return (
-    <View style={styles.overlay}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Notifications</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id}
-          style={styles.notificationsList}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Bell size={48} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>No notifications</Text>
-              <Text style={styles.emptyText}>
-                You're all caught up! New notifications will appear here.
-              </Text>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Notifications</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
+                <Text style={styles.markAllText}>Mark all read</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <X size={24} color={Colors.text.secondary} />
+              </TouchableOpacity>
             </View>
-          }
-        />
+          </View>
+
+          <FlatList
+            data={notifications}
+            renderItem={renderNotification}
+            keyExtractor={(item) => item.id}
+            style={styles.notificationsList}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Bell size={48} color={Colors.gray[300]} />
+                <Text style={styles.emptyTitle}>No notifications</Text>
+                <Text style={styles.emptyText}>
+                  You're all caught up! New notifications will appear here.
+                </Text>
+              </View>
+            }
+          />
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
@@ -204,7 +229,7 @@ const styles = StyleSheet.create({
     right: 20,
     width: 350,
     maxHeight: 500,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -219,12 +244,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
   },
   headerActions: {
     flexDirection: 'row',
@@ -237,7 +262,7 @@ const styles = StyleSheet.create({
   },
   markAllText: {
     fontSize: 14,
-    color: '#2563EB',
+    color: Colors.primary[500],
     fontWeight: '600',
   },
   closeButton: {
@@ -252,16 +277,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Colors.gray[100],
   },
   unreadNotification: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.primary[50],
   },
   notificationIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -272,24 +296,24 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   notificationMessage: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     lineHeight: 20,
     marginBottom: 4,
   },
   notificationTime: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2563EB',
+    backgroundColor: Colors.primary[500],
     marginTop: 8,
   },
   emptyState: {
@@ -300,13 +324,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
   },

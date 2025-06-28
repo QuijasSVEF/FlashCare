@@ -23,14 +23,14 @@ export default function Index() {
   // Force redirect after a longer timeout
   useEffect(() => {
     const forceTimeout = setTimeout(() => {
-      if (loading) {
+      if (loading || !user) {
         setForceRedirect(true);
         console.log('Auth force redirect timeout reached');
       }
-    }, 5000); // 5 second force timeout
+    }, 8000); // 8 second force timeout
 
     return () => clearTimeout(forceTimeout);
-  }, [loading]);
+  }, [loading, user]);
 
   // Show loading screen while checking auth state
   if (loading && !timeoutReached && !forceRedirect) {

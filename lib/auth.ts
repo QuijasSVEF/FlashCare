@@ -118,29 +118,34 @@ export const authService = {
   async getCurrentUser(): Promise<User | null> {
     try {
       console.log('Getting current user...');
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
       
       if (error) {
         console.error('Error getting auth user:', error);
         return null;
       }
       
-      if (!user) {
+      if (!data.user) {
         console.log('No authenticated user found');
         return null;
       }
 
-      console.log('Found authenticated user:', user.id);
+      console.log('Found authenticated user:', data.user.id);
 
-      const profile = await databaseService.getUserSafe(user.id);
+      try {
+        const profile = await databaseService.getUserSafe(data.user.id);
       
-      if (!profile) {
-        console.log('No profile found for user:', user.id, '- returning null');
+        if (!profile) {
+          console.log('No profile found for user:', data.user.id, '- returning null');
+          return null;
+        }
+      
+        console.log('Profile loaded successfully');
+        return profile;
+      } catch (profileError) {
+        console.error('Error fetching user profile:', profileError);
         return null;
       }
-      
-      console.log('Profile loaded successfully');
-      return profile;
     } catch (error) {
       console.error('Error getting current user:', error);
       return null;

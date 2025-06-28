@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Star, Users, Calendar, Award } from 'lucide-react-native';
 import { Card } from './ui/Card';
+import { Colors } from '../constants/Colors';
 
 interface QuickStatsCardProps {
   userRole: 'family' | 'caregiver';
@@ -21,19 +22,19 @@ export function QuickStatsCard({ userRole, stats }: QuickStatsCardProps) {
       icon: Users,
       label: 'Total Matches',
       value: stats.totalMatches.toString(),
-      color: '#2563EB',
+      color: Colors.primary[500],
     },
     {
       icon: Calendar,
       label: 'Upcoming Sessions',
       value: stats.upcomingSchedules.toString(),
-      color: '#7C3AED',
+      color: Colors.secondary[500],
     },
     {
       icon: Star,
       label: 'Active Chats',
       value: stats.activeChats.toString(),
-      color: '#059669',
+      color: Colors.success,
     },
   ];
 
@@ -42,19 +43,19 @@ export function QuickStatsCard({ userRole, stats }: QuickStatsCardProps) {
       icon: Star,
       label: 'Rating',
       value: stats.rating ? stats.rating.toFixed(1) : 'N/A',
-      color: '#F59E0B',
+      color: Colors.warning,
     },
     {
       icon: Award,
       label: 'Reviews',
       value: stats.reviewCount?.toString() || '0',
-      color: '#059669',
+      color: Colors.success,
     },
     {
       icon: Calendar,
       label: 'Completed Jobs',
       value: stats.completedJobs?.toString() || '0',
-      color: '#2563EB',
+      color: Colors.primary[500],
     },
   ];
 
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 16,
   },
   statsGrid: {
@@ -108,12 +109,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
   },
 });

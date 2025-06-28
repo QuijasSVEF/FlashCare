@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart, User, Users } from 'lucide-react-native';
+import { ArrowLeft, Heart, User, Users, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
@@ -102,7 +102,7 @@ export default function SignUpScreen() {
           <Heart size={24} color={Colors.primary[500]} />
           <Text style={styles.logo}>FlashCare</Text>
           <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
             style={styles.boltBadge}
             resizeMode="contain"
           />

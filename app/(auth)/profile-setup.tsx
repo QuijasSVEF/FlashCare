@@ -52,7 +52,7 @@ export default function ProfileSetupScreen() {
           <Heart size={24} color="#2563EB" />
           <Text style={styles.logo}>FlashCare</Text>
           <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
             style={styles.boltBadge}
             resizeMode="contain"
           />

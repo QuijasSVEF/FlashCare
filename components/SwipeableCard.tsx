@@ -2,14 +2,14 @@ import React, { useRef, useState } from 'react';
 import { 
   View, 
   Text, 
-  StyleSheet, 
+  StyleSheet,
   Dimensions,
   Image,
   Platform,
   PanResponder,
   Animated
 } from 'react-native';
-import { Heart, X, Star, MapPin, Clock, DollarSign } from 'lucide-react-native';
+import { Heart, X, Star, MapPin, Clock, DollarSign, Image as ImageIcon } from 'lucide-react-native';
 import { Card } from './ui/Card';
 import { Colors } from '../constants/Colors'; 
 
