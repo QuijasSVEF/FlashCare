@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Image, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
@@ -47,7 +47,7 @@ export default function ProfileSetupScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 40 }]}>
         <View style={styles.logoContainer}>
           <Heart size={24} color="#2563EB" />
           <Text style={styles.logo}>FlashCare</Text>

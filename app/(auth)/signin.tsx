@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, Mail, Lock } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
@@ -68,7 +68,10 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <TouchableOpacity 
+        onPress={() => router.back()} 
+        style={[styles.backButton, { top: Platform.OS === 'ios' ? 60 : 40 }]}
+      >
         <ArrowLeft size={24} color={Colors.text.primary} />
       </TouchableOpacity>
       
