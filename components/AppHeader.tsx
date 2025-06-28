@@ -21,9 +21,11 @@ export function AppHeader({
     <View style={styles.container}>
       {/* Logo Row */}
       <View style={styles.logoRow}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>YourLogo</Text>
-        </View>
+        <Image
+          source={{ uri: 'https://i.imgur.com/wrJlM2K.png' }}
+          style={styles.customLogo}
+          resizeMode="contain"
+        />
         <Image
           source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
           style={styles.boltBadge}
@@ -66,16 +68,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  logoContainer: {
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  customLogo: {
+    width: 120,
+    height: 40,
   },
   boltBadge: {
     width: 40,
