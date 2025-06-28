@@ -118,6 +118,51 @@ export const databaseService = {
   // Expose supabase client for advanced queries
   supabase,
 
+  // Document management
+  async createUserDocument(documentData: {
+    user_id: string;
+    file_name: string;
+    file_url: string;
+    file_path: string;
+    file_type?: string;
+    file_size?: number;
+    document_type?: string;
+  }) {
+    const { data, error } = await supabase
+      .from('user_documents')
+      .insert(documentData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getUserDocuments(userId: string, documentType?: string) {
+    let query = supabase
+      .from('user_documents')
+      .select('*')
+      .eq('user_id', userId)
+      .order('uploaded_at', { ascending: false });
+
+    if (documentType) {
+      query = query.eq('document_type', documentType);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async deleteUserDocument(documentId: string) {
+    const { error } = await supabase
+      .from('user_documents')
+      .delete()
+      .eq('id', documentId);
+
+    if (error) throw error;
+  },
+
   // Swipe operations
   async createSwipe(swipeData: Database['public']['Tables']['swipes']['Insert']) {
     const { data, error } = await supabase

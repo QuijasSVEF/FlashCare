@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
+import { databaseService } from './database';
 import * as ImagePicker from 'expo-image-picker';
 
 export const storageService = {
@@ -37,6 +38,29 @@ export const storageService = {
       const { data: urlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(filePath);
+
+      // Track the uploaded file in our database
+      if (bucket !== 'temp') {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await databaseService.supabase
+              .from('user_documents')
+              .insert({
+                user_id: user.id,
+                file_name: fileName,
+                file_url: urlData.publicUrl,
+                file_path: filePath,
+                file_type: this.getContentType(fileExt || ''),
+                file_size: fileData.size || 0,
+                document_type: this.getDocumentType(bucket)
+              });
+          }
+        } catch (dbError) {
+          console.warn('Failed to track file in database:', dbError);
+          // Don't fail the upload if database tracking fails
+        }
+      }
 
       return {
         path: filePath,
@@ -276,6 +300,19 @@ export const storageService = {
     }
   },
 
+  getDocumentType(bucket: string): string {
+    switch (bucket) {
+      case 'avatars':
+        return 'avatar';
+      case 'attachments':
+        return 'attachment';
+      case 'documents':
+        return 'document';
+      default:
+        return 'document';
+    }
+  },
+
   getContentType(extension: string): string {
         
     const types: Record<string, string> = {
@@ -303,6 +340,17 @@ export const storageService = {
 
   async deleteFile(filePath: string, bucket: string = 'avatars') {
     try {
+      // Remove from database tracking first
+      try {
+        await databaseService.supabase
+          .from('user_documents')
+          .delete()
+          .eq('file_path', filePath);
+      } catch (dbError) {
+        console.warn('Failed to remove file tracking from database:', dbError);
+      }
+
+      // Then remove from storage
       const { error } = await supabase.storage
         .from(bucket)
         .remove([filePath]);
@@ -328,6 +376,59 @@ export const storageService = {
       console.error('Error getting file info:', error);
       return { size: 0, type: 'unknown' };
     }
+  },
+
+  async getUserDocuments(userId: string, documentType?: string) {
+    try {
+      let query = databaseService.supabase
+        .from('user_documents')
+        .select('*')
+        .eq('user_id', userId)
+        .order('uploaded_at', { ascending: false });
+
+      if (documentType) {
+        query = query.eq('document_type', documentType);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error getting user documents:', error);
+      return [];
+    }
+  },
+
+  async createStorageBuckets() {
+    // This function documents the required storage buckets
+    // These should be created manually in the Supabase Dashboard
+    const buckets = [
+      {
+        id: 'avatars',
+        name: 'avatars',
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+      },
+      {
+        id: 'attachments', 
+        name: 'attachments',
+        public: false,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain']
+      },
+      {
+        id: 'documents',
+        name: 'documents', 
+        public: false,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/png']
+      }
+    ];
+
+    console.log('Required storage buckets:', buckets);
+    console.log('Please create these buckets manually in the Supabase Dashboard under Storage');
+    return buckets;
   },
 
   // Utility function to validate image files
