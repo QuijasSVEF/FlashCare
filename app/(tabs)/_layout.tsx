@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, Calendar, User, Search, Users } from 'lucide-react-native';
+import { Chrome as Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function TabLayout() {
@@ -35,6 +35,30 @@ export default function TabLayout() {
           ),
         }}
       />
+      
+      {isFamily && (
+        <Tabs.Screen
+          name="create-job"
+          options={{
+            title: 'Post Job',
+            tabBarIcon: ({ size, color }) => (
+              <Plus size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+      
+      {isFamily && (
+        <Tabs.Screen
+          name="my-jobs"
+          options={{
+            title: 'My Jobs',
+            tabBarIcon: ({ size, color }) => (
+              <Briefcase size={size} color={color} />
+            ),
+          }}
+        />
+      )}
       
       <Tabs.Screen
         name="matches"
