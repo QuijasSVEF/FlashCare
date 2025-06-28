@@ -55,7 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Don't sign out on profile error, just set user to null
             setUser(null);
           }
-          }
         } else {
           setUser(null);
         }
