@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Heart, MessageCircle, User, Plus, Briefcase, Settings, BarChart3, Search } from 'lucide-react-native';
+import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search } from 'lucide-react-native';
 import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { router } from 'expo-router';
