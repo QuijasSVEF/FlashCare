@@ -354,12 +354,18 @@ export default function ProfileScreen() {
         </CollapsibleSection>
 
         {/* Sign Out */}
-        <Card style={styles.signOutCard}>
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-            <LogOut size={20} color="#DC2626" />
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </Card>
+        <CollapsibleSection title="Account Actions" icon={LogOut} defaultExpanded={false}>
+          <View style={styles.accountActions}>
+            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+              <LogOut size={20} color="#DC2626" />
+              <Text style={styles.signOutText}>Sign Out of FlashCare</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.deleteAccountButton}>
+              <Text style={styles.deleteAccountText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
+        </CollapsibleSection>
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -666,20 +672,31 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  signOutCard: {
-    marginBottom: 16,
+  accountActions: {
+    gap: 12,
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
   },
   signOutText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#DC2626',
     marginLeft: 8,
+  },
+  deleteAccountButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  deleteAccountText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textDecorationLine: 'underline',
   },
   footer: {
     alignItems: 'center',

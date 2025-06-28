@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { LogOut } from 'lucide-react-native';
 import { EmergencyButton } from './EmergencyButton';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AppHeaderProps {
   title: string;
@@ -17,6 +19,19 @@ export function AppHeader({
   emergencyPhone,
   rightComponent 
 }: AppHeaderProps) {
+  const { signOut } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign Out', style: 'destructive', onPress: signOut },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Logo Row */}
@@ -44,6 +59,9 @@ export function AppHeader({
         
         <View style={styles.rightSection}>
           {rightComponent}
+          <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
+            <LogOut size={20} color="#DC2626" />
+          </TouchableOpacity>
           {showEmergencyButton && (
             <EmergencyButton phoneNumber={emergencyPhone} />
           )}
@@ -97,6 +115,11 @@ const styles = StyleSheet.create({
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FEE2E2',
   },
 });
