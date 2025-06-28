@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { Link } from 'expo-router';
-import { Heart, Shield, Users } from 'lucide-react-native';
+import { Shield, Users } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
 
 export default function WelcomeScreen() {
@@ -9,13 +9,16 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <Heart size={48} color="#2563EB" />
-          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={require('../../assets/images/logo (2).png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
-        <Text style={styles.title}>Caring connections for your family</Text>
+        <Text style={styles.title}>Supporting families and caregivers</Text>
         <Text style={styles.subtitle}>
-          Find trusted caregivers for seniors and family members with disabilities
+          Purposeful bonds, trusted care
         </Text>
 
         <Image
@@ -64,15 +67,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 32,
   },
-  logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#2563EB',
-    marginLeft: 12,
+  logoImage: {
+    width: 200,
+    height: 80,
   },
   title: {
     fontSize: 28,
