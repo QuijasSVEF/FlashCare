@@ -156,9 +156,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     position: 'relative',
   },
-  logo: {
-    fontSize: 20,
-  },
   boltBadge: {
     position: 'absolute',
     right: -60,
