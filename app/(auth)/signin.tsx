@@ -5,7 +5,7 @@ import { ArrowLeft, Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
-import { authService } from '../../lib/auth';
+import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
   const [formData, setFormData] = useState({
@@ -36,11 +36,9 @@ export default function SignInScreen() {
     
     try {
       console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
+      await signIn(formData.email, formData.password);
       
       console.log('Signin successful, navigating to tabs');
-      
-      // Navigate immediately since auth context will handle the redirect
       router.replace('/(tabs)');
       
     } catch (error: any) {
@@ -77,7 +75,7 @@ export default function SignInScreen() {
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Heart size={24} color="#2563EB" />
+          <Heart size={24} color={Colors.primary[500]} />
           <Text style={styles.logo}>FlashCare</Text>
           <Image
             source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
@@ -131,7 +129,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -152,9 +150,8 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2563EB',
+    color: Colors.primary[500],
     marginLeft: 8,
-    position: 'relative',
   },
   boltBadge: {
     position: 'absolute',
@@ -170,12 +167,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 32,
   },
   signInButton: {
@@ -184,11 +181,11 @@ const styles = StyleSheet.create({
   },
   signUpText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
   },
   signUpLink: {
-    color: '#2563EB',
+    color: Colors.primary[500],
     fontWeight: '600',
   },
 });

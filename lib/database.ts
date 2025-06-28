@@ -68,19 +68,14 @@ export const databaseService = {
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // Handle 'no rows found' error gracefully
-        if (error.code === 'PGRST116' || error.message?.includes('no rows') || error.message?.includes('No rows found')) {
-          console.log('Database: No user profile found for:', userId);
-          return null;
-        }
         console.error('Database error getting user:', error);
         throw error;
       }
       
-      console.log('Database: User profile fetched successfully');
+      console.log('Database: User profile fetched:', !!data);
       return data;
     } catch (error) {
       console.error('Database: Error getting user:', error);

@@ -1,42 +1,13 @@
 import { Tabs } from 'expo-router';
 import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search } from 'lucide-react-native';
-import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { router } from 'expo-router';
 import { Colors } from '../../constants/Colors';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   
   const isFamily = user?.role === 'family';
-
-  const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              console.log('Tabs: Starting sign out...');
-              const success = await signOut();
-              
-              if (success) {
-                console.log('Tabs: Sign out successful, navigating...');
-                router.replace('/(auth)/welcome');
-              }
-            } catch (error) {
-              console.error('Tabs: Sign out error:', error);
-              router.replace('/(auth)/welcome');
-            }
-          }
-        },
-      ]
-    );
-  };
 
   return (
     <Tabs

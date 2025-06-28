@@ -5,6 +5,7 @@ import { ArrowLeft, Heart, User, Users } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
 export default function SignUpScreen() {
   const [formData, setFormData] = useState({
@@ -98,7 +99,7 @@ export default function SignUpScreen() {
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Heart size={24} color="#2563EB" />
+          <Heart size={24} color={Colors.primary[500]} />
           <Text style={styles.logo}>FlashCare</Text>
           <Image
             source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
@@ -148,7 +149,7 @@ export default function SignUpScreen() {
             ]}
             onPress={() => setFormData(prev => ({ ...prev, role: 'family' }))}
           >
-            <Users size={24} color={formData.role === 'family' ? '#2563EB' : '#6B7280'} />
+            <Users size={24} color={formData.role === 'family' ? Colors.primary[500] : '#6B7280'} />
             <Text style={[
               styles.roleText,
               formData.role === 'family' && styles.roleTextSelected,
@@ -165,7 +166,7 @@ export default function SignUpScreen() {
             ]}
             onPress={() => setFormData(prev => ({ ...prev, role: 'caregiver' }))}
           >
-            <User size={24} color={formData.role === 'caregiver' ? '#2563EB' : '#6B7280'} />
+            <User size={24} color={formData.role === 'caregiver' ? Colors.primary[500] : '#6B7280'} />
             <Text style={[
               styles.roleText,
               formData.role === 'caregiver' && styles.roleTextSelected,
@@ -198,7 +199,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2563EB',
+    color: Colors.primary[500],
     marginLeft: 8,
   },
   boltBadge: {
@@ -235,12 +236,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     marginBottom: 32,
   },
   roleLabel: {
@@ -264,8 +265,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roleOptionSelected: {
-    borderColor: '#2563EB',
-    backgroundColor: '#EEF2FF',
+    borderColor: Colors.primary[500],
+    backgroundColor: Colors.primary[50],
   },
   roleText: {
     fontSize: 16,
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   roleTextSelected: {
-    color: '#2563EB',
+    color: Colors.primary[500],
   },
   roleDescription: {
     fontSize: 12,
@@ -294,11 +295,11 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
   },
   signInLink: {
-    color: '#2563EB',
+    color: Colors.primary[500],
     fontWeight: '600',
   },
 });
