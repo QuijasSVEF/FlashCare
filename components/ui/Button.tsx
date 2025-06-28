@@ -1,10 +1,11 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { Colors } from '../../constants/Colors';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   style?: ViewStyle;
@@ -42,28 +43,36 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 12,
+    elevation: 6,
   },
   primary: {
-    backgroundColor: '#2563EB',
+    backgroundColor: Colors.primary[500],
+    shadowColor: Colors.primary[500],
   },
   secondary: {
-    backgroundColor: '#059669',
+    backgroundColor: Colors.secondary[500],
+    shadowColor: Colors.secondary[500],
+  },
+  success: {
+    backgroundColor: Colors.success,
+    shadowColor: Colors.success,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#2563EB',
+    borderColor: Colors.primary[500],
+    shadowOpacity: 0.1,
   },
   danger: {
-    backgroundColor: '#DC2626',
+    backgroundColor: Colors.error,
+    shadowColor: Colors.error,
   },
   small: {
     paddingHorizontal: 16,
@@ -87,16 +96,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
   },
   secondaryText: {
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
+  },
+  successText: {
+    color: Colors.text.inverse,
   },
   outlineText: {
-    color: '#2563EB',
+    color: Colors.primary[500],
   },
   dangerText: {
-    color: '#FFFFFF',
+    color: Colors.text.inverse,
   },
   smallText: {
     fontSize: 14,

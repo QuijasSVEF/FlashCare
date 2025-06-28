@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-na
 import { LogOut, Menu, Phone } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { router } from 'expo-router';
+import { Colors } from '../constants/Colors';
 
 interface AppHeaderProps {
   title: string;
@@ -87,17 +88,17 @@ export function AppHeader({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowRadius: 16,
+    elevation: 6,
   },
   logoRow: {
     flexDirection: 'row',
@@ -118,14 +119,14 @@ const styles = StyleSheet.create({
     bottom: -2,
     left: 0,
     right: 0,
-    height: 3,
-    backgroundColor: '#2563EB',
+    height: 4,
+    backgroundColor: Colors.primary[500],
     borderRadius: 2,
-    shadowColor: '#2563EB',
+    shadowColor: Colors.primary[500],
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
   },
   boltBadge: {
     width: 40,
@@ -148,13 +149,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     marginBottom: 4,
     lineHeight: 28,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     lineHeight: 18,
   },
   rightSection: {

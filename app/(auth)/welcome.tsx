@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { Shield, Users } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
 export default function WelcomeScreen() {
   const { loading } = useAuth();
@@ -36,11 +37,15 @@ export default function WelcomeScreen() {
 
         <View style={styles.features}>
           <View style={styles.feature}>
-            <Shield size={24} color="#059669" />
+            <View style={styles.featureIcon}>
+              <Shield size={24} color={Colors.primary[500]} />
+            </View>
             <Text style={styles.featureText}>Verified caregivers</Text>
           </View>
           <View style={styles.feature}>
-            <Users size={24} color="#059669" />
+            <View style={styles.featureIcon}>
+              <Users size={24} color={Colors.primary[500]} />
+            </View>
             <Text style={styles.featureText}>Trusted community</Text>
           </View>
         </View>
@@ -52,7 +57,7 @@ export default function WelcomeScreen() {
         </Link>
         
         <Link href="/(auth)/signin" asChild>
-          <Button title="Sign In" size="large" />
+          <Button title="Sign In" variant="outline" size="large" />
         </Link>
 
         <Text style={styles.terms}>
@@ -66,7 +71,7 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
     paddingTop: 60,
   },
   content: {
@@ -93,13 +98,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 32,
@@ -107,7 +112,7 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: 200,
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 32,
   },
   features: {
@@ -118,11 +123,20 @@ const styles = StyleSheet.create({
   feature: {
     alignItems: 'center',
   },
+  featureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   featureText: {
     fontSize: 14,
-    color: '#374151',
-    marginTop: 8,
+    color: Colors.text.primary,
     textAlign: 'center',
+    fontWeight: '500',
   },
   actions: {
     paddingHorizontal: 20,
@@ -133,7 +147,7 @@ const styles = StyleSheet.create({
   },
   terms: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.text.tertiary,
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 16,

@@ -3,6 +3,7 @@ import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarC
 import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { router } from 'expo-router';
+import { Colors } from '../../constants/Colors';
 
 export default function TabLayout() {
   const { user, signOut } = useAuth();
@@ -41,20 +42,20 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: Colors.primary[500],
+        tabBarInactiveTintColor: Colors.gray[400],
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: Colors.background,
           borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
+          borderTopColor: Colors.gray[200],
           paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           paddingTop: 12,
           height: Platform.OS === 'ios' ? 88 : 72,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
+          shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 8,
+          shadowRadius: 16,
+          elevation: 12,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -63,7 +64,7 @@ export default function TabLayout() {
         },
         tabBarItemStyle: {
           paddingVertical: 4,
-          borderRadius: 8,
+          borderRadius: 12,
           marginHorizontal: 2,
         },
         tabBarIconStyle: {
