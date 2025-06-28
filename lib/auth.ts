@@ -120,15 +120,15 @@ export const authService = {
       const profile = await databaseService.getUser(user.id);
       
       if (!profile) {
-        console.log('No profile found for user:', user.id);
-        throw new Error('User profile not found. Please contact support.');
+        console.log('No profile found for user:', user.id, '- returning null');
+        return null;
       }
       
       console.log('Profile loaded successfully');
       return profile;
     } catch (error) {
       console.error('Error getting current user:', error);
-      throw error;
+      return null;
     }
   },
 

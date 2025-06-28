@@ -75,9 +75,7 @@ export default function MyJobsScreen() {
             <Text style={styles.jobDescription} numberOfLines={2}>
               {item.description}
             </Text>
-          </View>
-          
-          <View style={styles.jobActions}>
+          </View><View style={styles.jobActions}>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => handleEditJob(item)}
@@ -91,9 +89,8 @@ export default function MyJobsScreen() {
               <Trash2 size={16} color="#DC2626" />
             </TouchableOpacity>
           </View>
-        </View>
 
-        <View style={styles.jobDetails}>
+        </View><View style={styles.jobDetails}>
           <View style={styles.detailItem}>
             <MapPin size={14} color="#6B7280" />
             <Text style={styles.detailText}>{item.location}</Text>
@@ -106,16 +103,13 @@ export default function MyJobsScreen() {
             <DollarSign size={14} color="#6B7280" />
             <Text style={styles.detailText}>${item.rate_hour}/hr</Text>
           </View>
-        </View>
 
-        <View style={styles.jobFooter}>
+        </View><View style={styles.jobFooter}>
           <View style={styles.weeklyTotal}>
             <Text style={styles.weeklyTotalText}>
               ${weeklyTotal.toFixed(2)}/week
             </Text>
-          </View>
-          
-          <View style={styles.applicants}>
+          </View><View style={styles.applicants}>
             <Users size={16} color="#059669" />
             <TouchableOpacity
               onPress={() => router.push({
@@ -126,9 +120,8 @@ export default function MyJobsScreen() {
               <Text style={styles.applicantsText}>0 applicants</Text>
             </TouchableOpacity>
           </View>
-        </View>
 
-        <Text style={styles.postedDate}>
+        </View><Text style={styles.postedDate}>
           Posted {new Date(item.created_at).toLocaleDateString()}
         </Text>
       </Card>

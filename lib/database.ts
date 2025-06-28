@@ -71,6 +71,11 @@ export const databaseService = {
         .single();
 
       if (error) {
+        // Handle 'no rows found' error gracefully
+        if (error.code === 'PGRST116' || error.message?.includes('no rows') || error.message?.includes('No rows found')) {
+          console.log('Database: No user profile found for:', userId);
+          return null;
+        }
         console.error('Database error getting user:', error);
         throw error;
       }
