@@ -480,8 +480,8 @@ const styles = StyleSheet.create({
   cardContainer: {
     flex: 1,
     justifyContent: 'flex-start',
-    paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   actionButton: {
     width: 68,
     height: 68,
-    borderRadius: 34,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -504,9 +504,11 @@ const styles = StyleSheet.create({
   },
   passButton: {
     backgroundColor: Colors.error,
+    transform: [{ rotate: '8deg' }],
   },
   likeButton: {
     backgroundColor: Colors.primary[500],
+    transform: [{ rotate: '-8deg' }],
   },
   noMoreCards: {
     alignItems: 'center',
