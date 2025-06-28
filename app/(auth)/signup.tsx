@@ -45,8 +45,23 @@ export default function SignUpScreen() {
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
       
-      if (error.message?.includes('User already registered') || error.code === 'user_already_exists') {
+      // Parse Supabase error body if it exists
+      let parsedError = error;
+      if (error.body && typeof error.body === 'string') {
+        try {
+          parsedError = JSON.parse(error.body);
+        } catch (parseError) {
+          // If parsing fails, use the original error
+          parsedError = error;
+        }
+      }
+      
+      if (error.message?.includes('User already registered') || 
+          error.code === 'user_already_exists' || 
+          parsedError.code === 'user_already_exists') {
         errorMessage = 'An account with this email already exists. Please sign in instead or use a different email address.';
+      } else if (parsedError.message) {
+        errorMessage = parsedError.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
