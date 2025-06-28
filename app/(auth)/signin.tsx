@@ -45,9 +45,14 @@ export default function SignInScreen() {
     
     try {
       console.log('Attempting signin with:', formData.email);
-      await signIn(formData.email, formData.password);
-      console.log('Signin successful, navigating to tabs');
-      routerInstance.replace('/(tabs)');
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is updated
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
