@@ -1,218 +1,200 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
+import { Tabs } from 'expo-router';
+import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search, FileText } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
+import { Platform } from 'react-native';
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
+export default function TabLayout() {
+  const { user } = useAuth();
   
-  // If user is already signed in, redirect to tabs
-  useEffect(() => {
-    const handleAutoSignIn = async () => {
-      try {
-        const result = await signIn(formData.email, formData.password);
-        console.log('Signin successful, result:', !!result);
-        
-        // Small delay to ensure auth state is properly set
-        setTimeout(() => {
-          console.log('Navigating to tabs after signin');
-          routerInstance.replace('/(tabs)');
-        }, 100);
-      } catch (error) {
-        console.error('Auto signin error:', error);
-      }
-    };
-    
-    handleAutoSignIn();
-  }, [user]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
-    
-    try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
-      if (error.message?.includes('Invalid login credentials') || 
-          error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isFamily = user?.role === 'family';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: Colors.primary[500],
+        tabBarInactiveTintColor: Colors.gray[400],
+        tabBarStyle: {
+          backgroundColor: Colors.background,
+          borderTopWidth: 1,
+          borderTopColor: Colors.gray[200],
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingTop: 12,
+          height: Platform.OS === 'ios' ? 88 : 72,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 16,
+          elevation: 12,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
+          borderRadius: 12,
+          marginHorizontal: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 2,
+        },
+      }}>
+      
+      {/* Home/Browse - Different for each role */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: isFamily ? 'Find Care' : 'Find Jobs',
+          tabBarIcon: ({ size, color, focused }) => (
+            isFamily ? (
+              <Heart 
+                size={focused ? size + 2 : size} 
+                color={color} 
+                strokeWidth={focused ? 2.5 : 2}
+                fill={focused ? color : 'transparent'}
+              />
+            ) : (
+              <Search 
+                size={focused ? size + 2 : size} 
+                color={color} 
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            )
+          ),
+        }}
+      />
+      
+      {/* Family-specific tabs */}
+      {isFamily && (
+        <>
+          <Tabs.Screen
+            name="create-job"
+            options={{
+              title: 'Post Job',
+              tabBarIcon: ({ size, color, focused }) => (
+                <Plus 
+                  size={focused ? size + 2 : size} 
+                  color={color}
+                  strokeWidth={focused ? 2.5 : 2}
+                />
+              ),
+            }}
           />
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
+          
+          <Tabs.Screen
+            name="my-jobs"
+            options={{
+              title: 'My Jobs',
+              tabBarIcon: ({ size, color, focused }) => (
+                <Briefcase 
+                  size={focused ? size + 2 : size} 
+                  color={color}
+                  strokeWidth={focused ? 2.5 : 2}
+                />
+              ),
+            }}
+          />
+        </>
+      )}
+      
+      {/* Caregiver-specific tabs */}
+      {!isFamily && (
+        <Tabs.Screen
+          name="search"
+          options={{
+            title: 'Analytics',
+            tabBarIcon: ({ size, color, focused }) => (
+              <BarChart3 
+                size={focused ? size + 2 : size} 
+                color={color}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            ),
+          }}
         />
+      )}
+      
+      {/* Shared tabs */}
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          tabBarIcon: ({ size, color, focused }) => (
+            <MessageCircle 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
+      
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ size, color, focused }) => (
+            <Settings 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
 
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
-
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      {/* Hidden tabs that shouldn't show in navigation */}
+      <Tabs.Screen
+        name="matches"
+        options={{
+          href: null, // This hides it from the tab bar
+        }}
+      />
+      
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          href: null, // This hides it from the tab bar
+        }}
+      />
+      
+      <Tabs.Screen
+        name="billing"
+        options={{
+          href: null, // This hides it from the tab bar
+        }}
+      />
+      
+      <Tabs.Screen
+        name="edit-job"
+        options={{
+          href: null,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="file-demo"
+        options={{
+          title: "File Demo",
+          tabBarIcon: ({ size, color, focused }) => (
+            <FileText 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
+      
+      <Tabs.Screen
+        name="job-applicants"
+        options={{
+          href: null, // This hides it from the tab bar
+        }}
+      />
+    </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-});

@@ -65,6 +65,11 @@ export default function SignInScreen() {
         console.log('Navigating to tabs after signin');
         routerInstance.replace('/(tabs)');
       }, 100);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
