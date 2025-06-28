@@ -158,9 +158,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 20,
+  },
   boltBadge: {
-    position: 'absolute',
-    right: -60,
     position: 'absolute',
     right: -60,
     width: 30,
