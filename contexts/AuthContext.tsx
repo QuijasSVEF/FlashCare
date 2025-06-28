@@ -86,7 +86,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    await authService.signIn(email, password);
+    try {
+      const result = await authService.signIn(email, password);
+      
+      // The auth state change listener will handle setting the user
+      // We don't need to manually set it here
+      
+      return result;
+    } catch (error) {
+      console.error('Auth context sign in error:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {

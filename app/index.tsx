@@ -6,23 +6,32 @@ import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 export default function Index() {
   const { user, loading } = useAuth();
   const [timeoutReached, setTimeoutReached] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     // Add a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       setTimeoutReached(true);
-    }, 5000); // 5 second timeout
+    }, 3000); // 3 second timeout (reduced from 5)
 
-    return () => clearTimeout(timeout);
+    // Mark initial load as complete after a short delay
+    const initialTimeout = setTimeout(() => {
+      setInitialLoad(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+      clearTimeout(initialTimeout);
+    };
   }, []);
 
-  // If timeout is reached and still loading, redirect to welcome
-  if (timeoutReached && loading) {
+  // If timeout is reached and still loading, or if we're past initial load and no user
+  if ((timeoutReached && loading) || (!initialLoad && !loading && !user)) {
     return <Redirect href="/(auth)/welcome" />;
   }
 
   // If still loading and timeout not reached, show loading
-  if (loading && !timeoutReached) {
+  if ((loading && !timeoutReached) || initialLoad) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#2563EB" />

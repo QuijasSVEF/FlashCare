@@ -36,7 +36,15 @@ export const authService = {
       password,
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase auth error:', error);
+      throw error;
+    }
+    
+    if (!data.user) {
+      throw new Error('Sign in failed - no user returned');
+    }
+    
     return data;
   },
 

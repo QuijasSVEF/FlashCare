@@ -5,6 +5,7 @@ import { ArrowLeft, Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../lib/auth';
 
 export default function SignInScreen() {
   const [formData, setFormData] = useState({
@@ -31,26 +32,28 @@ export default function SignInScreen() {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({}); // Clear any previous errors
+    
     try {
-      const result = await signIn(formData.email, formData.password);
+      await signIn(formData.email, formData.password);
       
-      if (result.user) {
-        // Check if user has completed their profile
-        const profile = await authService.getCurrentUser();
-        if (profile) {
-          router.replace('/(tabs)');
-        } else {
-          // User exists but profile is incomplete
-          router.replace('/(auth)/profile-setup');
-        }
-      }
+      // Wait a moment for auth state to update
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 500);
+      
     } catch (error: any) {
+      console.error('Sign in error:', error);
       let errorMessage = 'Failed to sign in';
       
-      if (error.message?.includes('Invalid login credentials')) {
+      // Handle different types of auth errors
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
       } else if (error.message) {
         errorMessage = error.message;
       }
