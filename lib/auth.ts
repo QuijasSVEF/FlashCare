@@ -20,6 +20,7 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
+    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -61,11 +62,6 @@ export default function SignInScreen() {
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
-            resolve(null);
-          }, 1500);
-        });
-        
-        const profile = await Promise.race([profilePromise, timeoutPromise]);
       
       if (error.message?.includes('Invalid login credentials') || 
                  error.message?.includes('invalid_credentials')) {
