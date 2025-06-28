@@ -20,16 +20,22 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    }
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
+      }
+    };
+    
+    handleAutoSignIn();
   }, [user]);
 
   const validateForm = () => {
@@ -54,7 +60,12 @@ export default function SignInScreen() {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
-      // Small delay to ensure auth state is updated
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+      // Small delay to ensure auth state is properly set
       setTimeout(() => {
         console.log('Navigating to tabs after signin');
         routerInstance.replace('/(tabs)');
@@ -62,9 +73,16 @@ export default function SignInScreen() {
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
+          }, 100);
+        } catch (error) {
+          console.error('Auto signin error:', error);
+        }
+      };
+      
+      handleAutoSignIn();
       
       if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
+          error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = 'Please check your email and click the confirmation link before signing in.';
@@ -84,7 +102,7 @@ export default function SignInScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, formData.email, formData.password, signIn, routerInstance]);
 
   return (
     <View style={styles.container}>
