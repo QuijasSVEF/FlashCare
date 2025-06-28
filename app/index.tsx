@@ -20,6 +20,7 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
+    const handleSignIn = async () => {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -28,7 +29,7 @@ export default function SignInScreen() {
         console.log('Navigating to tabs after signin');
         routerInstance.replace('/(tabs)');
       }, 100);
-    }
+    };
   }, [user]);
 
   const validateForm = () => {
@@ -61,75 +62,6 @@ export default function SignInScreen() {
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
-
-    // Clear timeout if loading completes
-    if (!loading) {
-      clearTimeout(timeout);
-      setForceRedirect(true);
-    }
-
-    return () => clearTimeout(timeout);
-  }, [loading, user]);
-
-  // Additional effect to handle navigation
-  useEffect(() => {
-    if (forceRedirect && !loading) {
-      console.log('Ready to redirect - user:', !!user);
-      
-      // Small delay to ensure state is settled
-      const navTimeout = setTimeout(() => {
-        if (user) {
-          console.log('Redirecting to tabs with user:', user.id, user.role);
-        } else {
-          console.log('Redirecting to welcome - no user');
-        }
-      }, 100);
-      
-      return () => clearTimeout(navTimeout);
-    }
-  }, [forceRedirect, loading, user]);
-
-  // Show loading screen while determining auth state
-  if (!forceRedirect) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#2563EB" />
-        <Text style={styles.loadingText}>Loading FlashCare...</Text>
-      </View>
-    );
-  }
-
-  // Handle error state
-  if (authError) {
-    return <Redirect href="/(auth)/welcome" />;
-  }
-
-  // If user exists, go to main app
-  if (user) {
-    console.log('Redirecting to tabs with user:', user.id, user.role);
-    return <Redirect href="/(tabs)" />;
-  }
-
-  // Otherwise, go to welcome screen
-  console.log('Redirecting to welcome - no user');
-  return <Redirect href="/(auth)/welcome" />;
-}
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-});
-
       
       if (error.message?.includes('Invalid login credentials') || 
                  error.message?.includes('invalid_credentials')) {
