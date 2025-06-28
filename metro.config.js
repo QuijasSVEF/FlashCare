@@ -2,16 +2,20 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Ensure react-native-web is properly aliased for web builds
+// Configure web-specific module resolution
 config.resolver.alias = {
   ...config.resolver.alias,
-  'react-native': 'react-native-web',
+  // Ensure react-native components use react-native-web on web platform
+  'react-native$': 'react-native-web',
 };
 
-// Prioritize web-specific file extensions
+// Set platform resolution order
 config.resolver.platforms = ['web', 'native', 'ios', 'android'];
 
-// Ensure proper module resolution for web
-config.resolver.resolverMainFields = ['browser', 'main'];
+// Configure resolver main fields for web compatibility
+config.resolver.resolverMainFields = ['browser', 'module', 'main'];
+
+// Ensure proper source extensions
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'web.js', 'web.ts', 'web.tsx'];
 
 module.exports = config;

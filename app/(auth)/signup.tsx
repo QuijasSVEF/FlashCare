@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, User, Users } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
