@@ -11,6 +11,7 @@ export const databaseService = {
   // User operations
   async createUser(userData: Database['public']['Tables']['users']['Insert']) {
     try {
+      console.log('Creating user with data:', userData);
       // First check if user already exists
       const existingUser = await this.getUser(userData.id);
       if (existingUser) {
@@ -30,6 +31,7 @@ export const databaseService = {
         throw error;
       }
       
+      console.log('User created successfully:', data);
       return data;
     } catch (error: any) {
       console.error('CreateUser error:', error);

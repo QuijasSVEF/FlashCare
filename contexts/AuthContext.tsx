@@ -99,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => {
+    console.log('Starting signup with role:', userData.role);
     console.log('Starting signup for:', email);
     await authService.signUp(email, password, userData);
   };

@@ -13,6 +13,10 @@ export const authService = {
         password,
         options: {
           emailRedirectTo: undefined, // Disable email confirmation for now
+          data: {
+            name: userData.name,
+            role: userData.role,
+          }
         }
       });
 
