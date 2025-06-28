@@ -59,12 +59,6 @@ export const authService = {
     try {
       console.log('Auth service: Starting signin for:', email);
 
-      // Clear any existing session first to prevent conflicts
-      await supabase.auth.signOut();
-      
-      // Wait a moment for cleanup
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,

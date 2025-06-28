@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) {
           console.error('Error getting session:', error);
           setUser(null);
-          setLoading(false);
           return;
         }
 
@@ -61,9 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error initializing auth:', error);
         setUser(null);
-      } finally {
-        setLoading(false);
-      }
     };
 
     initializeAuth();
