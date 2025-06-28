@@ -39,6 +39,7 @@ export default function HomeScreen() {
         user.location || undefined
       );
       setCaregivers(caregivers);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load caregivers');
     } finally {
@@ -51,8 +52,13 @@ export default function HomeScreen() {
 
     try {
       setLoading(true);
-      const jobs = await databaseService.getJobPosts(20);
+      const jobs = await matchingService.getRecommendedJobs(
+        user.id,
+        user.location || undefined,
+        20
+      );
       setJobPosts(jobs);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load job posts');
     } finally {
@@ -62,9 +68,10 @@ export default function HomeScreen() {
 
   const handleSwipe = async (direction: 'like' | 'pass') => {
     const items = user?.role === 'family' ? caregivers : jobPosts;
-    if (currentIndex >= items.length) return;
+    if (currentIndex >= items.length || !user?.id) return;
 
     const currentItem = items[currentIndex];
+    setCurrentIndex(prev => prev + 1);
 
     try {
       if (user?.role === 'family') {
@@ -75,14 +82,12 @@ export default function HomeScreen() {
           direction
         );
 
-        if (direction === 'like') {
-          if (result.isMatch) {
-            Alert.alert(
-              '🎉 It\'s a Match!', 
-              `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`,
-              [{ text: 'Great!', style: 'default' }]
-            );
-          }
+        if (direction === 'like' && result.isMatch) {
+          Alert.alert(
+            '🎉 It\'s a Match!', 
+            `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`,
+            [{ text: 'Great!', style: 'default' }]
+          );
         }
       } else if (user?.role === 'caregiver') {
         const currentJob = currentItem;
@@ -93,24 +98,30 @@ export default function HomeScreen() {
           direction
         );
 
-        if (direction === 'like') {
-          if (result.isMatch) {
-            Alert.alert(
-              '🎉 It\'s a Match!', 
-              `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`,
-              [{ text: 'Great!', style: 'default' }]
-            );
-          }
+        if (direction === 'like' && result.isMatch) {
+          Alert.alert(
+            '🎉 It\'s a Match!', 
+            `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`,
+            [{ text: 'Great!', style: 'default' }]
+          );
         }
       }
 
-      setCurrentIndex(prev => prev + 1);
     } catch (error) {
-      Alert.alert('Error', 'Failed to process swipe. Please try again.');
       console.error('Error saving swipe:', error);
+      // Reset index on error
+      setCurrentIndex(prev => prev - 1);
+      
+      let errorMessage = 'Failed to process swipe. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('No job posts found')) {
+          errorMessage = 'Please create a job posting first before browsing caregivers.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      Alert.alert('Error', errorMessage);
     }
-
-    setCurrentIndex(prev => prev + 1);
   };
 
   const handleApplyFilters = (filters: any) => {
@@ -124,7 +135,26 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>Finding caregivers...</Text>
+        <Text style={styles.loadingText}>
+          {user?.role === 'family' ? 'Finding caregivers...' : 'Loading job opportunities...'}
+        </Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            user?.role === 'family' ? loadCaregivers() : loadJobPosts();
+          }}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -288,6 +318,23 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     color: '#6B7280',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#DC2626',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',

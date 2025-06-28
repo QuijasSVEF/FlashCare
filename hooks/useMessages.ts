@@ -47,7 +47,9 @@ export function useMessages(matchId: string) {
         body,
       };
 
-      await databaseService.sendMessage(messageData);
+      const newMessage = await databaseService.sendMessage(messageData);
+      // Optimistically add the message to the list
+      setMessages(prev => [...prev, newMessage]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
       throw err;

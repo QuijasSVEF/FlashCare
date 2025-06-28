@@ -112,6 +112,9 @@ export const databaseService = {
     return data || [];
   },
 
+  // Expose supabase client for advanced queries
+  supabase,
+
   // Swipe operations
   async createSwipe(swipeData: Database['public']['Tables']['swipes']['Insert']) {
     const { data, error } = await supabase
@@ -125,20 +128,33 @@ export const databaseService = {
   },
 
   async checkForMatch(familyId: string, caregiverId: string, jobId: string) {
-    // Check if caregiver has liked this family/job
-    const { data: caregiverSwipe } = await supabase
+    // Check if both users have liked each other for this job
+    const { data: swipes } = await supabase
       .from('swipes')
       .select('*')
       .eq('family_id', familyId)
       .eq('caregiver_id', caregiverId)
       .eq('job_id', jobId)
-      .eq('direction', 'like')
-      .single();
+      .eq('direction', 'like');
 
-    return !!caregiverSwipe;
+    // We need exactly 2 likes (one from family, one from caregiver) for a match
+    return swipes && swipes.length >= 2;
   },
 
   async createMatch(matchData: Database['public']['Tables']['matches']['Insert']) {
+    // Check if match already exists
+    const { data: existingMatch } = await supabase
+      .from('matches')
+      .select('*')
+      .eq('family_id', matchData.family_id)
+      .eq('caregiver_id', matchData.caregiver_id)
+      .eq('job_id', matchData.job_id)
+      .single();
+
+    if (existingMatch) {
+      return existingMatch;
+    }
+
     const { data, error } = await supabase
       .from('matches')
       .insert(matchData)
@@ -178,6 +194,21 @@ export const databaseService = {
   },
 
   async sendMessage(messageData: Database['public']['Tables']['messages']['Insert']) {
+    // Verify the sender is part of the match
+    const { data: match } = await supabase
+      .from('matches')
+      .select('*')
+      .eq('id', messageData.match_id)
+      .single();
+
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    if (match.family_id !== messageData.sender_id && match.caregiver_id !== messageData.sender_id) {
+      throw new Error('Unauthorized to send message to this match');
+    }
+
     const { data, error } = await supabase
       .from('messages')
       .insert(messageData)
@@ -365,7 +396,7 @@ export const databaseService = {
   // Real-time subscriptions
   subscribeToMessages(matchId: string, callback: (message: Message) => void) {
     return supabase
-      .channel(`messages:${matchId}`)
+      .channel(`messages_${matchId}`)
       .on(
         'postgres_changes',
         {
@@ -383,7 +414,7 @@ export const databaseService = {
 
   subscribeToMatches(userId: string, callback: (match: any) => void) {
     return supabase
-      .channel(`matches:${userId}`)
+      .channel(`matches_${userId}`)
       .on(
         'postgres_changes',
         {
@@ -393,7 +424,13 @@ export const databaseService = {
           filter: `or(caregiver_id.eq.${userId},family_id.eq.${userId})`,
         },
         (payload) => {
-          callback(payload.new);
+          // Fetch the complete match data with user info
+          this.getUserMatches(userId).then(matches => {
+            const newMatch = matches.find(m => m.id === payload.new.id);
+            if (newMatch) {
+              callback(newMatch);
+            }
+          });
         }
       )
       .subscribe();

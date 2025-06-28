@@ -11,11 +11,28 @@ export const matchingService = {
     jobId?: string
   ) {
     try {
+      // For family swiping on caregivers, we need a job context
+      if (!jobId) {
+        // Get the family's most recent job post as default
+        const familyJobs = await databaseService.getUserJobPosts(swiperId);
+        if (familyJobs.length === 0) {
+          throw new Error('No job posts found. Please create a job posting first.');
+        }
+        jobId = familyJobs[0].id;
+      }
+
+      // Check if swipe already exists
+      const existingSwipe = await this.getExistingSwipe(swiperId, targetUserId, jobId);
+      if (existingSwipe) {
+        console.log('Swipe already exists');
+        return { isMatch: false, alreadySwiped: true };
+      }
+
       // Create swipe record
       const swipeData = {
-        family_id: swiperId, // Assuming family member is swiping
+        family_id: swiperId,
         caregiver_id: targetUserId,
-        job_id: jobId || '', // Default job ID if not provided
+        job_id: jobId,
         direction,
       };
 
@@ -26,7 +43,7 @@ export const matchingService = {
         const isMatch = await databaseService.checkForMatch(
           swiperId,
           targetUserId,
-          jobId || ''
+          jobId
         );
 
         if (isMatch) {
@@ -34,7 +51,7 @@ export const matchingService = {
           const matchData = {
             family_id: swiperId,
             caregiver_id: targetUserId,
-            job_id: jobId || '',
+            job_id: jobId,
           };
 
           const match = await databaseService.createMatch(matchData);
@@ -56,6 +73,13 @@ export const matchingService = {
     direction: 'like' | 'pass'
   ) {
     try {
+      // Check if swipe already exists
+      const existingSwipe = await this.getExistingSwipe(familyId, caregiverId, jobId);
+      if (existingSwipe) {
+        console.log('Swipe already exists');
+        return { isMatch: false, alreadySwiped: true };
+      }
+
       // Create swipe record (caregiver swiping on family's job)
       const swipeData = {
         family_id: familyId,
@@ -94,26 +118,103 @@ export const matchingService = {
     }
   },
 
+  async getExistingSwipe(familyId: string, caregiverId: string, jobId: string) {
+    try {
+      const { data, error } = await databaseService.supabase
+        .from('swipes')
+        .select('*')
+        .eq('family_id', familyId)
+        .eq('caregiver_id', caregiverId)
+        .eq('job_id', jobId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error checking existing swipe:', error);
+      return null;
+    }
+  },
+
   async getRecommendedCaregivers(
     familyUserId: string,
     location?: string,
     limit = 10
   ) {
     try {
-      // Get all caregivers excluding already swiped ones
-      const caregivers = await databaseService.getCaregivers(familyUserId, limit);
+      // Get caregivers that haven't been swiped on yet
+      const { data: swipedCaregivers } = await databaseService.supabase
+        .from('swipes')
+        .select('caregiver_id')
+        .eq('family_id', familyUserId);
 
-      // TODO: Implement more sophisticated matching algorithm
-      // For now, return all available caregivers
-      // Future enhancements:
-      // - Filter by location proximity
-      // - Consider user preferences
-      // - Factor in ratings and reviews
-      // - Machine learning recommendations
+      const swipedIds = swipedCaregivers?.map(s => s.caregiver_id) || [];
 
-      return caregivers;
+      let query = databaseService.supabase
+        .from('users')
+        .select('*')
+        .eq('role', 'caregiver')
+        .limit(limit);
+
+      if (swipedIds.length > 0) {
+        query = query.not('id', 'in', `(${swipedIds.join(',')})`);
+      }
+
+      if (location) {
+        // Simple location matching - in production, use geolocation
+        query = query.ilike('location', `%${location.split(',')[0]}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return data || [];
     } catch (error) {
       console.error('Error getting recommended caregivers:', error);
+      throw error;
+    }
+  },
+
+  async getRecommendedJobs(
+    caregiverId: string,
+    location?: string,
+    limit = 10
+  ) {
+    try {
+      // Get jobs that haven't been swiped on yet
+      const { data: swipedJobs } = await databaseService.supabase
+        .from('swipes')
+        .select('job_id')
+        .eq('caregiver_id', caregiverId);
+
+      const swipedJobIds = swipedJobs?.map(s => s.job_id) || [];
+
+      let query = databaseService.supabase
+        .from('job_posts')
+        .select(`
+          *,
+          family:users!job_posts_family_id_fkey(*)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (swipedJobIds.length > 0) {
+        query = query.not('id', 'in', `(${swipedJobIds.join(',')})`);
+      }
+
+      if (location) {
+        query = query.ilike('location', `%${location.split(',')[0]}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting recommended jobs:', error);
       throw error;
     }
   },

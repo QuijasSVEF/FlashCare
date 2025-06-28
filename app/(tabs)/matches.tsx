@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { MessageCircle, Star, Clock } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { EmergencyButton } from '../../components/EmergencyButton';
+import { PaywallModal } from '../../components/PaywallModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
-import { databaseService } from '../../lib/database';
 
 export default function MatchesScreen() {
   const { user } = useAuth();
+  const { isSubscriber } = useSubscription();
   const { matches, loading, error } = useMatches();
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -29,7 +32,13 @@ export default function MatchesScreen() {
 
     return (
       <TouchableOpacity
-        onPress={() => router.push(`/chat/${item.id}`)}
+        onPress={() => {
+          if (!isSubscriber) {
+            setShowPaywall(true);
+            return;
+          }
+          router.push(`/chat/${item.id}`);
+        }}
         style={styles.matchItem}
       >
         <Card>
@@ -42,7 +51,7 @@ export default function MatchesScreen() {
             <View style={styles.matchInfo}>
               <View style={styles.matchHeader}>
                 <Text style={styles.matchName}>{otherUser.name}</Text>
-                {false && ( // TODO: Implement unread count
+                {false && ( // Unread count - implement when adding message status
                   <View style={styles.unreadBadge}>
                     <Text style={styles.unreadText}>0</Text>
                   </View>
@@ -61,7 +70,7 @@ export default function MatchesScreen() {
               )}
               
               <Text style={styles.lastMessage} numberOfLines={1}>
-                Start a conversation!
+                {isSubscriber ? 'Tap to start chatting!' : 'Upgrade to message'}
               </Text>
             </View>
             
@@ -90,7 +99,7 @@ export default function MatchesScreen() {
     );
   }
 
-  if (matches.length === 0) {
+  if (error) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -99,13 +108,8 @@ export default function MatchesScreen() {
         </View>
         
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>No matches yet</Text>
-          <Text style={styles.emptyText}>
-            {user?.role === 'family' 
-              ? "Start swiping on caregivers to find your perfect match!"
-              : "Keep browsing job posts to connect with families!"
-            }
-          </Text>
+          <Text style={styles.errorTitle}>Failed to load matches</Text>
+          <Text style={styles.emptyText}>Please try again later</Text>
         </View>
       </View>
     );
@@ -124,6 +128,23 @@ export default function MatchesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.matchesList}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No matches yet</Text>
+            <Text style={styles.emptyText}>
+              {user?.role === 'family' 
+                ? "Start swiping on caregivers to find your perfect match!"
+                : "Keep browsing job posts to connect with families!"
+              }
+            </Text>
+          </View>
+        }
+      />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="messaging"
       />
     </View>
   );
@@ -236,6 +257,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#111827',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#DC2626',
     textAlign: 'center',
     marginBottom: 16,
   },

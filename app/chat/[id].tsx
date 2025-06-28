@@ -22,19 +22,29 @@ export default function ChatScreen() {
   const { id: matchId } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const { isSubscriber } = useSubscription();
-  const { messages, loading, sendMessage } = useMessages(matchId);
+  const { messages, loading, sendMessage, error } = useMessages(matchId);
   const [messageText, setMessageText] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
+  const [otherUser, setOtherUser] = useState<any>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  // Mock match data - in real app, fetch from database
-  const mockMatch = {
-    id: matchId,
-    otherUser: {
-      id: '2',
-      name: 'Sarah Johnson',
-      avatar_url: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-      role: user?.role === 'family' ? 'caregiver' : 'family',
+  useEffect(() => {
+    if (matchId && user?.id) {
+      loadMatchData();
+    }
+  }, [matchId, user?.id]);
+
+  const loadMatchData = async () => {
+    try {
+      const matches = await databaseService.getUserMatches(user!.id);
+      const currentMatch = matches.find(m => m.id === matchId);
+      
+      if (currentMatch) {
+        const other = user?.role === 'family' ? currentMatch.caregiver : currentMatch.family;
+        setOtherUser(other);
+      }
+    } catch (error) {
+      console.error('Error loading match data:', error);
     }
   };
 
@@ -110,6 +120,28 @@ export default function ChatScreen() {
     );
   }
 
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Failed to load messages</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => window.location.reload()}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!otherUser) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.loadingText}>Loading conversation...</Text>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -123,13 +155,13 @@ export default function ChatScreen() {
         
         <View style={styles.headerInfo}>
           <Image
-            source={{ uri: mockMatch.otherUser.avatar_url }}
+            source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
             style={styles.headerAvatar}
           />
           <View style={styles.headerText}>
-            <Text style={styles.headerName}>{mockMatch.otherUser.name}</Text>
+            <Text style={styles.headerName}>{otherUser.name}</Text>
             <Text style={styles.headerStatus}>
-              {mockMatch.otherUser.role === 'caregiver' ? 'Caregiver' : 'Family Member'}
+              {otherUser.role === 'caregiver' ? 'Caregiver' : 'Family Member'}
             </Text>
           </View>
         </View>
@@ -157,7 +189,7 @@ export default function ChatScreen() {
           <View style={styles.emptyMessages}>
             <Text style={styles.emptyTitle}>Start the conversation!</Text>
             <Text style={styles.emptyText}>
-              Send a message to {mockMatch.otherUser.name} to get started.
+              Send a message to {otherUser.name} to get started.
             </Text>
           </View>
         }
@@ -208,6 +240,23 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#6B7280',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#DC2626',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
