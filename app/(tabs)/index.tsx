@@ -4,65 +4,56 @@ import { Heart, X, MapPin } from 'lucide-react-native';
 import { CaregiverCard } from '../../components/CaregiverCard';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { matchingService } from '../../lib/matching';
+import { databaseService } from '../../lib/database';
 
 const { width: screenWidth } = Dimensions.get('window');
-
-// Mock caregiver data
-const mockCaregivers = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    avatar_url: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-    bio: 'Experienced caregiver with 7 years helping families. Specializing in senior care and disability support. Certified in CPR and first aid.',
-    location: 'San Francisco, CA',
-    rating: 4.9,
-    experience: '7+ years',
-    hourlyRate: 28,
-  },
-  {
-    id: '2',
-    name: 'Michael Rodriguez',
-    avatar_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-    bio: 'Compassionate care professional with specialized training in autism support and behavioral therapy.',
-    location: 'San Francisco, CA',
-    rating: 4.8,
-    experience: '5+ years',
-    hourlyRate: 25,
-  },
-  {
-    id: '3',
-    name: 'Emily Chen',
-    avatar_url: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=400',
-    bio: 'Certified nursing assistant with experience in post-surgical care and medication management.',
-    location: 'Oakland, CA',
-    rating: 4.9,
-    experience: '6+ years',
-    hourlyRate: 30,
-  },
-];
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [cards, setCards] = useState(mockCaregivers);
+  const [cards, setCards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (user?.role === 'family') {
+      loadCaregivers();
+    }
+  }, [user]);
+
+  const loadCaregivers = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const caregivers = await matchingService.getRecommendedCaregivers(
+        user.id,
+        user.location || undefined
+      );
+      setCards(caregivers);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load caregivers');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSwipe = async (direction: 'like' | 'pass') => {
     if (currentIndex >= cards.length) return;
 
     const currentCaregiver = cards[currentIndex];
 
-    // Mock swipe action - in real app, this would save to database
     try {
       if (user?.role === 'family') {
-        // Insert swipe record
-        console.log(`Swiped ${direction} on caregiver ${currentCaregiver.id}`);
-        
-        // If it's a like, check for match (mock implementation)
+        const result = await matchingService.handleSwipe(
+          user.id,
+          currentCaregiver.id,
+          direction
+        );
+
         if (direction === 'like') {
-          // Simulate 30% chance of match for demo
-          const isMatch = Math.random() > 0.7;
-          if (isMatch) {
+          if (result.isMatch) {
             Alert.alert(
               '🎉 It\'s a Match!', 
               `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`,
@@ -71,6 +62,10 @@ export default function HomeScreen() {
           }
         }
       }
+
+      setCurrentIndex(prev => prev + 1);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to process swipe. Please try again.');
     } catch (error) {
       console.error('Error saving swipe:', error);
     }
@@ -79,6 +74,14 @@ export default function HomeScreen() {
   };
 
   const currentCaregiver = cards[currentIndex];
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.loadingText}>Finding caregivers...</Text>
+      </View>
+    );
+  }
 
   if (user?.role === 'caregiver') {
     return (
@@ -145,7 +148,7 @@ export default function HomeScreen() {
               style={styles.resetButton}
               onPress={() => {
                 setCurrentIndex(0);
-                setCards([...mockCaregivers]);
+                loadCaregivers();
               }}
             >
               <Text style={styles.resetButtonText}>Start Over</Text>
@@ -162,6 +165,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
     paddingTop: 60,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#6B7280',
   },
   header: {
     flexDirection: 'row',

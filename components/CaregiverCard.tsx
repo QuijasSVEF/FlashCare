@@ -10,9 +10,11 @@ interface CaregiverCardProps {
     avatar_url?: string;
     bio?: string;
     location?: string;
-    rating?: number;
-    experience?: string;
-    hourlyRate?: number;
+    role: 'family' | 'caregiver';
+    phone?: string;
+    emergency_phone?: string;
+    created_at: string;
+    updated_at: string;
   };
 }
 
@@ -30,7 +32,7 @@ export function CaregiverCard({ caregiver }: CaregiverCardProps) {
           <Text style={styles.name}>{caregiver.name}</Text>
           <View style={styles.rating}>
             <Star size={16} color="#F59E0B" />
-            <Text style={styles.ratingText}>{caregiver.rating || 4.8}</Text>
+            <Text style={styles.ratingText}>4.8</Text>
             <Text style={styles.ratingCount}>(127 reviews)</Text>
           </View>
           <View style={styles.location}>
@@ -47,10 +49,10 @@ export function CaregiverCard({ caregiver }: CaregiverCardProps) {
       <View style={styles.details}>
         <View style={styles.detail}>
           <Clock size={16} color="#6B7280" />
-          <Text style={styles.detailText}>{caregiver.experience || '5+ years'}</Text>
+          <Text style={styles.detailText}>5+ years</Text>
         </View>
         <View style={styles.rate}>
-          <Text style={styles.rateText}>${caregiver.hourlyRate || 25}/hr</Text>
+          <Text style={styles.rateText}>$25/hr</Text>
         </View>
       </View>
     </Card>

@@ -5,53 +5,25 @@ import { MessageCircle, Star, Clock } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
-
-// Mock matches data
-const mockMatches = [
-  {
-    id: '1',
-    caregiver: {
-      id: '1',
-      name: 'Sarah Johnson',
-      avatar_url: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.9,
-      experience: '7+ years',
-    },
-    family: {
-      id: '2',
-      name: 'The Anderson Family',
-      avatar_url: 'https://images.pexels.com/photos/1128318/pexels-photo-1128318.jpeg?auto=compress&cs=tinysrgb&w=400',
-      location: 'San Francisco, CA',
-    },
-    lastMessage: 'Looking forward to meeting you!',
-    lastMessageTime: '2m ago',
-    unreadCount: 2,
-  },
-  {
-    id: '2',
-    caregiver: {
-      id: '3',
-      name: 'Emily Chen',
-      avatar_url: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.9,
-      experience: '6+ years',
-    },
-    family: {
-      id: '4',
-      name: 'The Williams Family',
-      avatar_url: 'https://images.pexels.com/photos/1128317/pexels-photo-1128317.jpeg?auto=compress&cs=tinysrgb&w=400',
-      location: 'Oakland, CA',
-    },
-    lastMessage: 'What time works best for you?',
-    lastMessageTime: '1h ago',
-    unreadCount: 0,
-  },
-];
+import { useMatches } from '../../hooks/useMatches';
+import { databaseService } from '../../lib/database';
 
 export default function MatchesScreen() {
   const { user } = useAuth();
+  const { matches, loading, error } = useMatches();
 
-  const renderMatch = ({ item }: { item: typeof mockMatches[0] }) => {
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const renderMatch = ({ item }: { item: any }) => {
     const otherUser = user?.role === 'family' ? item.caregiver : item.family;
     const isCaregiver = user?.role === 'caregiver';
 
@@ -63,16 +35,16 @@ export default function MatchesScreen() {
         <Card>
           <View style={styles.matchContent}>
             <Image
-              source={{ uri: otherUser.avatar_url }}
+              source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
               style={styles.avatar}
             />
             
             <View style={styles.matchInfo}>
               <View style={styles.matchHeader}>
                 <Text style={styles.matchName}>{otherUser.name}</Text>
-                {item.unreadCount > 0 && (
+                {false && ( // TODO: Implement unread count
                   <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>{item.unreadCount}</Text>
+                    <Text style={styles.unreadText}>0</Text>
                   </View>
                 )}
               </View>
@@ -82,19 +54,19 @@ export default function MatchesScreen() {
               ) : (
                 <View style={styles.caregiverDetails}>
                   <Star size={14} color="#F59E0B" />
-                  <Text style={styles.rating}>{otherUser.rating}</Text>
+                  <Text style={styles.rating}>4.8</Text>
                   <Clock size={14} color="#6B7280" />
-                  <Text style={styles.experience}>{otherUser.experience}</Text>
+                  <Text style={styles.experience}>5+ years</Text>
                 </View>
               )}
               
               <Text style={styles.lastMessage} numberOfLines={1}>
-                {item.lastMessage}
+                Start a conversation!
               </Text>
             </View>
             
             <View style={styles.matchActions}>
-              <Text style={styles.timeStamp}>{item.lastMessageTime}</Text>
+              <Text style={styles.timeStamp}>{formatTimeAgo(item.created_at)}</Text>
               <MessageCircle size={20} color="#2563EB" />
             </View>
           </View>
@@ -103,7 +75,22 @@ export default function MatchesScreen() {
     );
   };
 
-  if (mockMatches.length === 0) {
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Matches</Text>
+          <EmergencyButton phoneNumber={user?.emergency_phone} />
+        </View>
+        
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>Loading matches...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (matches.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -132,7 +119,7 @@ export default function MatchesScreen() {
       </View>
 
       <FlatList
-        data={mockMatches}
+        data={matches}
         renderItem={renderMatch}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.matchesList}

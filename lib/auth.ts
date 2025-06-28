@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { databaseService } from './database';
 import { Database } from './supabase';
 
 type User = Database['public']['Tables']['users']['Row'];
@@ -13,15 +14,11 @@ export const authService = {
     if (error) throw error;
 
     if (data.user) {
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          name: userData.name,
-          role: userData.role,
-        });
-
-      if (profileError) throw profileError;
+      await databaseService.createUser({
+        id: data.user.id,
+        name: userData.name,
+        role: userData.role,
+      });
     }
 
     return data;
@@ -47,13 +44,12 @@ export const authService = {
     
     if (!user) return null;
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    return profile;
+    try {
+      return await databaseService.getUser(user.id);
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      return null;
+    }
   },
 
   async updateProfile(updates: Database['public']['Tables']['users']['Update']) {
@@ -61,14 +57,6 @@ export const authService = {
     
     if (!user) throw new Error('No user found');
 
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return await databaseService.updateUser(user.id, updates);
   }
 };
