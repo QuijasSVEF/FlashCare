@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const profile = await Promise.race([
               authService.getCurrentUser(),
               new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
               )
             ]);
             console.log('Profile loaded:', !!profile);
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profile = await Promise.race([
             authService.getCurrentUser(),
             new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+              setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
             )
           ]);
           console.log('Profile in auth change:', !!profile);
