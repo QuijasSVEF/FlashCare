@@ -128,24 +128,16 @@ export const authService = {
       console.log('Found authenticated user:', data.user.id);
 
       try {
-        // Add timeout to prevent hanging
-        const profilePromise = new Promise<User | null>(async (resolve, reject) => {
-          try {
-            const profile = await databaseService.getUserSafe(data.user.id);
-            resolve(profile);
-          } catch (error) {
-            reject(error);
-          }
-        });
-        
-        const timeoutPromise = new Promise<null>((resolve) => {
-          setTimeout(() => {
-            console.log('Profile fetch timeout reached');
-            resolve(null);
-          }, 2000);
-        });
-        
-        const profile = await Promise.race([profilePromise, timeoutPromise]);
+        // Simplified profile fetch with shorter timeout
+        const profile = await Promise.race([
+          databaseService.getUserSafe(data.user.id),
+          new Promise<null>((resolve) => {
+            setTimeout(() => {
+              console.log('Profile fetch timeout reached');
+              resolve(null);
+            }, 1500); // Shorter timeout
+          })
+        ]);
       
         if (!profile) {
           console.log('No profile found for user:', data.user.id, '- returning null');

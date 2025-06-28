@@ -47,7 +47,13 @@ export default function SignInScreen() {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
       console.log('Signin request sent successfully');
-      // Navigation will be handled by the root layout based on auth state
+      
+      // Force navigation after successful signin
+      setTimeout(() => {
+        console.log('Forcing navigation to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 1000);
+      
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
@@ -70,8 +76,12 @@ export default function SignInScreen() {
       }
       
       Alert.alert('Sign In Error', errorMessage);
-    } finally {
       setLoading(false);
+    } finally {
+      // Don't set loading to false immediately to allow navigation
+      setTimeout(() => {
+        setLoading(false);
+      }, 1500);
     }
   };
 

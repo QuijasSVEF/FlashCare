@@ -11,13 +11,13 @@ export default function Index() {
   useEffect(() => {
     console.log('Index: Auth state changed - loading:', loading, 'user:', user?.id);
 
-    // Set a timeout to prevent infinite loading
+    // Set a shorter timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-      if (loading) {
+      if (loading || !shouldRedirect) {
         console.log('Auth loading timeout reached, forcing navigation decision');
         setShouldRedirect(true);
       }
-    }, 5000); // 5 second timeout
+    }, 2000); // 2 second timeout
 
     // When loading completes, allow redirect
     if (!loading) {
@@ -29,16 +29,11 @@ export default function Index() {
   }, [loading, user]);
 
   // Show loading screen while auth is initializing
-  if (!shouldRedirect || loading) {
+  if (!shouldRedirect) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#2563EB" />
         <Text style={styles.loadingText}>Loading FlashCare...</Text>
-        {shouldRedirect && (
-          <Text style={styles.timeoutText}>
-            Taking longer than expected...
-          </Text>
-        )}
       </View>
     );
   }

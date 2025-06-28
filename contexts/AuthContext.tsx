@@ -25,13 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
     
-    // Set a maximum timeout for initialization
+    // Set a shorter timeout for initialization
     const initTimeout = setTimeout(() => {
-      if (mounted) {
-        console.log('Auth initialization timeout - setting loading to false');
+      if (mounted && loading) {
+        console.log('Auth initialization timeout - forcing loading to false');
         setLoading(false);
       }
-    }, 5000); // 5 second timeout
+    }, 3000); // 3 second timeout
 
     // Get initial session
     const initializeAuth = async () => {
@@ -96,19 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
         try {
-          setLoading(true);
+          // Don't set loading to true here to prevent UI blocking
           const profile = await authService.getCurrentUser();
           if (mounted) {
             console.log('Profile in auth change:', !!profile);
             setUser(profile);
+            setLoading(false);
           }
         } catch (profileError) {
           console.error('Error getting profile in auth change:', profileError);
           if (mounted) {
             setUser(null);
-          }
-        } finally {
-          if (mounted) {
             setLoading(false);
           }
         }
