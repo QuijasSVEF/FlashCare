@@ -32,26 +32,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) {
           console.error('Error getting session:', error);
           setUser(null);
+          setLoading(false);
           return;
         }
 
         console.log('Session found:', !!session?.user);
         if (session?.user) {
           try {
-            const profile = await Promise.race([
-              authService.getCurrentUser(),
-              new Promise<null>((_, reject) => {
-                setTimeout(() => {
-                  console.log('Profile fetch timeout reached in auth change');
-                  reject(new Error('Profile fetch timeout'));
-                }, 30000);
-              })
-            ]);
+            const profile = await authService.getCurrentUser();
             console.log('Profile loaded:', !!profile);
             setUser(profile);
           } catch (profileError) {
             console.error('Error getting user profile:', profileError);
-            // Don't sign out on profile error, just set user to null
             setUser(null);
           }
         } else {
@@ -60,8 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error initializing auth:', error);
         setUser(null);
-          };
-    }
+      } finally {
+        setLoading(false);
+      }
+    };
 
     initializeAuth();
 
@@ -75,15 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      if (session?.user && event === 'SIGNED_IN') {
+      if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
         try {
           setLoading(true);
-          const profile = await Promise.race([
-            authService.getCurrentUser(),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
-            )
-          ]);
+          const profile = await authService.getCurrentUser();
           console.log('Profile in auth change:', !!profile);
           setUser(profile);
         } catch (profileError) {
@@ -94,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setLoading(false);
-        }
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -108,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Starting signin for:', email);
-            
+      
       const result = await authService.signIn(email, password);
       
       if (!result.user || !result.session) {

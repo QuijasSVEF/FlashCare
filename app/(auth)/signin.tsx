@@ -37,8 +37,10 @@ export default function SignInScreen() {
     try {
       console.log('Attempting signin with:', formData.email);
       await signIn(formData.email, formData.password);
-      // Navigation will happen automatically via the auth state change in index.tsx
       console.log('Signin request sent successfully');
+      
+      // Don't manually navigate - let the auth state change handle it
+      // The useAuth hook will update the user state and trigger navigation
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
