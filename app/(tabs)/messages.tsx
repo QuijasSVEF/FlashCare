@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import { router } from 'expo-router';
+import { MessageCircle } from 'lucide-react-native';
+import { Card } from '../../components/ui/Card';
 import { PaywallModal } from '../../components/PaywallModal';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useMatches } from '../../hooks/useMatches';
 import { Button } from '../../components/ui/Button';
 
 export default function MessagesScreen() {
   const { user } = useAuth();
   const { isSubscriber } = useSubscription();
+  const { matches, loading } = useMatches();
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleStartMessaging = () => {
@@ -20,6 +25,58 @@ export default function MessagesScreen() {
     }
   };
 
+  const renderConversation = ({ item }: { item: any }) => {
+    const otherUser = user?.role === 'family' ? item.caregiver : item.family;
+    
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          if (!isSubscriber) {
+            setShowPaywall(true);
+            return;
+          }
+          router.push(`/chat/${item.id}`);
+        }}
+        style={styles.conversationItem}
+      >
+        <Card>
+          <View style={styles.conversationContent}>
+            <Image
+              source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
+              style={styles.avatar}
+            />
+            
+            <View style={styles.conversationInfo}>
+              <Text style={styles.conversationName}>{otherUser.name}</Text>
+              <Text style={styles.conversationPreview}>
+                {isSubscriber ? 'Tap to start chatting!' : 'Upgrade to message'}
+              </Text>
+            </View>
+            
+            <View style={styles.conversationActions}>
+              <MessageCircle size={20} color="#2563EB" />
+            </View>
+          </View>
+        </Card>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Messages</Text>
+          <EmergencyButton phoneNumber={user?.emergency_phone} />
+        </View>
+        
+        <View style={styles.upgradePrompt}>
+          <Text style={styles.upgradeTitle}>Loading conversations...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -27,7 +84,7 @@ export default function MessagesScreen() {
         <EmergencyButton phoneNumber={user?.emergency_phone} />
       </View>
 
-      {!isSubscriber ? (
+      {!isSubscriber && matches.length > 0 ? (
         <View style={styles.upgradePrompt}>
           <Text style={styles.upgradeTitle}>Unlock Messaging</Text>
           <Text style={styles.upgradeText}>
@@ -41,14 +98,21 @@ export default function MessagesScreen() {
             style={styles.upgradeButton}
           />
         </View>
-      ) : (
-        <View style={styles.messagesContent}>
-          <Text style={styles.messagesTitle}>Your Conversations</Text>
-          <Text style={styles.messagesText}>
-            You can now message with your matches! 
-            This feature is fully unlocked with your subscription.
+      ) : matches.length === 0 ? (
+        <View style={styles.upgradePrompt}>
+          <Text style={styles.upgradeTitle}>No conversations yet</Text>
+          <Text style={styles.upgradeText}>
+            Start matching with caregivers to begin conversations!
           </Text>
         </View>
+      ) : (
+        <FlatList
+          data={matches}
+          renderItem={renderConversation}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.conversationsList}
+          showsVerticalScrollIndicator={false}
+        />
       )}
 
       <PaywallModal
@@ -101,23 +165,37 @@ const styles = StyleSheet.create({
   upgradeButton: {
     width: '100%',
   },
-  messagesContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
+  conversationsList: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
   },
-  messagesTitle: {
-    fontSize: 24,
+  conversationItem: {
+    marginBottom: 0,
+  },
+  conversationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 16,
+  },
+  conversationInfo: {
+    flex: 1,
+  },
+  conversationName: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
-    textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  messagesText: {
+  conversationPreview: {
     fontSize: 16,
     color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
+  },
+  conversationActions: {
+    padding: 8,
   },
 });

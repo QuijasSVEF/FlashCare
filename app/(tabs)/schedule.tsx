@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Calendar, Clock, User, MapPin } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -7,34 +7,13 @@ import { EmergencyButton } from '../../components/EmergencyButton';
 import { PaywallModal } from '../../components/PaywallModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-
-// Mock schedule data
-const mockSchedule = [
-  {
-    id: '1',
-    caregiver: 'Sarah Johnson',
-    family: 'Anderson Family',
-    date: '2024-01-15',
-    startTime: '09:00',
-    endTime: '15:00',
-    status: 'confirmed' as const,
-    location: 'San Francisco, CA',
-  },
-  {
-    id: '2',
-    caregiver: 'Emily Chen',
-    family: 'Williams Family',
-    date: '2024-01-16',
-    startTime: '10:00',
-    endTime: '14:00',
-    status: 'pending' as const,
-    location: 'Oakland, CA',
-  },
-];
+import { useSchedules } from '../../hooks/useSchedules';
+import { databaseService } from '../../lib/database';
 
 export default function ScheduleScreen() {
   const { user } = useAuth();
   const { isSubscriber } = useSubscription();
+  const { schedules, loading, refetch } = useSchedules();
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleScheduleAction = () => {
@@ -45,25 +24,52 @@ export default function ScheduleScreen() {
     }
   };
 
-  const renderScheduleItem = ({ item }: { item: typeof mockSchedule[0] }) => {
-    const otherParty = user?.role === 'family' ? item.caregiver : item.family;
+  const handleAcceptSchedule = async (scheduleId: string) => {
+    try {
+      await databaseService.updateScheduleStatus(scheduleId, 'confirmed');
+      Alert.alert('Success', 'Schedule confirmed!');
+      refetch();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to confirm schedule');
+    }
+  };
+
+  const handleDeclineSchedule = async (scheduleId: string) => {
+    try {
+      await databaseService.updateScheduleStatus(scheduleId, 'cancelled');
+      Alert.alert('Success', 'Schedule declined');
+      refetch();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to decline schedule');
+    }
+  };
+
+  const renderScheduleItem = ({ item }: { item: any }) => {
+    const match = item.match;
+    const otherUser = user?.role === 'family' ? match.caregiver : match.family;
+    const startDate = new Date(item.start_ts);
+    const endDate = new Date(item.end_ts);
     
     return (
       <Card style={styles.scheduleItem}>
         <View style={styles.scheduleHeader}>
           <View style={styles.scheduleInfo}>
-            <Text style={styles.scheduleName}>{otherParty}</Text>
+            <Text style={styles.scheduleName}>{otherUser.name}</Text>
             <View style={styles.scheduleDetails}>
               <Calendar size={16} color="#6B7280" />
-              <Text style={styles.scheduleDate}>{item.date}</Text>
+              <Text style={styles.scheduleDate}>
+                {startDate.toLocaleDateString()}
+              </Text>
             </View>
             <View style={styles.scheduleDetails}>
               <Clock size={16} color="#6B7280" />
-              <Text style={styles.scheduleTime}>{item.startTime} - {item.endTime}</Text>
+              <Text style={styles.scheduleTime}>
+                {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
             </View>
             <View style={styles.scheduleDetails}>
               <MapPin size={16} color="#6B7280" />
-              <Text style={styles.scheduleLocation}>{item.location}</Text>
+              <Text style={styles.scheduleLocation}>{otherUser.location || 'Location TBD'}</Text>
             </View>
           </View>
           
@@ -84,14 +90,14 @@ export default function ScheduleScreen() {
           <View style={styles.scheduleActions}>
             <Button
               title="Accept"
-              onPress={handleScheduleAction}
+              onPress={() => handleAcceptSchedule(item.id)}
               variant="secondary"
               size="small"
               style={styles.actionButton}
             />
             <Button
               title="Decline"
-              onPress={handleScheduleAction}
+              onPress={() => handleDeclineSchedule(item.id)}
               variant="outline"
               size="small"
               style={styles.actionButton}
@@ -101,6 +107,21 @@ export default function ScheduleScreen() {
       </Card>
     );
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Schedule</Text>
+          <EmergencyButton phoneNumber={user?.emergency_phone} />
+        </View>
+        
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>Loading schedules...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -136,7 +157,7 @@ export default function ScheduleScreen() {
           )}
 
           <FlatList
-            data={mockSchedule}
+            data={schedules}
             renderItem={renderScheduleItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.scheduleList}
