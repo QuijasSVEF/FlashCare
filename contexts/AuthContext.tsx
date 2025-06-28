@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Force navigation to tabs after successful sign in
       if (Platform.OS === 'web') {
         setTimeout(() => {
-          window.location.href = '/(tabs)';
+          window.location.replace('/(tabs)');
         }, 500);
       }
 
@@ -169,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Force navigation to welcome screen after sign out
       if (Platform.OS === 'web') {
         setTimeout(() => {
-          window.location.href = '/(auth)/welcome';
+          window.location.replace('/(auth)/welcome');
         }, 500);
       }
       

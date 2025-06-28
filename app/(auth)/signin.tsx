@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext'; 
+import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
@@ -15,7 +15,14 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
+    if (user) {
+      router.replace('/(tabs)');
+    }
+  }, [user]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -34,7 +41,7 @@ export default function SignInScreen() {
     setLoading(true);
     setErrors({});
     
-    let redirectTimer: NodeJS.Timeout;
+    let redirectTimer: any;
     
     try {
       console.log('Attempting signin with:', formData.email);
@@ -44,7 +51,7 @@ export default function SignInScreen() {
       // Set a timer to force navigation if auth state change doesn't trigger it
       redirectTimer = setTimeout(() => {
         console.log('Signin redirect timer triggered');
-        router.replace('/(tabs)');
+        window.location.href = '/(tabs)';
       }, 2000);
     } catch (error: any) {
       console.error('Signin error:', error);
@@ -94,7 +101,7 @@ export default function SignInScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.title}>Welcome back!</Text>
         <Text style={styles.subtitle}>Sign in to your account</Text>
 
         <Input
@@ -104,6 +111,7 @@ export default function SignInScreen() {
           placeholder="Enter your email"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
           error={errors.email}
         />
 
@@ -113,6 +121,7 @@ export default function SignInScreen() {
           onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
           placeholder="Enter your password"
           secureTextEntry
+          autoComplete="password"
           error={errors.password}
         />
 
@@ -121,6 +130,7 @@ export default function SignInScreen() {
           onPress={handleSignIn}
           disabled={loading}
           size="large"
+          variant={loading ? "disabled" : "primary"}
           style={styles.signInButton}
         />
 

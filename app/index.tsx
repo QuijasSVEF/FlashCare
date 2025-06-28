@@ -32,14 +32,14 @@ export default function Index() {
   useEffect(() => {
     if (Platform.OS === 'web') {
       const forceRedirectTimer = setTimeout(() => {
-        if (!user) {
+        if (!user && !loading) {
           console.log('Forcing redirect to welcome after timeout');
           window.location.href = '/(auth)/welcome';
-        } else {
+        } else if (user) {
           console.log('Forcing redirect to tabs after timeout');
           window.location.href = '/(tabs)';
         }
-      }, 8000); // 8 seconds
+      }, 3000); // 3 seconds
       
       return () => clearTimeout(forceRedirectTimer);
     }

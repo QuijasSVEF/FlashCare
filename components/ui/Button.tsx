@@ -5,7 +5,7 @@ import { Colors } from '../../constants/Colors';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'disabled';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   style?: ViewStyle;
@@ -64,6 +64,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
     shadowColor: Colors.success,
   },
+  disabled: {
+    backgroundColor: Colors.gray[300],
+    shadowOpacity: 0.1,
+  },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
@@ -102,6 +106,9 @@ const styles = StyleSheet.create({
     color: Colors.text.inverse,
   },
   successText: {
+    color: Colors.text.inverse,
+  },
+  disabledText: {
     color: Colors.text.inverse,
   },
   outlineText: {
