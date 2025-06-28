@@ -9,7 +9,7 @@ import {
   PanResponder,
   Animated
 } from 'react-native';
-import { Heart, X, Star, MapPin, Clock } from 'lucide-react-native';
+import { Heart, X, Star, MapPin, Clock, DollarSign } from 'lucide-react-native';
 import { Card } from './ui/Card';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -117,6 +117,9 @@ export function SwipeableCard({
           <Star size={16} color="#F59E0B" fill="#F59E0B" />
           <Text style={styles.ratingText}>4.8</Text>
         </View>
+        <View style={styles.verifiedBadge}>
+          <Text style={styles.verifiedText}>✓ Verified</Text>
+        </View>
       </View>
 
       <View style={styles.infoSection}>
@@ -129,6 +132,14 @@ export function SwipeableCard({
         <Text style={styles.bio} numberOfLines={3}>
           {data.bio || 'Experienced caregiver with 5+ years helping families. Specializing in senior care and disability support.'}
         </Text>
+
+        <View style={styles.skillsContainer}>
+          {['Senior Care', 'CPR Certified', 'First Aid'].map((skill, index) => (
+            <View key={index} style={styles.skillTag}>
+              <Text style={styles.skillText}>{skill}</Text>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.details}>
           <View style={styles.detailItem}>
@@ -154,7 +165,13 @@ export function SwipeableCard({
             }}
             style={styles.familyAvatar}
           />
-          <Text style={styles.familyName}>{data.family?.name || 'Family Member'}</Text>
+          <View>
+            <Text style={styles.familyName}>{data.family?.name || 'Family Member'}</Text>
+            <View style={styles.location}>
+              <MapPin size={14} color="#6B7280" />
+              <Text style={styles.locationText}>{data.location}</Text>
+            </View>
+          </View>
         </View>
       </View>
 
@@ -168,8 +185,8 @@ export function SwipeableCard({
           <Text style={styles.detailText}>{data.hours_per_week} hrs/week</Text>
         </View>
         <View style={styles.detailItem}>
-          <MapPin size={16} color="#6B7280" />
-          <Text style={styles.detailText}>{data.location}</Text>
+          <DollarSign size={16} color="#6B7280" />
+          <Text style={styles.detailText}>${data.rate_hour}/hr</Text>
         </View>
       </View>
 
@@ -179,7 +196,9 @@ export function SwipeableCard({
             ${(data.hours_per_week * data.rate_hour).toFixed(2)}/week
           </Text>
         </View>
-        <Text style={styles.rateText}>${data.rate_hour}/hr</Text>
+        <Text style={styles.postedTime}>
+          {new Date(data.created_at).toLocaleDateString()}
+        </Text>
       </View>
     </View>
   );
@@ -227,17 +246,26 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   card: {
-    height: 500,
+    height: 520,
     borderRadius: 20,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   swipingLeft: {
     borderColor: '#EF4444',
-    borderWidth: 2,
+    borderWidth: 3,
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.3,
   },
   swipingRight: {
     borderColor: '#059669',
-    borderWidth: 2,
+    borderWidth: 3,
+    shadowColor: '#059669',
+    shadowOpacity: 0.3,
   },
   cardContent: {
     flex: 1,
@@ -252,6 +280,8 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
   ratingBadge: {
     position: 'absolute',
@@ -274,6 +304,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
     marginLeft: 4,
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    top: -5,
+    left: 80,
+    backgroundColor: '#059669',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   infoSection: {
     flex: 1,
@@ -301,7 +345,25 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 24,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
     marginBottom: 20,
+  },
+  skillTag: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  skillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2563EB',
   },
   details: {
     flexDirection: 'row',
@@ -318,7 +380,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   rateContainer: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#D1FAE5',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -326,7 +388,7 @@ const styles = StyleSheet.create({
   rateText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2563EB',
+    color: '#059669',
   },
   jobHeader: {
     marginBottom: 16,
@@ -351,6 +413,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#374151',
+    marginBottom: 4,
   },
   jobDescription: {
     fontSize: 16,
@@ -378,6 +441,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#059669',
+  },
+  postedTime: {
+    fontSize: 12,
+    color: '#9CA3AF',
   },
   swipeIndicator: {
     position: 'absolute',

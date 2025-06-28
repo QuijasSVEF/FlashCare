@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-na
 import { LogOut } from 'lucide-react-native';
 import { EmergencyButton } from './EmergencyButton';
 import { useAuth } from '../contexts/AuthContext';
+import { router } from 'expo-router';
 
 interface AppHeaderProps {
   title: string;
@@ -21,7 +22,7 @@ export function AppHeader({
 }: AppHeaderProps) {
   const { signOut } = useAuth();
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
@@ -32,9 +33,14 @@ export function AppHeader({
           style: 'destructive', 
           onPress: async () => {
             try {
+              console.log('Starting sign out from header...');
               await signOut();
+              console.log('Sign out completed, navigating to welcome...');
+              router.replace('/(auth)/welcome');
             } catch (error) {
               console.error('Sign out error in header:', error);
+              // Force navigation even if there's an error
+              router.replace('/(auth)/welcome');
             }
           }
         },
@@ -46,11 +52,14 @@ export function AppHeader({
     <View style={styles.container}>
       {/* Logo Row */}
       <View style={styles.logoRow}>
-        <Image
-          source={{ uri: 'https://i.imgur.com/wrJlM2K.png' }}
-          style={styles.customLogo}
-          resizeMode="contain"
-        />
+        <View style={styles.logoContainer}>
+          <Image
+            source={{ uri: 'https://i.imgur.com/wrJlM2K.png' }}
+            style={styles.customLogo}
+            resizeMode="contain"
+          />
+          <View style={styles.logoGradient} />
+        </View>
         <Image
           source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
           style={styles.boltBadge}
@@ -89,6 +98,11 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   logoRow: {
     flexDirection: 'row',
@@ -96,9 +110,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  logoContainer: {
+    position: 'relative',
+  },
   customLogo: {
-    width: 120,
-    height: 40,
+    width: 140,
+    height: 45,
+  },
+  logoGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#2563EB',
+    borderRadius: 2,
   },
   boltBadge: {
     width: 40,
@@ -131,5 +157,10 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#FEE2E2',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });

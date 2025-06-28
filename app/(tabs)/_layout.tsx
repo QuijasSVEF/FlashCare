@@ -2,13 +2,14 @@ import { Tabs } from 'expo-router';
 import { Chrome as Home, MessageCircle, Calendar, User, Search, Users, Plus, Briefcase, LogOut } from 'lucide-react-native';
 import { TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { router } from 'expo-router';
 
 export default function TabLayout() {
   const { user, signOut } = useAuth();
   
   const isFamily = user?.role === 'family';
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
@@ -19,9 +20,14 @@ export default function TabLayout() {
           style: 'destructive', 
           onPress: async () => {
             try {
+              console.log('Starting sign out from tabs...');
               await signOut();
+              console.log('Sign out completed, navigating to welcome...');
+              router.replace('/(auth)/welcome');
             } catch (error) {
               console.error('Sign out error in tabs:', error);
+              // Force navigation even if there's an error
+              router.replace('/(auth)/welcome');
             }
           }
         },
@@ -29,25 +35,11 @@ export default function TabLayout() {
     );
   };
 
-  const LogoutButton = () => (
-    <TouchableOpacity
-      onPress={handleSignOut}
-      style={{
-        padding: 8,
-        borderRadius: 8,
-        backgroundColor: '#FEE2E2',
-        marginRight: 8,
-      }}
-    >
-      <LogOut size={20} color="#DC2626" />
-    </TouchableOpacity>
-  );
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2563EB',
+        tabBarActiveTintColor: '#2563EB', // Primary blue from logo
         tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
@@ -56,10 +48,18 @@ export default function TabLayout() {
           paddingBottom: 8,
           paddingTop: 8,
           height: 70,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 10,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
       }}>
       

@@ -155,7 +155,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Clear subscription state if on mobile
       if (Platform.OS !== 'web') {
-        await subscriptionService.logOut();
+        try {
+          await subscriptionService.logOut();
+        } catch (subscriptionError) {
+          console.error('Error clearing subscription state:', subscriptionError);
+          // Don't throw - we still want to complete the sign out
+        }
       }
       
       console.log('Sign out completed successfully');
@@ -163,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error during sign out:', error);
       // Even if there's an error, clear the user state
       setUser(null);
+      // Don't throw the error - we want to complete the sign out process
     }
   };
 

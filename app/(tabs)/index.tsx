@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Image } from 'react-native';
-import { Heart, X, MapPin, Clock, DollarSign, User, Filter } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Image, Modal } from 'react-native';
+import { Heart, X, MapPin, Clock, DollarSign, User, Filter, Search, Users, Menu } from 'lucide-react-native';
 import { SwipeableCard } from '../../components/SwipeableCard';
 import { Card } from '../../components/ui/Card';
 import { FilterModal } from '../../components/FilterModal';
@@ -12,8 +12,74 @@ import { matchingService } from '../../lib/matching';
 import { databaseService } from '../../lib/database';
 import { useNotifications } from '../../hooks/useNotifications';
 import { NotificationBanner } from '../../components/NotificationBanner';
+import { router } from 'expo-router';
 
 const { width: screenWidth } = Dimensions.get('window');
+
+interface QuickMenuModalProps {
+  visible: boolean;
+  onClose: () => void;
+  userRole: 'family' | 'caregiver';
+}
+
+function QuickMenuModal({ visible, onClose, userRole }: QuickMenuModalProps) {
+  const menuItems = [
+    {
+      icon: Users,
+      title: 'Matches',
+      subtitle: 'View your connections',
+      color: '#059669',
+      onPress: () => {
+        onClose();
+        router.push('/(tabs)/matches');
+      }
+    },
+    {
+      icon: Search,
+      title: 'Advanced Search',
+      subtitle: 'Find specific caregivers',
+      color: '#2563EB',
+      onPress: () => {
+        onClose();
+        router.push('/(tabs)/search');
+      }
+    }
+  ];
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <View style={styles.quickMenu}>
+          <Text style={styles.quickMenuTitle}>Quick Actions</Text>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.quickMenuItem}
+              onPress={item.onPress}
+            >
+              <View style={[styles.quickMenuIcon, { backgroundColor: `${item.color}15` }]}>
+                <item.icon size={24} color={item.color} />
+              </View>
+              <View style={styles.quickMenuContent}>
+                <Text style={styles.quickMenuItemTitle}>{item.title}</Text>
+                <Text style={styles.quickMenuItemSubtitle}>{item.subtitle}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -25,6 +91,7 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({});
 
   React.useEffect(() => {
@@ -166,68 +233,6 @@ export default function HomeScreen() {
     );
   }
 
-  const renderJobCard = (job: any) => {
-    const weeklyEarnings = job.hours_per_week * job.rate_hour;
-    const timeAgo = new Date(job.created_at);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - timeAgo.getTime()) / (1000 * 60 * 60));
-    
-    let timeText = '';
-    if (diffInHours < 1) timeText = 'Just posted';
-    else if (diffInHours < 24) timeText = `${diffInHours}h ago`;
-    else timeText = `${Math.floor(diffInHours / 24)}d ago`;
-
-    return (
-      <Card style={styles.jobCard}>
-        <View style={styles.jobCardHeader}>
-          <Text style={styles.jobCardTitle}>{job.title}</Text>
-          
-          <View style={styles.familyInfo}>
-            <View style={styles.familyHeader}>
-              <Image
-                source={{ 
-                  uri: job.family?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-                }}
-                style={styles.familyAvatar}
-              />
-              <View>
-                <Text style={styles.familyName}>{job.family?.name || 'Family Member'}</Text>
-                <View style={styles.jobLocation}>
-                  <MapPin size={14} color="#6B7280" />
-                  <Text style={styles.jobLocationText}>{job.location}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.jobCardDescription} numberOfLines={4}>
-          {job.description}
-        </Text>
-
-        <View style={styles.jobCardDetails}>
-          <View style={styles.jobDetailItem}>
-            <Clock size={16} color="#6B7280" />
-            <Text style={styles.jobDetailText}>{job.hours_per_week} hrs/week</Text>
-          </View>
-          <View style={styles.jobDetailItem}>
-            <DollarSign size={16} color="#6B7280" />
-            <Text style={styles.jobDetailText}>${job.rate_hour}/hour</Text>
-          </View>
-        </View>
-
-        <View style={styles.jobCardFooter}>
-          <View style={styles.weeklyEarnings}>
-            <Text style={styles.weeklyEarningsText}>
-              ${weeklyEarnings.toFixed(2)}/week
-            </Text>
-          </View>
-          <Text style={styles.postedTime}>{timeText}</Text>
-        </View>
-      </Card>
-    );
-  };
-
   return (
     <View style={styles.container}>
       {notifications.map((notification) => (
@@ -246,12 +251,20 @@ export default function HomeScreen() {
         subtitle={`📍 ${user?.location || 'San Francisco, CA'}`}
         emergencyPhone={user?.emergency_phone}
         rightComponent={
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => setShowFilterModal(true)}
-          >
-            <Filter size={20} color="#2563EB" />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.quickMenuButton}
+              onPress={() => setShowQuickMenu(true)}
+            >
+              <Menu size={20} color="#2563EB" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setShowFilterModal(true)}
+            >
+              <Filter size={20} color="#2563EB" />
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -305,6 +318,12 @@ export default function HomeScreen() {
         )}
       </View>
 
+      <QuickMenuModal
+        visible={showQuickMenu}
+        onClose={() => setShowQuickMenu(false)}
+        userRole={user?.role || 'family'}
+      />
+
       <FilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
@@ -325,7 +344,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
   centered: {
     justifyContent: 'center',
@@ -351,6 +370,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  quickMenuButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#EEF2FF',
   },
   filterButton: {
     padding: 8,
@@ -390,6 +418,7 @@ const styles = StyleSheet.create({
   noMoreCards: {
     alignItems: 'center',
     paddingHorizontal: 40,
+    paddingTop: 100,
   },
   noMoreTitle: {
     fontSize: 24,
@@ -416,116 +445,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  comingSoon: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
   },
-  comingSoonTitle: {
-    fontSize: 24,
+  quickMenu: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    margin: 20,
+    minWidth: 280,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  quickMenuTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
-    textAlign: 'center',
     marginBottom: 16,
-  },
-  comingSoonText: {
-    fontSize: 16,
-    color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
   },
-  familyHeader: {
+  quickMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  familyAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  jobBrowsingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  jobCard: {
-    width: '100%',
-    maxWidth: 350,
-    alignSelf: 'center',
-  },
-  jobCardHeader: {
-    marginBottom: 16,
-  },
-  jobCardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
     marginBottom: 8,
   },
-  familyInfo: {
-    marginBottom: 8,
+  quickMenuIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
   },
-  familyName: {
+  quickMenuContent: {
+    flex: 1,
+  },
+  quickMenuItemTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 4,
+    color: '#111827',
+    marginBottom: 2,
   },
-  jobLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  jobLocationText: {
+  quickMenuItemSubtitle: {
     fontSize: 14,
     color: '#6B7280',
-    marginLeft: 4,
-  },
-  jobCardDescription: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 24,
-    marginBottom: 16,
-  },
-  jobCardDetails: {
-    flexDirection: 'row',
-    gap: 20,
-    marginBottom: 16,
-  },
-  jobDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  jobDetailText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 4,
-  },
-  jobCardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  weeklyEarnings: {
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  weeklyEarningsText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#059669',
-  },
-  postedTime: {
-    fontSize: 12,
-    color: '#9CA3AF',
   },
 });
