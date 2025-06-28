@@ -10,6 +10,19 @@ type Message = Database['public']['Tables']['messages']['Row'];
 export const databaseService = {
   // User operations
   async createUser(userData: Database['public']['Tables']['users']['Insert']) {
+    // First check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userData.id)
+      .single();
+
+    if (existingUser) {
+      // User already exists, return existing user data
+      return await this.getUser(userData.id);
+    }
+
+    // Create new user
     const { data, error } = await supabase
       .from('users')
       .insert(userData)

@@ -19,7 +19,17 @@ export default function ProfileSetupScreen() {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      await updateProfile(formData);
+      if (user?.id) {
+        await updateProfile(formData);
+      } else {
+        // If no user, try to get current user and create profile
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          await databaseService.updateUser(authUser.id, formData);
+        } else {
+          throw new Error('No authenticated user found');
+        }
+      }
       router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Profile Error', error.message || 'Failed to update profile');

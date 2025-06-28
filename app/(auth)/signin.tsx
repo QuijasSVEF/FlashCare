@@ -32,10 +32,30 @@ export default function SignInScreen() {
 
     setLoading(true);
     try {
-      await signIn(formData.email, formData.password);
-      router.replace('/(tabs)');
+      const result = await signIn(formData.email, formData.password);
+      
+      if (result.user) {
+        // Check if user has completed their profile
+        const profile = await authService.getCurrentUser();
+        if (profile) {
+          router.replace('/(tabs)');
+        } else {
+          // User exists but profile is incomplete
+          router.replace('/(auth)/profile-setup');
+        }
+      }
     } catch (error: any) {
-      Alert.alert('Sign In Error', error.message || 'Failed to sign in');
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
     } finally {
       setLoading(false);
     }

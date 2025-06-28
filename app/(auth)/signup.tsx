@@ -37,11 +37,22 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      await signUp(formData.email, formData.password, {
+      const result = await signUp(formData.email, formData.password, {
         name: formData.name,
         role: formData.role as 'family' | 'caregiver',
       });
-      router.replace('/(auth)/profile-setup');
+      
+      // Check if user needs email confirmation
+      if (result.user && !result.session) {
+        Alert.alert(
+          'Check Your Email',
+          'Please check your email and click the confirmation link to complete your registration.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // User is signed up and confirmed, go to profile setup
+        router.replace('/(auth)/profile-setup');
+      }
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
       

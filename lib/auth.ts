@@ -6,22 +6,28 @@ type User = Database['public']['Tables']['users']['Row'];
 
 export const authService = {
   async signUp(email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) {
-    const { data, error } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (error) throw error;
+    if (authError) throw authError;
 
-    if (data.user) {
-      await databaseService.createUser({
-        id: data.user.id,
-        name: userData.name,
-        role: userData.role,
-      });
+    if (authData.user) {
+      try {
+        await databaseService.createUser({
+          id: authData.user.id,
+          name: userData.name,
+          role: userData.role,
+        });
+      } catch (profileError) {
+        console.error('Error creating user profile:', profileError);
+        // If profile creation fails, we should still return the auth data
+        // The user can complete their profile later
+      }
     }
 
-    return data;
+    return authData;
   },
 
   async signIn(email: string, password: string) {
@@ -45,11 +51,11 @@ export const authService = {
     if (!user) return null;
 
     try {
-      return await databaseService.getUser(user.id);
+      const profile = await databaseService.getUser(user.id);
+      return profile;
     } catch (error) {
       console.error('Error getting user profile:', error);
-      
-      // If user profile doesn't exist, return null (they may need to complete signup)
+      // If profile doesn't exist, return null so user can complete profile setup
       return null;
     }
   },
