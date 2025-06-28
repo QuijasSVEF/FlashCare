@@ -36,13 +36,12 @@ export default function SignInScreen() {
     
     try {
       console.log('Attempting signin with:', formData.email);
-      await signIn(formData.email, formData.password);
+      const result = await signIn(formData.email, formData.password);
       
-      // Small delay to ensure auth state is updated
       console.log('Signin successful, navigating to tabs');
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 100);
+      
+      // Navigate immediately since auth context will handle the redirect
+      router.replace('/(tabs)');
       
     } catch (error: any) {
       console.error('Signin error:', error);
@@ -79,11 +78,7 @@ export default function SignInScreen() {
         </TouchableOpacity>
         <View style={styles.logoContainer}>
           <Heart size={24} color="#2563EB" />
-          <Image
-          source={{ uri: 'https://i.imgur.com/wrJlM2K.png' }}
-          style={styles.customLogo}
-          resizeMode="contain"
-        />
+          <Text style={styles.logo}>FlashCare</Text>
           <Image
             source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/refs/heads/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
             style={styles.boltBadge}
@@ -159,8 +154,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2563EB',
     marginLeft: 8,
+    position: 'relative',
   },
+  logo: {
+    fontSize: 20,
   boltBadge: {
+    position: 'absolute',
+    right: -60,
     position: 'absolute',
     right: -60,
     width: 30,

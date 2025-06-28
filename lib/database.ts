@@ -68,18 +68,18 @@ export const databaseService = {
         .from('users')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) {
-        console.error('Error getting user:', error);
+        console.error('Database error getting user:', error);
         throw error;
       }
       
-      console.log('User profile fetched:', !!data);
+      console.log('Database: User profile fetched successfully');
       return data;
     } catch (error) {
-      console.error('Error getting user:', error);
-      throw error; // Re-throw to be handled by caller
+      console.error('Database: Error getting user:', error);
+      throw error;
     }
   },
 

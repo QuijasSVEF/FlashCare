@@ -107,15 +107,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Starting signin for:', email);
+      
+      // Clear any existing user state first
+      setUser(null);
+      
       const result = await authService.signIn(email, password);
       
       if (!result.user || !result.session) {
         throw new Error('Sign in failed - invalid response from server');
       }
       
+      console.log('Auth service signin successful, getting profile...');
+      
+      // Get user profile after successful signin
+      try {
+        const profile = await authService.getCurrentUser();
+        if (profile) {
+          setUser(profile);
+          console.log('Profile loaded successfully');
+        } else {
+          throw new Error('Failed to load user profile');
+        }
+      } catch (profileError) {
+        console.error('Error loading profile after signin:', profileError);
+        // Sign out if profile loading fails
+        await authService.signOut();
+        throw new Error('Failed to load user profile. Please try again.');
+      }
+      
       return result;
     } catch (error) {
       console.error('SignIn error in context:', error);
+      setUser(null);
       throw error;
     }
   };

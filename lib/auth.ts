@@ -57,11 +57,7 @@ export const authService = {
 
   async signIn(email: string, password: string) {
     try {
-      // Clear any existing session first
-      await supabase.auth.signOut();
-      
-      // Wait a moment for cleanup
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('Auth service: Starting signin for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
@@ -69,6 +65,7 @@ export const authService = {
       });
 
       if (error) {
+        console.error('Supabase signin error:', error);
         throw error;
       }
       
@@ -76,6 +73,7 @@ export const authService = {
         throw new Error('Sign in failed - no user or session returned');
       }
       
+      console.log('Supabase signin successful for user:', data.user.id);
       return data;
     } catch (error: any) {
       console.error('SignIn error:', error);
@@ -109,44 +107,28 @@ export const authService = {
 
   async getCurrentUser(): Promise<User | null> {
     try {
+      console.log('Getting current user...');
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return null;
+      if (!user) {
+        console.log('No authenticated user found');
+        return null;
+      }
+
+      console.log('Found authenticated user:', user.id);
 
       const profile = await databaseService.getUser(user.id);
       
-      // If profile doesn't exist, try to create it
       if (!profile) {
-        console.log('Profile not found, attempting to create...');
-        try {
-          const newProfile = await databaseService.createUser({
-            id: user.id,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-            role: user.user_metadata?.role || 'family',
-          });
-          return newProfile;
-        } catch (createError) {
-          console.error('Error creating profile:', createError);
-          // If creation fails, return a minimal user object to prevent infinite loading
-          return {
-            id: user.id,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-            role: user.user_metadata?.role || 'family',
-            avatar_url: null,
-            bio: null,
-            phone: null,
-            emergency_phone: null,
-            location: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-        }
+        console.log('No profile found for user:', user.id);
+        throw new Error('User profile not found. Please contact support.');
       }
       
+      console.log('Profile loaded successfully');
       return profile;
     } catch (error) {
       console.error('Error getting current user:', error);
-      throw error; // Re-throw to be caught by timeout logic
+      throw error;
     }
   },
 
