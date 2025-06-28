@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { router, useRouter } from 'expo-router';
 import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button'; 
+import { useAuth } from '../contexts/AuthContext';
+import { Colors } from '../constants/Colors';
 
 export default function SignInScreen() {
   const [formData, setFormData] = useState({
@@ -60,11 +60,6 @@ export default function SignInScreen() {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
       // Small delay to ensure auth state is properly set
       setTimeout(() => {
         console.log('Navigating to tabs after signin');
