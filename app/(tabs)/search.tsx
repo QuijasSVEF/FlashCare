@@ -4,6 +4,8 @@ import { Search, Filter, MapPin, Star, Clock, DollarSign } from 'lucide-react-na
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { SearchModal } from '../../components/SearchModal';
+import { AdvancedFilterModal } from '../../components/AdvancedFilterModal';
+import { CaregiverProfileCard } from '../../components/CaregiverProfileCard';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
@@ -14,6 +16,7 @@ export default function SearchScreen() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({});
 
   useEffect(() => {
@@ -75,47 +78,11 @@ export default function SearchScreen() {
   };
 
   const renderCaregiverItem = ({ item }: { item: any }) => (
-    <Card style={styles.resultCard}>
-      <View style={styles.resultHeader}>
-        <Image
-          source={{ 
-            uri: item.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-          }}
-          style={styles.avatar}
-        />
-        <View style={styles.resultInfo}>
-          <Text style={styles.resultName}>{item.name}</Text>
-          <View style={styles.rating}>
-            <Star size={16} color="#F59E0B" />
-            <Text style={styles.ratingText}>4.8</Text>
-            <Text style={styles.ratingCount}>(127 reviews)</Text>
-          </View>
-          {item.location && (
-            <View style={styles.location}>
-              <MapPin size={14} color="#6B7280" />
-              <Text style={styles.locationText}>{item.location}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.rateContainer}>
-          <Text style={styles.rateText}>$25/hr</Text>
-        </View>
-      </View>
-
-      {item.bio && (
-        <Text style={styles.resultBio} numberOfLines={2}>
-          {item.bio}
-        </Text>
-      )}
-
-      <View style={styles.skills}>
-        {['Senior Care', 'CPR Certified', '5+ Years'].map((skill, index) => (
-          <View key={index} style={styles.skillTag}>
-            <Text style={styles.skillTagText}>{skill}</Text>
-          </View>
-        ))}
-      </View>
-    </Card>
+    <CaregiverProfileCard 
+      caregiver={item}
+      onMessage={() => console.log('Message caregiver:', item.id)}
+      onViewProfile={() => console.log('View profile:', item.id)}
+    />
   );
 
   const renderJobItem = ({ item }: { item: any }) => {
@@ -195,7 +162,7 @@ export default function SearchScreen() {
         </View>
         <TouchableOpacity
           style={styles.filterButton}
-          onPress={() => setShowSearchModal(true)}
+          onPress={() => setShowAdvancedFilters(true)}
         >
           <Filter size={20} color="#2563EB" />
         </TouchableOpacity>
@@ -238,6 +205,13 @@ export default function SearchScreen() {
         visible={showSearchModal}
         onClose={() => setShowSearchModal(false)}
         onSearch={handleApplyFilters}
+        userRole={user?.role || 'family'}
+      />
+
+      <AdvancedFilterModal
+        visible={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        onApplyFilters={handleApplyFilters}
         userRole={user?.role || 'family'}
       />
     </View>

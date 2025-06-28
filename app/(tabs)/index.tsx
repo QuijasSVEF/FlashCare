@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Image } from 'react-native';
 import { Heart, X, MapPin, Clock, DollarSign, User, Filter } from 'lucide-react-native';
 import { CaregiverCard } from '../../components/CaregiverCard';
+import { CaregiverProfileCard } from '../../components/CaregiverProfileCard';
 import { Card } from '../../components/ui/Card';
 import { FilterModal } from '../../components/FilterModal';
+import { AdvancedFilterModal } from '../../components/AdvancedFilterModal';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchingService } from '../../lib/matching';
@@ -19,6 +21,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({});
 
   React.useEffect(() => {
@@ -249,7 +252,12 @@ export default function HomeScreen() {
           <>
             <View style={styles.cardWrapper}>
               {user?.role === 'family' ? (
-                <CaregiverCard caregiver={currentItem} />
+                <CaregiverProfileCard 
+                  caregiver={currentItem}
+                  onMessage={() => console.log('Message caregiver')}
+                  onViewProfile={() => console.log('View profile')}
+                  showActions={false}
+                />
               ) : (
                 renderJobCard(currentItem)
               )}
@@ -298,6 +306,13 @@ export default function HomeScreen() {
       <FilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
+        onApplyFilters={handleApplyFilters}
+        userRole={user?.role || 'family'}
+      />
+
+      <AdvancedFilterModal
+        visible={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
         onApplyFilters={handleApplyFilters}
         userRole={user?.role || 'family'}
       />

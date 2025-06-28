@@ -1,15 +1,18 @@
 import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, Phone, MapPin, Award } from 'lucide-react-native';
+import { User, Settings, Star, Shield, CreditCard, LogOut, CreditCard as Edit3, Phone, MapPin, Award, Bell, Calendar, MessageCircle } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { ProfileEditModal } from '../../components/ProfileEditModal';
 import { ReviewModal } from '../../components/ReviewModal';
 import { NotificationCenter } from '../../components/NotificationCenter';
+import { QuickStatsCard } from '../../components/QuickStatsCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { databaseService } from '../../lib/database';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -19,11 +22,18 @@ export default function ProfileScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [userReviews, setUserReviews] = useState<any[]>([]);
   const [userRating, setUserRating] = useState({ average: 0, count: 0 });
+  const [userStats, setUserStats] = useState({
+    totalMatches: 0,
+    activeChats: 0,
+    upcomingSchedules: 0,
+    completedJobs: 0,
+  });
 
   useEffect(() => {
     if (user?.id) {
       loadUserReviews();
       loadUserRating();
+      loadUserStats();
     }
   }, [user?.id]);
 
@@ -42,6 +52,27 @@ export default function ProfileScreen() {
       setUserRating(rating);
     } catch (error) {
       console.error('Error loading rating:', error);
+    }
+  };
+
+  const loadUserStats = async () => {
+    try {
+      // Load user statistics
+      const matches = await databaseService.getUserMatches(user!.id);
+      const schedules = await databaseService.getUserSchedules(user!.id);
+      
+      setUserStats({
+        totalMatches: matches.length,
+        activeChats: matches.length, // Simplified - in production, count active conversations
+        upcomingSchedules: schedules.filter(s => 
+          s.status === 'confirmed' && new Date(s.start_ts) > new Date()
+        ).length,
+        completedJobs: schedules.filter(s => 
+          s.status === 'confirmed' && new Date(s.end_ts) < new Date()
+        ).length,
+      });
+    } catch (error) {
+      console.error('Error loading user stats:', error);
     }
   };
 
@@ -65,6 +96,7 @@ export default function ProfileScreen() {
     console.log('Profile saved successfully');
     loadUserReviews();
     loadUserRating();
+    loadUserStats();
   };
 
   const profileStats = [
@@ -137,22 +169,19 @@ export default function ProfileScreen() {
         </View>
       </Card>
 
-      {/* Stats (for caregivers) */}
+      {/* Quick Stats */}
+      <QuickStatsCard 
+        userRole={user?.role || 'family'}
+        stats={{
+          ...userStats,
+          rating: userRating.average,
+          reviewCount: userRating.count,
+        }}
+      />
+
+      {/* Recent Reviews (for caregivers) */}
       {user?.role === 'caregiver' && (
         <>
-          <Card style={styles.statsCard}>
-            <Text style={styles.statsTitle}>Your Stats</Text>
-            <View style={styles.statsGrid}>
-              {profileStats.map((stat, index) => (
-                <View key={index} style={styles.statItem}>
-                  <stat.icon size={24} color="#2563EB" />
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                  <Text style={styles.statLabel}>{stat.label}</Text>
-                </View>
-              ))}
-            </View>
-          </Card>
-
           {/* Recent Reviews */}
           {userReviews.length > 0 && (
             <Card style={styles.reviewsCard}>
