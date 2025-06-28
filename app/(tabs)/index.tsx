@@ -66,7 +66,6 @@ export default function HomeScreen() {
       setCurrentIndex(prev => prev + 1);
     } catch (error) {
       Alert.alert('Error', 'Failed to process swipe. Please try again.');
-    } catch (error) {
       console.error('Error saving swipe:', error);
     }
 
