@@ -99,9 +99,6 @@ export const authService = {
       
       if (!user) return null;
 
-      // Wait a moment for the database trigger to create the profile
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       const profile = await databaseService.getUser(user.id);
       
       // If profile doesn't exist, try to create it
@@ -116,14 +113,26 @@ export const authService = {
           return newProfile;
         } catch (createError) {
           console.error('Error creating profile:', createError);
-          return null;
+          // If creation fails, return a minimal user object to prevent infinite loading
+          return {
+            id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            role: user.user_metadata?.role || 'family',
+            avatar_url: null,
+            bio: null,
+            phone: null,
+            emergency_phone: null,
+            location: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
         }
       }
       
       return profile;
     } catch (error) {
       console.error('Error getting current user:', error);
-      return null;
+      throw error; // Re-throw to be caught by timeout logic
     }
   },
 

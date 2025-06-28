@@ -5,15 +5,30 @@ import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 
 export default function Index() {
   const { user, loading } = useAuth();
+  const [timeoutReached, setTimeoutReached] = useState(false);
+
+  // Add a timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setTimeoutReached(true);
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Show loading screen while checking auth state
-  if (loading) {
+  if (loading && !timeoutReached) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#2563EB" />
         <Text style={styles.loadingText}>Loading FlashCare...</Text>
       </View>
     );
+  }
+
+  // If timeout reached and still loading, redirect to welcome
+  if (timeoutReached && loading) {
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   // If user exists, go to main app

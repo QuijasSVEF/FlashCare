@@ -61,6 +61,7 @@ export const databaseService = {
 
   async getUser(userId: string) {
     try {
+      console.log('Fetching user profile for:', userId);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -68,19 +69,15 @@ export const databaseService = {
         .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // User profile doesn't exist yet
-          console.log('User profile not found for:', userId);
-          return null;
-        }
         console.error('Error getting user:', error);
         throw error;
       }
       
+      console.log('User profile fetched:', !!data);
       return data;
     } catch (error) {
       console.error('Error getting user:', error);
-      return null;
+      throw error; // Re-throw to be handled by caller
     }
   },
 

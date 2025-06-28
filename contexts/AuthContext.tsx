@@ -38,12 +38,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Session found:', !!session?.user);
         if (session?.user) {
           try {
-            const profile = await authService.getCurrentUser();
+            // Try to get user profile with timeout
+            const profile = await Promise.race([
+              authService.getCurrentUser(),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+              )
+            ]);
             console.log('Profile loaded:', !!profile);
             setUser(profile);
           } catch (profileError) {
             console.error('Error getting user profile:', profileError);
-            // If profile doesn't exist, user might need to complete signup
+            // If profile fetch fails, sign out and redirect to auth
+            await supabase.auth.signOut();
             setUser(null);
           }
         } else {
@@ -66,7 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (session?.user) {
           try {
-            const profile = await authService.getCurrentUser();
+            // Add timeout for profile fetching
+            const profile = await Promise.race([
+              authService.getCurrentUser(),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+              )
+            ]);
             console.log('Profile in auth change:', !!profile);
             setUser(profile);
           } catch (profileError) {
