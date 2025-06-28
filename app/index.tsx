@@ -1,23 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 
 export default function Index() {
   const { user, loading } = useAuth();
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
     // Add a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('Authentication loading timeout - redirecting to welcome');
-      }
-    }, 10000); // 10 second timeout
+      setTimeoutReached(true);
+    }, 5000); // 5 second timeout
 
     return () => clearTimeout(timeout);
-  }, [loading]);
+  }, []);
 
-  if (loading) {
+  // If timeout is reached and still loading, redirect to welcome
+  if (timeoutReached && loading) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
+  // If still loading and timeout not reached, show loading
+  if (loading && !timeoutReached) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#2563EB" />
@@ -26,10 +31,12 @@ export default function Index() {
     );
   }
 
+  // If user exists, go to main app
   if (user) {
     return <Redirect href="/(tabs)" />;
   }
 
+  // Otherwise, go to welcome screen
   return <Redirect href="/(auth)/welcome" />;
 }
 

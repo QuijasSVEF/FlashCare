@@ -43,9 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // If profile doesn't exist, user might need to complete signup
             setUser(null);
           }
+        } else {
+          // No session, user is not authenticated
+          setUser(null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }

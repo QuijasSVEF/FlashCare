@@ -49,14 +49,8 @@ export const authService = {
     } catch (error) {
       console.error('Error getting user profile:', error);
       
-      // If user profile doesn't exist, they may need to complete signup
-      if (error && typeof error === 'object' && 'code' in error && 
-          (error.code === 'PGRST116' || error.code === 'PGRST301')) {
-        return null;
-      }
-      
-      // For other errors, still return null but log them
-      throw error;
+      // If user profile doesn't exist, return null (they may need to complete signup)
+      return null;
     }
   },
 
