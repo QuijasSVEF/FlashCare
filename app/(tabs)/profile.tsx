@@ -320,7 +320,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  },
   notificationBadgeText: {
     color: '#FFFFFF',
     fontSize: 10,
