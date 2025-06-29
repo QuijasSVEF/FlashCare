@@ -8,7 +8,7 @@ import {
   Alert,
   Switch,
 } from 'react-native';
-import { Bell, Settings, User, Shield, CreditCard, HelpCircle, LogOut, Trash2 } from 'lucide-react-native';
+import { Bell, Settings, User, Shield, CreditCard, CircleHelp as HelpCircle, LogOut, Trash2 } from 'lucide-react-native';
 
 interface CollapsibleSectionProps {
   title: string;
