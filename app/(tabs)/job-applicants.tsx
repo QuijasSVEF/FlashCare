@@ -61,7 +61,9 @@ export default function JobApplicantsScreen() {
               uri: caregiver.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
             }}
             style={styles.avatar}
-          /><View style={styles.applicantInfo}>
+          />
+
+          <View style={styles.applicantInfo}>
             <Text style={styles.applicantName}>{caregiver.name}</Text>
             <View style={styles.rating}>
               <Star size={16} color="#F59E0B" />
@@ -73,22 +75,30 @@ export default function JobApplicantsScreen() {
                 <Text style={styles.locationText}>{caregiver.location}</Text>
               </View>
             )}
-          </View><TouchableOpacity
+          </View>
+
+          <TouchableOpacity
             style={styles.messageButton}
             onPress={() => handleStartConversation(item)}
           >
             <MessageCircle size={20} color="#2563EB" />
           </TouchableOpacity>
 
-        </View>{caregiver.bio && (
+        </View>
+
+        {caregiver.bio && (
           <Text style={styles.applicantBio} numberOfLines={3}>
             {caregiver.bio}
           </Text>
 
-        )}<View style={styles.applicantFooter}>
+        )}
+
+        <View style={styles.applicantFooter}>
           <Text style={styles.appliedDate}>
             Applied {new Date(item.created_at).toLocaleDateString()}
-          </Text><Button
+          </Text>
+
+          <Button
             title="View Profile"
             onPress={() => handleViewProfile(item)}
             variant="outline"
