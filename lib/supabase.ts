@@ -20,6 +20,7 @@ export default function SignInScreen() {
   
   // Check if user is already signed in
   useEffect(() => {
+    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -61,78 +62,86 @@ export default function SignInScreen() {
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  demoButton: {
-    minWidth: 100,
-  },
-});
+    }
+  };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.background,
+      paddingTop: 60,
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+    },
+    backButton: {
+      padding: 8,
+      marginRight: 16,
+    },
+    logoContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      position: 'relative',
+    },
+    logo: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: Colors.primary[500],
+      marginLeft: 8,
+    },
+    boltBadge: {
+      position: 'absolute',
+      right: -60,
+      width: 30,
+      height: 30,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: 20,
+      paddingTop: 40,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: Colors.text.primary,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: Colors.text.secondary,
+      marginBottom: 32,
+    },
+    signInButton: {
+      marginTop: 16,
+      marginBottom: 24,
+    },
+    signUpText: {
+      fontSize: 16,
+      color: Colors.text.secondary,
+      textAlign: 'center',
+    },
+    signUpLink: {
+      color: Colors.primary[500],
+      fontWeight: '600',
+    },
+    demoSection: {
+      marginTop: 20,
+      marginBottom: 20,
+      alignItems: 'center',
+    },
+    demoTitle: {
+      fontSize: 14,
+      color: Colors.text.secondary,
+      marginBottom: 12,
+    },
+    demoButtons: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 8,
+      marginBottom: 8,
+    },
+    demoButton: {
+      minWidth: 100,
+    },
+  });
+}
