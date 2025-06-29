@@ -1,367 +1,194 @@
-import { supabase } from './supabase';
-import type { Database } from '../types/database';
-
-type Tables = Database['public']['Tables'];
-type User = Tables['users']['Row'];
-type JobPost = Tables['job_posts']['Row'];
-type Match = Tables['matches']['Row'];
-type Message = Tables['messages']['Row'];
-type Swipe = Tables['swipes']['Row'];
-type Review = Tables['reviews']['Row'];
-type Schedule = Tables['schedules']['Row'];
-type Credential = Tables['credentials']['Row'];
-type UserDocument = Tables['user_documents']['Row'];
-
-export const databaseService = {
-  // User operations
-  async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await supabase
-      .from('users')
-      .insert(userData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getUserById(id: string) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async updateUser(id: string, updates: Partial<Omit<User, 'id' | 'created_at'>>) {
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getUsersByRole(role: 'family' | 'caregiver') {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('role', role);
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // Job post operations
-  async createJobPost(jobData: Omit<JobPost, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .insert(jobData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getJobPosts() {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .select(`
-        *,
-        users!job_posts_family_id_fkey(*)
-      `)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getJobPostsByFamily(familyId: string) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .select('*')
-      .eq('family_id', familyId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async updateJobPost(id: string, updates: Partial<Omit<JobPost, 'id' | 'family_id' | 'created_at'>>) {
-    const { data, error } = await supabase
-      .from('job_posts')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async deleteJobPost(id: string) {
-    const { error } = await supabase
-      .from('job_posts')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-  },
-
-  // Swipe operations
-  async createSwipe(swipeData: Omit<Swipe, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('swipes')
-      .insert(swipeData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getSwipesBetweenUsers(familyId: string, caregiverId: string) {
-    const { data, error } = await supabase
-      .from('swipes')
-      .select('*')
-      .eq('family_id', familyId)
-      .eq('caregiver_id', caregiverId);
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // Match operations
-  async createMatch(matchData: Omit<Match, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('matches')
-      .insert(matchData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getMatchesForUser(userId: string) {
-    const { data, error } = await supabase
-      .from('matches')
-      .select(`
-        *,
-        family:users!matches_family_id_fkey(*),
-        caregiver:users!matches_caregiver_id_fkey(*),
-        job_posts(*)
-      `)
-      .or(`family_id.eq.${userId},caregiver_id.eq.${userId}`)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // Message operations
-  async createMessage(messageData: Omit<Message, 'id' | 'sent_at'>) {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert(messageData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getMessagesForMatch(matchId: string) {
-    const { data, error } = await supabase
-      .from('messages')
-      .select(`
-        *,
-        sender:users!messages_sender_id_fkey(*)
-      `)
-      .eq('match_id', matchId)
-      .order('sent_at', { ascending: true });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // Review operations
-  async createReview(reviewData: Omit<Review, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert(reviewData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getReviewsForUser(userId: string) {
-    const { data, error } = await supabase
-      .from('reviews')
-      .select(`
-        *,
-        reviewer:users!reviews_reviewer_id_fkey(*),
-        reviewee:users!reviews_reviewee_id_fkey(*)
-      `)
-      .eq('reviewee_id', userId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // Schedule operations
-  async createSchedule(scheduleData: Omit<Schedule, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('schedules')
-      .insert(scheduleData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getSchedulesForMatch(matchId: string) {
-    const { data, error } = await supabase
-      .from('schedules')
-      .select('*')
-      .eq('match_id', matchId)
-      .order('start_ts', { ascending: true });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async updateScheduleStatus(id: string, status: 'pending' | 'confirmed' | 'cancelled') {
-    const { data, error } = await supabase
-      .from('schedules')
-      .update({ status })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // Credential operations
-  async createCredential(credentialData: Omit<Credential, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('credentials')
-      .insert(credentialData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getCredentialsForUser(userId: string) {
-    const { data, error } = await supabase
-      .from('credentials')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  // User document operations
-  async createUserDocument(documentData: Omit<UserDocument, 'id' | 'uploaded_at' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('user_documents')
-      .insert(documentData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async getUserDocuments(userId: string) {
-    const { data, error } = await supabase
-      .from('user_documents')
-      .select('*')
-      .eq('user_id', userId)
-      .order('uploaded_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async deleteUserDocument(id: string) {
-    const { error } = await supabase
-      .from('user_documents')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-  },
-
-  // Search and filtering
-  async searchJobPosts(filters: {
-    location?: string;
-    minRate?: number;
-    maxRate?: number;
-    minHours?: number;
-    maxHours?: number;
-  }) {
-    let query = supabase
-      .from('job_posts')
-      .select(`
-        *,
-        users!job_posts_family_id_fkey(*)
-      `);
-
-    if (filters.location) {
-      query = query.ilike('location', `%${filters.location}%`);
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+    // Demo implementation
+    return demoSchedules.filter(schedule => schedule.match_id === matchId);
+  const [formData, setFormData] = useState({
+    email: '',
+  async updateScheduleStatus(id: string, status: any) {
+    // Demo implementation
+    const schedule = demoSchedules.find(s => s.id === id);
+    if (schedule) {
+      return { ...schedule, status };
     }
-    if (filters.minRate) {
-      query = query.gte('rate_hour', filters.minRate);
-    }
-    if (filters.maxRate) {
-      query = query.lte('rate_hour', filters.maxRate);
-    }
-    if (filters.minHours) {
-      query = query.gte('hours_per_week', filters.minHours);
-    }
-    if (filters.maxHours) {
-      query = query.lte('hours_per_week', filters.maxHours);
-    }
+    return null;
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+  async createCredential(credentialData: any) {
+    // Demo implementation
+    return { 
+      id: `credential-${Date.now()}`, 
+      ...credentialData, 
+      created_at: new Date().toISOString() 
+    };
+    const newErrors: Record<string, string> = {};
 
-    const { data, error } = await query.order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    // Demo implementation
+    return [];
+    if (!validateForm()) return;
+
+    setLoading(true);
+  async createUserDocument(documentData: any) {
+    // Demo implementation
+    return { 
+      id: `document-${Date.now()}`, 
+      ...documentData, 
+      uploaded_at: new Date().toISOString(),
+      created_at: new Date().toISOString() 
+    };
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    // Demo implementation
+    return [];
+    if (id.includes('family')) {
+      return demoFamilies.find(f => f.id === id) || demoFamilies[0];
+    } else {
+    // Demo implementation
+    console.log('Deleting document:', id);
+    return true;
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+  async searchJobPosts(filters: any) {
+    // Demo implementation
+    return demoJobPosts;
+        
+        <View style={styles.demoSection}>
+  async searchCaregivers(filters: any) {
+    // Demo implementation
+    return demoCaregivers;
   },
-
-  async searchCaregivers(filters: {
-    location?: string;
-    hasCredentials?: boolean;
-  }) {
-    let query = supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'caregiver');
-
-    if (filters.location) {
-      query = query.ilike('location', `%${filters.location}%`);
+  
+  // Additional methods for demo functionality
+  async getUserMatches(userId: string) {
+    // Demo implementation
+    return demoMatches.filter(match => 
+      match.family_id === userId || match.caregiver_id === userId
+    );
+  },
+  
+  async getMatchMessages(matchId: string) {
+    // Demo implementation
+    return demoMessages[matchId as keyof typeof demoMessages] || [];
+  },
+  
+  async sendMessage(messageData: any) {
+    // Demo implementation
+    return { 
+      id: `msg-${Date.now()}`, 
+      ...messageData, 
+      sent_at: new Date().toISOString() 
+    };
+  },
+  
+  async getUserSchedules(userId: string) {
+    // Demo implementation
+    return demoSchedules.filter(schedule => 
+      schedule.match.family_id === userId || schedule.match.caregiver_id === userId
+    );
+  },
+  
+  async getUserReviews(userId: string) {
+    // Demo implementation
+    return demoReviews.filter(review => review.reviewee_id === userId);
+  },
+  
+  async getUserRating(userId: string) {
+    // Demo implementation
+    const reviews = demoReviews.filter(review => review.reviewee_id === userId);
+    if (reviews.length === 0) {
+      return { average: 0, count: 0 };
     }
-
-    const { data, error } = await query.order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
-  }
-};
+    const total = reviews.reduce((sum, review) => sum + review.rating_int, 0);
+    return { average: total / reviews.length, count: reviews.length };
+  },
+  
+  // Subscription methods (mock implementations)
+  subscribeToMessages(matchId: string, callback: (message: any) => void) {
+    // Demo implementation
+    console.log('Subscribed to messages for match:', matchId);
+    return {
+      unsubscribe: () => console.log('Unsubscribed from messages')
+    };
+  },
+  
+  subscribeToMatches(userId: string, callback: (match: any) => void) {
+    // Demo implementation
+    console.log('Subscribed to matches for user:', userId);
+    return {
+      unsubscribe: () => console.log('Unsubscribed from matches')
+    };
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+  async updateUser(id: string, updates: any) {
+                  password: 'password'
+    // Demo implementation - return the user with updates applied
+                  email: 'caregiver3@example.com',
+    console.log('Updating user:', id, updates);
+                  password: 'password'
+    let user;
+                });
+    if (id.includes('family')) {
+              }}
+      user = demoFamilies.find(f => f.id === id) || demoFamilies[0];
+              variant="outline"
+    } else {
+              size="small"
+      user = demoCaregivers.find(c => c.id === id) || demoCaregivers[0];
+              style={styles.demoButton}
+    // Demo implementation
+    }
+    return role === 'family' ? demoFamilies : demoCaregivers;
+          onPress={handleSignIn}
+    // Demo implementation
+  async updateJobPost(id: string, updates: any) {
+  async createMessage(messageData: any) {
+    return demoMatches.filter(match => 
+    // Demo implementation
+    color: Colors.text.secondary,
+  async createReview(reviewData: any) {
+    return { 
+    // Demo implementation
+  async createSchedule(scheduleData: any) {
+  },
+    // Demo implementation
+    gap: 8,
+    return { 
+    marginBottom: 8,
+      id: `schedule-${Date.now()}`, 
+  },
+      ...scheduleData, 
+  demoButton: {
+      created_at: new Date().toISOString() 
+    minWidth: 100,
+    };
+  },
+});

@@ -1,177 +1,281 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
-import { databaseService } from '../lib/database';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-interface AuthContextType {
-  user: User | null;
-  profile: any | null;
-  session: Session | null;
-  loading: boolean;
-  signUp: (email: string, password: string, userData: any) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<void>;
-  updateProfile: (updates: any) => Promise<any>;
-}
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      } else {
-        setLoading(false);
+    if (user) {
+      console.log('User already signed in, redirecting to tabs');
+      routerInstance.replace('/(tabs)');
+    }
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      // Navigation will be handled by the useEffect above
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
       
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const userProfile = await databaseService.getUserById(userId);
-      setProfile(userProfile);
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      setProfile(null);
+      Alert.alert('Sign In Error', errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-
-  const signUp = async (email: string, password: string, userData: any) => {
-    try {
-      setLoading(true);
-      
-      // Sign up with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Create user profile in database
-        const profileData = {
-          id: authData.user.id,
-          ...userData,
-        };
-        
-        const profile = await databaseService.createUser(profileData);
-        setProfile(profile);
-        
-        return { user: authData.user, profile };
-      }
-
-      return authData;
-    } catch (error) {
-      console.error('Sign up error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      return data;
-    } catch (error) {
-      console.error('Sign in error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-    } catch (error) {
-      console.error('Sign out error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async (updates: any) => {
-    try {
-      if (!user) throw new Error('No user logged in');
-      
-      const updatedProfile = await databaseService.updateUser(user.id, updates);
-      setProfile(updatedProfile);
-      
-      return updatedProfile;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      throw error;
-    }
-  };
-
-  const value = {
-    user,
-    profile,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    updateProfile,
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
+
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password} 
+        /> 
+        
+        <View style={styles.demoSection}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Family 1"
+              onPress={() => {
+                setFormData({
+                  email: 'family1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Family 2"
+              onPress={() => {
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 3"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver3@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+        </View>
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
+  },
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
+  },
+});

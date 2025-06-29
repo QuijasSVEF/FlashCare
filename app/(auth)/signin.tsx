@@ -18,24 +18,12 @@ export default function SignInScreen() {
   const routerInstance = useRouter();
   const { signIn, user } = useAuth();
   
-  // If user is already signed in, redirect to tabs
+  // Check if user is already signed in
   useEffect(() => {
-    const handleAutoSignIn = async () => {
-      try {
-        const result = await signIn(formData.email, formData.password);
-        console.log('Signin successful, result:', !!result);
-        
-        // Small delay to ensure auth state is properly set
-        setTimeout(() => {
-          console.log('Navigating to tabs after signin');
-          routerInstance.replace('/(tabs)');
-        }, 100);
-      } catch (error) {
-        console.error('Auto signin error:', error);
-      }
-    };
-    
-    handleAutoSignIn();
+    if (user) {
+      console.log('User already signed in, redirecting to tabs');
+      routerInstance.replace('/(tabs)');
+    }
   }, [user]);
 
   const validateForm = () => {
@@ -59,7 +47,7 @@ export default function SignInScreen() {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
-      // Navigation will be handled by the useEffect above
+      
       // Small delay to ensure auth state is properly set
       setTimeout(() => {
         console.log('Navigating to tabs after signin');
@@ -69,18 +57,13 @@ export default function SignInScreen() {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
       
-    if (user) {
-      console.log('User already signed in, redirecting to tabs');
-      routerInstance.replace('/(tabs)');
-    }
-      
       if (errorMessage.includes('User not found')) {
         errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
       Alert.alert('Sign In Error', errorMessage);
     } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   };
 

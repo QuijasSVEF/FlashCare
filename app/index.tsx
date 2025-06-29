@@ -1,88 +1,219 @@
-import { useEffect, useState } from 'react';
-import { Redirect } from 'expo-router';
-import { useAuth } from '../contexts/AuthContext';
-import { View, StyleSheet, ActivityIndicator, Text, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-export default function Index() {
-  const { user, loading } = useAuth();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
   useEffect(() => {
-    console.log('Index: Auth state changed - loading:', loading, 'user:', user?.id);
-
-    // Set a timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.log('Auth loading timeout reached, forcing navigation decision');
-        setShouldRedirect(true);
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
       }
-    }, 5000); // 5 second timeout
+    };
+    
+    handleAutoSignIn();
+  }, [user]);
 
-    // When loading completes, allow redirect
-    if (!loading) {
-      console.log('Auth loading complete, preparing for redirect');
-      setShouldRedirect(true);
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+        console.log('Auth loading timeout reached');
+        setLoadingTimeout(true);
+        // Force redirect to welcome screen after timeout
+        setShouldRedirect(true); 
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+    }, 3000); // 3 second timeout
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return () => clearTimeout(timeout);
-  }, [loading, user]);
-
-  // Show loading screen while auth is initializing
-  if (!shouldRedirect || loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#2563EB" />
-        <Text style={styles.loadingText}>Loading FlashCare...</Text>
-        {shouldRedirect && (
-          <Text style={styles.timeoutText}>
-            Taking longer than expected...
-          </Text>
-        )}
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
       </View>
-    );
-  }
 
-  // If there's an auth error, show welcome screen
-  if (authError) {
-    console.log('Auth error, redirecting to welcome');
-    return <Redirect href="/(auth)/welcome" />;
-  }
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
-  // If user exists, go to main app
-  if (user) {
-    console.log('Redirecting to tabs with user:', user.id, user.role);
-    return <Redirect href="/(tabs)" />;
-  }
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
 
-  // Otherwise, go to welcome screen
-  console.log('Redirecting to welcome - no user');
-  return <Redirect href="/(auth)/welcome" />;
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+
+        {loadingTimeout && (
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  loading: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+  },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  loadingText: {
-    marginTop: 16,
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
     fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
+    color: Colors.text.secondary,
+    marginBottom: 32,
   },
-  timeoutText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  errorText: {
+  signInButton: {
     marginTop: 16,
-    fontSize: 14,
-    color: '#EF4444',
-    textAlign: 'center',
-  }
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: '#A1A1AA',
 });

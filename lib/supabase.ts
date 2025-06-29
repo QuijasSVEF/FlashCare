@@ -1,221 +1,138 @@
-import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-// Get environment variables or use defaults
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-// Log configuration for debugging
-console.log('Supabase URL configured:', supabaseUrl ? 'Yes' : 'No');
-console.log('Supabase Anon Key configured:', supabaseAnonKey ? 'Yes' : 'No');
-
-// Use localStorage for web, AsyncStorage for native platforms
-const storage = Platform.OS === 'web' 
-  ? {
-      getItem: (key: string) => {
-        if (typeof localStorage === 'undefined') return null;
-        return localStorage.getItem(key);
-      },
-      setItem: (key: string, value: string) => {
-        if (typeof localStorage === 'undefined') return;
-        localStorage.setItem(key, value);
-      },
-      removeItem: (key: string) => {
-        if (typeof localStorage === 'undefined') return;
-        localStorage.removeItem(key);
-      },
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // Check if user is already signed in
+  useEffect(() => {
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     }
-  : AsyncStorage;
+  }, [user]);
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: storage,
-    autoRefreshToken: true, 
-    persistSession: true,
-    detectSessionInUrl: Platform.OS === 'web',
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  global: {
-    fetch: (...args) => {
-      // Add timeout to all fetch requests
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Request timed out'));
-        }, 10000); // 10 second timeout
-        
-        fetch(...args)
-          .then(resolve)
-          .catch(reject)
-          .finally(() => clearTimeout(timeout));
-      });
-    }
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
+  },
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
   },
 });
-
-export type Database = {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string;
-          role: 'family' | 'caregiver';
-          name: string;
-          avatar_url?: string;
-          bio?: string;
-          phone?: string;
-          emergency_phone?: string;
-          location?: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          role: 'family' | 'caregiver';
-          name: string;
-          avatar_url?: string;
-          bio?: string;
-          phone?: string;
-          emergency_phone?: string;
-          location?: string;
-        };
-        Update: {
-          name?: string;
-          avatar_url?: string;
-          bio?: string;
-          phone?: string;
-          emergency_phone?: string;
-          location?: string;
-        };
-      };
-      credentials: {
-        Row: {
-          id: string;
-          user_id: string;
-          certification_url: string;
-          expires_at: string;
-          created_at: string;
-        };
-        Insert: {
-          user_id: string;
-          certification_url: string;
-          expires_at: string;
-        };
-        Update: {
-          certification_url?: string;
-          expires_at?: string;
-        };
-      };
-      job_posts: {
-        Row: {
-          id: string;
-          family_id: string;
-          title: string;
-          hours_per_week: number;
-          rate_hour: number;
-          description: string;
-          location: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          family_id: string;
-          title: string;
-          hours_per_week: number;
-          rate_hour: number;
-          description: string;
-          location: string;
-        };
-        Update: {
-          title?: string;
-          hours_per_week?: number;
-          rate_hour?: number;
-          description?: string;
-          location?: string;
-        };
-      };
-      swipes: {
-        Row: {
-          id: string;
-          job_id: string;
-          family_id: string;
-          caregiver_id: string;
-          direction: 'like' | 'pass';
-          created_at: string;
-        };
-        Insert: {
-          job_id: string;
-          family_id: string;
-          caregiver_id: string;
-          direction: 'like' | 'pass';
-        };
-        Update: never;
-      };
-      matches: {
-        Row: {
-          id: string;
-          caregiver_id: string;
-          family_id: string;
-          job_id: string;
-          created_at: string;
-        };
-        Insert: {
-          caregiver_id: string;
-          family_id: string;
-          job_id: string;
-        };
-        Update: never;
-      };
-      messages: {
-        Row: {
-          id: string;
-          match_id: string;
-          sender_id: string;
-          body: string;
-          sent_at: string;
-        };
-        Insert: {
-          match_id: string;
-          sender_id: string;
-          body: string;
-        };
-        Update: never;
-      };
-      reviews: {
-        Row: {
-          id: string;
-          reviewer_id: string;
-          reviewee_id: string;
-          rating_int: number;
-          comment_text?: string;
-          created_at: string;
-        };
-        Insert: {
-          reviewer_id: string;
-          reviewee_id: string;
-          rating_int: number;
-          comment_text?: string;
-        };
-        Update: never;
-      };
-      schedules: {
-        Row: {
-          id: string;
-          match_id: string;
-          start_ts: string;
-          end_ts: string;
-          status: 'pending' | 'confirmed' | 'cancelled';
-          created_at: string;
-        };
-        Insert: {
-          match_id: string;
-          start_ts: string;
-          end_ts: string;
-          status?: 'pending' | 'confirmed' | 'cancelled';
-        };
-        Update: {
-          status?: 'pending' | 'confirmed' | 'cancelled';
-        };
-      };
-    };
-  };
-};
