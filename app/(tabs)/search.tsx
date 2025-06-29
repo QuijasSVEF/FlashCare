@@ -20,6 +20,7 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
+    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -50,7 +51,10 @@ export default function SignInScreen() {
         weeklyStats: [
           { day: 'Mon', matches: 2, earnings: 150 },
           { day: 'Tue', matches: 1, earnings: 75 },
-          { day: 'Wed', matches: 3, earnings: 225 },
+          { day: 'Wed', matches: 3, earnings: 225 }
+        ]
+      });
+  };
 
   return (
     <View style={styles.container}>
