@@ -15,197 +15,278 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
-  
-  // If user is already signed in, redirect to tabs
-  useEffect(() => {
-    if (user) {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+export default function ScheduleScreen() {
+  const { user } = useAuth();
+  const { isSubscriber } = useSubscription();
+  const { schedules, loading, refetch } = useSchedules();
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
+
+  const handleScheduleAction = () => {
+    if (!isSubscriber) {
+      setShowPaywall(true);
+    } else {
+      console.log('Access scheduling features');
     }
-  }, [user]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
+  const handleNewSession = () => {
+    if (!isSubscriber) {
+      setShowPaywall(true);
+    } else {
+      // For demo, we'll use a mock match - in production, show match selection
+      setSelectedMatch({
+        id: 'demo-match',
+        otherUser: { name: 'Sarah Johnson' },
+        jobDetails: {
+          title: 'Senior Care Assistant',
+          rate_hour: 25,
+          location: 'San Francisco, CA'
+        }
+      });
+      setShowScheduleModal(true);
+    }
+  };
 
-    setLoading(true);
-    setErrors({});
-    
+  const handleAcceptSchedule = async (scheduleId: string) => {
     try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin request sent successfully');
-      // Navigation will be handled by the root layout based on auth state
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
-      if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
+      await databaseService.updateScheduleStatus(scheduleId, 'confirmed');
+      Alert.alert('Success', 'Schedule confirmed!');
+      refetch();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to confirm schedule');
     }
   };
+
+  const handleDeclineSchedule = async (scheduleId: string) => {
+    Alert.alert(
+      'Decline Schedule',
+      'Are you sure you want to decline this schedule?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Decline',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await databaseService.updateScheduleStatus(scheduleId, 'cancelled');
+              Alert.alert('Schedule declined');
+              refetch();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to decline schedule');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return Colors.success;
+      case 'pending':
+        return Colors.warning;
+      case 'cancelled':
+        return Colors.error;
+      default:
+        return Colors.gray[400];
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return CheckCircle;
+      case 'cancelled':
+        return XCircle;
+      default:
+        return Clock;
+    }
+  };
+
+  const renderScheduleItem = ({ item }: { item: any }) => {
+    const match = item.match;
+    const otherUser = user?.role === 'family' ? match.caregiver : match.family;
+    const startDate = new Date(item.start_ts);
+    const endDate = new Date(item.end_ts);
+    const StatusIcon = getStatusIcon(item.status);
+    const statusColor = getStatusColor(item.status);
+    
+    return (
+      <Card style={styles.scheduleItem}>
+        <View style={styles.scheduleHeader}>
+          <View style={styles.scheduleInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.scheduleName}>{otherUser.name}</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+                <StatusIcon size={14} color={statusColor} />
+                <Text style={[styles.statusText, { color: statusColor }]}>
+                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.scheduleDetails}>
+              <View style={styles.detailRow}>
+                <Calendar size={16} color={Colors.text.secondary} />
+                <Text style={styles.scheduleDate}>
+                  {startDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <Clock size={16} color={Colors.text.secondary} />
+                <Text style={styles.scheduleTime}>
+                  {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                  {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <MapPin size={16} color={Colors.text.secondary} />
+                <Text style={styles.scheduleLocation}>
+                  {otherUser.location || 'Location TBD'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {user?.role === 'caregiver' && item.status === 'pending' && (
+          <View style={styles.scheduleActions}>
+            <Button
+              title="Accept"
+              onPress={() => handleAcceptSchedule(item.id)}
+              variant="success"
+              size="small"
+              style={styles.actionButton}
+            />
+            <Button
+              title="Decline"
+              onPress={() => handleDeclineSchedule(item.id)}
+              variant="outline"
+              size="small"
+              style={styles.actionButton}
+            />
+          </View>
+        )}
+      </Card>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <AppHeader
+          title="Schedule"
+        />
+        
+        <View style={styles.loadingContainer}>
+          <Calendar size={48} color={Colors.primary[500]} />
+          <Text style={styles.loadingText}>Loading your schedule...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
+      <AppHeader
+        title="Your Schedule"
+        subtitle={`${schedules.length} upcoming session${schedules.length !== 1 ? 's' : ''}`}
+      />
+
+      {!isSubscriber ? (
+        <View style={styles.upgradePrompt}>
+          <View style={styles.upgradeIcon}>
+            <Calendar size={48} color={Colors.primary[500]} />
+          </View>
+          <Text style={styles.upgradeTitle}>Unlock Advanced Scheduling</Text>
+          <Text style={styles.upgradeText}>
+            Manage your care schedule, book appointments, and coordinate with your matches. 
+            Upgrade to access full scheduling features.
+          </Text>
+          <Button
+            title="Upgrade Now"
+            onPress={handleScheduleAction}
+            size="large"
+            style={styles.upgradeButton}
           />
         </View>
-      </View>
+      ) : (
+        <>
+          {user?.role === 'family' && (
+            <View style={styles.quickActions}>
+              <Button
+                title="Schedule New Session"
+                onPress={handleNewSession}
+                style={styles.newSessionButton}
+              />
+            </View>
+          )}
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+          <FlatList
+            data={schedules}
+            renderItem={renderScheduleItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.scheduleList}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Calendar size={64} color={Colors.gray[300]} />
+                </View>
+                <Text style={styles.emptyTitle}>No scheduled sessions</Text>
+                <Text style={styles.emptyText}>
+                  {user?.role === 'family' 
+                    ? "Schedule sessions with your matched caregivers to get started"
+                    : "You'll see your upcoming care sessions here once families book with you"
+                  }
+                </Text>
+                {user?.role === 'family' && (
+                  <TouchableOpacity
+                    style={styles.scheduleButton}
+                    onPress={handleNewSession}
+                  >
+                    <Plus size={20} color={Colors.text.inverse} />
+                    <Text style={styles.scheduleButtonText}>Schedule Session</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            }
+          />
+        </>
+      )}
 
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="advanced scheduling"
+      />
+
+      {selectedMatch && (
+        <EnhancedScheduleModal
+          visible={showScheduleModal}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setSelectedMatch(null);
+          }}
+          matchId={selectedMatch.id}
+          otherUserName={selectedMatch.otherUser.name}
+          jobDetails={selectedMatch.jobDetails}
+          onScheduleCreated={() => {
+            refetch();
+            setShowScheduleModal(false);
+            setSelectedMatch(null);
+          }}
         />
-
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
-
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Accounts</Text>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Family 1"
-              onPress={() => {
-                setFormData({
-                  email: 'family1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Family 2"
-              onPress={() => {
-                setFormData({
-                  email: 'family2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Caregiver 1"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 2"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 3"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver3@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-        </View>
-
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+      )}
     </View>
   );
 }
@@ -215,81 +296,157 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
+  loadingContainer: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
+  loadingText: {
     fontSize: 16,
     color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
     marginTop: 16,
+    textAlign: 'center',
+  },
+  quickActions: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    marginBottom: 20,
+  },
+  newSessionButton: {
+    width: '100%',
+  },
+  scheduleList: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  scheduleItem: {
+    marginBottom: 12,
+  },
+  scheduleHeader: {
+    marginBottom: 16,
+  },
+  scheduleInfo: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  scheduleName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    flex: 1,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  scheduleDetails: {
+    gap: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scheduleDate: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 8,
+  },
+  scheduleTime: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 8,
+  },
+  scheduleLocation: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 8,
+  },
+  scheduleActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  upgradePrompt: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  upgradeIcon: {
     marginBottom: 24,
   },
-  signUpText: {
+  upgradeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  upgradeText: {
     fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
   },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
+  upgradeButton: {
+    width: '100%',
   },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
+  emptyState: {
     alignItems: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
+  emptyIcon: {
+    marginBottom: 24,
   },
-  demoButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
     marginBottom: 8,
   },
-  demoButton: {
-    minWidth: 100,
+  emptyText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  scheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary[500],
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  scheduleButtonText: {
+    color: Colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });

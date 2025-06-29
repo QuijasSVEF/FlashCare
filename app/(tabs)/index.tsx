@@ -20,7 +20,6 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -52,160 +51,319 @@ export default function SignInScreen() {
     try {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
-      console.log('Signin request sent successfully');
-      // Navigation will be handled by the root layout based on auth state
-    } catch (error: any) {
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+interface QuickMenuModalProps {
+  visible: boolean;
+  onClose: () => void;
+  userRole: 'family' | 'caregiver';
+}
       console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
-      if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
+function QuickMenuModal({ visible, onClose, userRole }: QuickMenuModalProps) {
+  const menuItems = [
+    {
+      icon: Users,
+      title: 'Matches',
+      subtitle: 'View your connections',
+      color: Colors.primary[500],
+      onPress: () => {
+        onClose();
+        router.push('/(tabs)/matches');
       }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+    },
+    {
+      icon: Search,
+      title: 'Advanced Search',
+      subtitle: 'Find specific caregivers',
+      color: Colors.secondary[500],
+      onPress: () => {
+        onClose();
+        router.push('/(tabs)/search');
       }
-      
-      Alert.alert('Sign In Error', errorMessage);
+    }
+  ];
+import { useNotifications } from '../../hooks/useNotifications';
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <View style={styles.quickMenu}>
+          <View style={styles.quickMenuHeader}>
+  React.useEffect(() => {
+    if (user?.role === 'family') {
+      loadCaregivers();
+    } else if (user?.role === 'caregiver') {
+      loadJobPosts();
+    }
+  }, [user]);
+          </View>
+  const loadCaregivers = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const caregivers = await matchingService.getRecommendedCaregivers(
+        user.id,
+        user.location || undefined
+      );
+      setCaregivers(caregivers);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load caregivers');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadJobPosts = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const jobs = await matchingService.getRecommendedJobs(
+        user.id,
+        user.location || undefined,
+        20
+      );
+      setJobPosts(jobs);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load job posts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSwipe = async (direction: 'like' | 'pass') => {
+    const items = user?.role === 'family' ? caregivers : jobPosts;
+    if (currentIndex >= items.length || !user?.id) {
+      showError('Error', 'No more items to swipe');
+      return;
+    }
+
+    const currentItem = items[currentIndex];
+
+              style={styles.quickMenuItem}
+      if (user?.role === 'family') {
+        const currentCaregiver = currentItem;
+        const result = await matchingService.handleSwipe(
+          user.id,
+          currentCaregiver.id,
+          direction
+        );
+
+        if (direction === 'like' && result.isMatch) {
+          showSuccess(
+            '🎉 It\'s a Match!',
+            `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`
+          );
+        }
+      } else if (user?.role === 'caregiver') {
+        const currentJob = currentItem;
+        const result = await matchingService.handleJobSwipe(
+          user.id,
+          currentJob.family_id,
+          currentJob.id,
+          direction
+        );
+
+        if (direction === 'like' && result.isMatch) {
+          showSuccess(
+            '🎉 It\'s a Match!',
+            `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`
+          );
+        }
+  const { user } = useAuth();
+
+      // Move to next item after successful swipe
+      setCurrentIndex(prev => prev + 1);
+
+    } catch (error) {
+      console.error('Error saving swipe:', error);
+      
+      let errorMessage = 'Failed to process swipe. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('No job posts found')) {
+          errorMessage = 'Please create a job posting first before browsing caregivers.';
+        } else {
+          errorMessage = error.message;
+        }
+  const [jobPosts, setJobPosts] = useState<any[]>([]);
+      showError('Error', errorMessage);
+  const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<any>({});
+
+  const handleApplyFilters = (filters: any) => {
+    setActiveFilters(filters);
+    console.log('Applied filters:', filters);
+  };
+
+  const currentItem = user?.role === 'family' ? caregivers[currentIndex] : jobPosts[currentIndex];
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner}>
+            <View style={[styles.spinnerRing, styles.spinnerRing1]} />
+            <View style={[styles.spinnerRing, styles.spinnerRing2]} />
+            <View style={[styles.spinnerRing, styles.spinnerRing3]} />
+          </View>
+          <Text style={styles.loadingText}>
+            {user?.role === 'family' ? 'Finding perfect caregivers...' : 'Loading amazing opportunities...'}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <View style={styles.errorContainer}>
+          <View style={styles.errorIcon}>
+            <X size={48} color={Colors.error} />
+          </View>
+          <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setError(null);
+              user?.role === 'family' ? loadCaregivers() : loadJobPosts();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
-        </View>
+      {notifications.map((notification) => (
+        <NotificationBanner
+          key={notification.id}
+          visible={notification.visible}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onDismiss={() => hideNotification(notification.id)}
+        />
+      ))}
+      
+      <AppHeader
+        title={user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
+        subtitle={`📍 ${user?.location || 'San Francisco, CA'}`}
+        rightComponent={
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.quickMenuButton}
+              onPress={() => setShowQuickMenu(true)}
+              activeOpacity={0.7}
+            >
+              <Menu size={20} color={Colors.primary[500]} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setShowFilterModal(true)}
+              activeOpacity={0.7}
+            >
+              <Filter size={20} color={Colors.primary[500]} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
+
+      <View style={styles.cardContainer}>
+        {currentIndex < (user?.role === 'family' ? caregivers : jobPosts).length ? (
+          <>
+            <SwipeableCard
+              data={currentItem}
+              onSwipeLeft={() => handleSwipe('pass')}
+              onSwipeRight={() => handleSwipe('like')}
+              userRole={user?.role || 'family'}
+            />
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.passButton]}
+                onPress={() => handleSwipe('pass')}
+                activeOpacity={0.8}
+              >
+                <X size={28} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.likeButton]}
+                onPress={() => handleSwipe('like')}
+                activeOpacity={0.8}
+              >
+                <Heart size={28} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <View style={styles.noMoreCards}>
+            <View style={styles.noMoreIcon}>
+              <Search size={64} color={Colors.gray[300]} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.noMoreTitle}>
+              {user?.role === 'family' ? 'No more caregivers nearby' : 'No more jobs available'}
+            </Text>
+            <Text style={styles.noMoreText}>
+              {user?.role === 'family' 
+                ? 'Check back later for new caregivers in your area, or expand your search radius.'
+                : 'Check back later for new job postings in your area.'
+              }
+            </Text>
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={() => {
+                setCurrentIndex(0);
+                user?.role === 'family' ? loadCaregivers() : loadJobPosts();
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.resetButtonText}>Start Over</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+      <QuickMenuModal
+        visible={showQuickMenu}
+        onClose={() => setShowQuickMenu(false)}
+        userRole={user?.role || 'family'}
+      />
 
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApplyFilters={handleApplyFilters}
+        userRole={user?.role || 'family'}
+      />
 
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
-
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Accounts</Text>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Family 1"
-              onPress={() => {
-                setFormData({
-                  email: 'family1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Family 2"
-              onPress={() => {
-                setFormData({
-                  email: 'family2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Caregiver 1"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 2"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 3"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver3@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-        </View>
-
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <AdvancedFilterModal
+        visible={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        onApplyFilters={handleApplyFilters}
+        userRole={user?.role || 'family'}
+      />
     </View>
   );
 }
@@ -215,81 +373,244 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-  header: {
-    flexDirection: 'row',
+  centered: {
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
   },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
+  loadingContainer: {
     alignItems: 'center',
+    padding: 40,
+  },
+  loadingSpinner: {
+    width: 60,
+    height: 60,
+    marginBottom: 24,
     position: 'relative',
   },
-  logo: {
+  spinnerRing: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  spinnerRing1: {
+    borderTopColor: Colors.primary[500],
+    transform: [{ rotate: '0deg' }],
+  },
+  spinnerRing2: {
+    borderRightColor: Colors.secondary[500],
+    transform: [{ rotate: '120deg' }],
+  },
+  spinnerRing3: {
+    borderBottomColor: Colors.primary[300],
+    transform: [{ rotate: '240deg' }],
+  },
+  loadingText: {
+    fontSize: 18,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  errorIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.error + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  errorTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
+    color: Colors.text.primary,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
+  errorText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
   },
-  content: {
+  retryButton: {
+    backgroundColor: Colors.primary[500],
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  retryButtonText: {
+    color: Colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  quickMenuButton: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.primary[50],
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  filterButton: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.primary[50],
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardContainer: {
     flex: 1,
+    justifyContent: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingTop: 30,
   },
-  title: {
-    fontSize: 28,
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 60,
+    marginTop: 30,
+    paddingBottom: 20,
+  },
+  actionButton: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  passButton: {
+    backgroundColor: Colors.error,
+  },
+  likeButton: {
+    backgroundColor: Colors.primary[500],
+  },
+  noMoreCards: {
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingTop: 80,
+  },
+  noMoreIcon: {
+    marginBottom: 24,
+  },
+  noMoreTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 32,
+  },
+  noMoreText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  resetButton: {
+    backgroundColor: Colors.primary[500],
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: Colors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  resetButtonText: {
+    color: Colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickMenu: {
+    backgroundColor: Colors.background,
+    borderRadius: 24,
+    padding: 24,
+    margin: 20,
+    minWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  quickMenuHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  quickMenuTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: Colors.text.primary,
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
+  quickMenuAccent: {
+    width: 40,
+    height: 3,
+    backgroundColor: Colors.primary[500],
+    borderRadius: 2,
   },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-  },
-  demoButtons: {
+  quickMenuItem: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     marginBottom: 8,
   },
-  demoButton: {
-    minWidth: 100,
+  quickMenuIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  quickMenuContent: {
+    flex: 1,
+  },
+  quickMenuItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  quickMenuItemSubtitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
   },
 });

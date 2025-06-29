@@ -20,7 +20,6 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -52,8 +51,13 @@ export default function SignInScreen() {
     try {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
-      console.log('Signin request sent successfully');
-      // Navigation will be handled by the root layout based on auth state
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
