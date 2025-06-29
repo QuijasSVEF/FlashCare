@@ -20,9 +20,14 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
-      console.log('User already signed in, redirecting to tabs');
-      routerInstance.replace('/(tabs)');
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     }
   }, [user]);
 
