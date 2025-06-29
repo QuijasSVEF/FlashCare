@@ -243,7 +243,7 @@ export const demoMessages = {
       id: 'msg-3-2',
       match_id: 'match-3',
       sender_id: 'caregiver-2',
-      body: 'Hello! Yes, I specialize in elderly care. I'd be happy to help. What specific assistance does your mother need?',
+      body: 'Hello! Yes, I specialize in elderly care. I\'d be happy to help. What specific assistance does your mother need?',
       sent_at: '2023-10-27T10:30:00Z',
     }
   ],
@@ -252,7 +252,7 @@ export const demoMessages = {
       id: 'msg-4-1',
       match_id: 'match-4',
       sender_id: 'family-2',
-      body: 'Hi Sarah, we're looking for someone to help with our twins on weekends. Are you available?',
+      body: 'Hi Sarah, we\'re looking for someone to help with our twins on weekends. Are you available?',
       sent_at: '2023-10-28T14:20:00Z',
     },
     {
