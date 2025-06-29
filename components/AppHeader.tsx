@@ -61,7 +61,7 @@ export function AppHeader({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.background,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
