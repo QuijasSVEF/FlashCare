@@ -145,18 +145,25 @@ export const demoMatches = [
 export const demoMessages = {
   'match-1': [
     {
-      id: 'msg-1-1',
+      id: 'msg-1-0',
       match_id: 'match-1',
       sender_id: 'family-1',
-      body: 'Hello Sarah! I saw your profile and think you might be a great fit for helping with my mother\'s care. Are you available to discuss further?',
+      body: 'Hello Sarah! I saw your profile and think you might be a great fit for helping with my mother\'s care.',
       sent_at: '2023-10-25T14:30:00Z',
+    },
+    {
+      id: 'msg-1-1',
+      match_id: 'match-1',
+      sender_id: 'caregiver-1',
+      body: 'Hi there! Thank you for reaching out.',
+      sent_at: '2023-10-25T14:35:00Z',
     },
     {
       id: 'msg-1-2',
       match_id: 'match-1',
       sender_id: 'caregiver-1',
-      body: 'Hi there! Thank you for reaching out. I\'d be happy to discuss how I can help with your mother\'s care. What specific needs does she have?',
-      sent_at: '2023-10-25T15:45:00Z',
+      body: 'I\'d be happy to discuss how I can help with your mother\'s care. What specific needs does she have?',
+      sent_at: '2023-10-25T14:36:00Z',
     },
     {
       id: 'msg-1-3',
@@ -169,8 +176,29 @@ export const demoMessages = {
       id: 'msg-1-4',
       match_id: 'match-1',
       sender_id: 'caregiver-1',
-      body: 'That sounds like something I can definitely help with. I\'m available for an interview on Thursday afternoon or Friday morning. Would either of those work for you?',
+      body: 'That sounds like something I can definitely help with. I\'m available for an interview on Thursday afternoon or Friday morning.',
       sent_at: '2023-10-25T17:05:00Z',
+    },
+    {
+      id: 'msg-1-5',
+      match_id: 'match-1',
+      sender_id: 'caregiver-1',
+      body: 'Would either of those work for you?',
+      sent_at: '2023-10-25T17:06:00Z',
+    },
+    {
+      id: 'msg-1-6',
+      match_id: 'match-1',
+      sender_id: 'family-1',
+      body: 'Thursday afternoon works great for me. How about 3pm?',
+      sent_at: '2023-10-25T18:30:00Z',
+    },
+    {
+      id: 'msg-1-7',
+      match_id: 'match-1',
+      sender_id: 'caregiver-1',
+      body: 'Perfect! 3pm on Thursday it is. I look forward to meeting you and learning more about how I can help.',
+      sent_at: '2023-10-25T19:15:00Z',
     }
   ],
   'match-2': [
@@ -194,6 +222,45 @@ export const demoMessages = {
       sender_id: 'family-2',
       body: 'They\'re very active and love arts and crafts. We need someone Tuesday, Wednesday, and Thursday from 1-5pm. Would that schedule work for you?',
       sent_at: '2023-10-26T12:45:00Z',
+    },
+    {
+      id: 'msg-2-4',
+      match_id: 'match-2',
+      sender_id: 'caregiver-3',
+      body: 'That schedule works perfectly for me! I have lots of experience with arts and crafts activities for toddlers.',
+      sent_at: '2023-10-26T13:30:00Z',
+    }
+  ],
+  'match-3': [
+    {
+      id: 'msg-3-1',
+      match_id: 'match-3',
+      sender_id: 'family-1',
+      body: 'Hi Michael, I saw you have experience with elderly care. My mother needs assistance with daily activities.',
+      sent_at: '2023-10-27T09:15:00Z',
+    },
+    {
+      id: 'msg-3-2',
+      match_id: 'match-3',
+      sender_id: 'caregiver-2',
+      body: 'Hello! Yes, I specialize in elderly care. I'd be happy to help. What specific assistance does your mother need?',
+      sent_at: '2023-10-27T10:30:00Z',
+    }
+  ],
+  'match-4': [
+    {
+      id: 'msg-4-1',
+      match_id: 'match-4',
+      sender_id: 'family-2',
+      body: 'Hi Sarah, we're looking for someone to help with our twins on weekends. Are you available?',
+      sent_at: '2023-10-28T14:20:00Z',
+    },
+    {
+      id: 'msg-4-2',
+      match_id: 'match-4',
+      sender_id: 'caregiver-1',
+      body: 'Hi there! I do have some weekend availability. What hours are you looking for?',
+      sent_at: '2023-10-28T15:45:00Z',
     }
   ]
 };

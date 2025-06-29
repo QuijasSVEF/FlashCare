@@ -18,7 +18,6 @@ export default function MatchesScreen() {
   const { matches, loading, error } = useMatches();
   const [showPaywall, setShowPaywall] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
-  const [showChatModal, setShowChatModal] = useState(false);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -37,11 +36,11 @@ export default function MatchesScreen() {
     
     const handleMatchPress = () => {
       if (!isSubscriber) {
-        setShowPaywall(true);
-        return;
+        setShowPaywall(true); 
+      } else {
+        // Navigate to chat screen with the match ID
+        router.push(`/chat/${item.id}`);
       }
-      setSelectedMatch(item);
-      setShowChatModal(true);
     };
 
     return (
@@ -78,7 +77,7 @@ export default function MatchesScreen() {
               )}
               
               <Text style={styles.lastMessage} numberOfLines={1}>
-                Tap to start chatting! Full access enabled
+                {isSubscriber ? 'Tap to start chatting!' : 'Upgrade to message'}
               </Text>
             </View>
             
@@ -176,33 +175,6 @@ export default function MatchesScreen() {
         onClose={() => setShowPaywall(false)}
         feature="messaging"
       />
-
-      {selectedMatch && (
-        <Modal
-          visible={showChatModal}
-          animationType="slide"
-          presentationStyle="pageSheet"
-        >
-          <View style={styles.chatModal}>
-            <View style={styles.chatHeader}>
-              <Text style={styles.chatTitle}>
-                Chat with {user?.role === 'family' ? selectedMatch.caregiver.name : selectedMatch.family.name}
-              </Text>
-              <TouchableOpacity onPress={() => setShowChatModal(false)}>
-                <Text style={styles.closeButton}>Close</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.chatContent}>
-              <Text style={styles.chatPlaceholder}>
-                🎉 You matched! This is where your conversation would appear.
-              </Text>
-              <Text style={styles.chatSubtext}>
-                In the full app, you'd see real-time messaging here.
-              </Text>
-            </View>
-          </View>
-        </Modal>
-      )}
     </View>
   );
 }
@@ -390,48 +362,5 @@ const styles = StyleSheet.create({
     color: Colors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
-  },
-  chatModal: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: Colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
-  },
-  chatTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  closeButton: {
-    fontSize: 16,
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-  chatContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  chatPlaceholder: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  chatSubtext: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    textAlign: 'center',
   },
 });

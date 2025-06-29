@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { databaseService } from '../lib/database';
-import { Database } from '../lib/supabase';
+import { Database } from '../types/database';
 
 type Message = Database['public']['Tables']['messages']['Row'];
 
@@ -78,6 +78,8 @@ export function useRealTimeMessages(matchId: string) {
           msg.id === tempMessage.id ? newMessage : msg
         )
       );
+      
+      return newMessage;
     } catch (err) {
       // Remove temp message on error
       setMessages(prev => 

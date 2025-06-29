@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   View, 
   TextInput, 
-  TouchableOpacity, 
+  TouchableOpacity,
+  Keyboard,
   StyleSheet, 
   Alert,
   Platform 
@@ -39,6 +40,7 @@ export function EnhancedMessageInput({
   const handleSend = () => {
     if (value.trim() && !disabled) {
       onSend();
+      Keyboard.dismiss();
     }
   };
 

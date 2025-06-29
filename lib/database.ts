@@ -206,11 +206,23 @@ export const databaseService = {
   
   async getMatchMessages(matchId: string) {
     // Demo implementation
-    return demoMessages[matchId as keyof typeof demoMessages] || [];
+    // Add some delay to simulate network request
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Return messages for the match or empty array if none exist
+    const matchMessages = demoMessages[matchId as keyof typeof demoMessages] || [];
+    
+    // Sort messages by sent_at
+    return [...matchMessages].sort((a, b) => 
+      new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+    );
   },
   
   async sendMessage(messageData: any) {
     // Demo implementation
+    // Add small delay to simulate network request
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     return { 
       id: `msg-${Date.now()}`, 
       ...messageData, 
@@ -270,9 +282,12 @@ export const databaseService = {
   // Subscription methods (mock implementations)
   subscribeToMessages(matchId: string, callback: (message: any) => void) {
     // Demo implementation
-    console.log('Subscribed to messages for match:', matchId);
+    console.log('Subscribed to real-time messages for match:', matchId);
+    
+    // In a real app, this would set up a real-time subscription
+    // For demo purposes, we'll just return an unsubscribe function
     return {
-      unsubscribe: () => console.log('Unsubscribed from messages')
+      unsubscribe: () => console.log('Unsubscribed from real-time messages')
     };
   },
   

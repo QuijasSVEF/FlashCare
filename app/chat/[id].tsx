@@ -1,206 +1,247 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  FlatList, 
+  KeyboardAvoidingView, 
+  Platform,
+  ActivityIndicator
+} from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
+import { ArrowLeft, Phone, Video } from 'lucide-react-native';
+import { EnhancedMessageInput } from '../components/EnhancedMessageInput';
+import { MessageAttachment } from '../components/MessageAttachment';
+import { TypingIndicator } from '../components/TypingIndicator';
+import { VideoCallModal } from '../components/VideoCallModal';
+import { useAuth } from '../contexts/AuthContext';
+import { useRealTimeMessages } from '../hooks/useRealTimeMessages';
+import { Colors } from '../constants/Colors';
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
+export default function ChatScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
+  const { 
+    messages, 
+    loading, 
+    error, 
+    sendMessage, 
+    isTyping,
+    simulateTyping
+  } = useRealTimeMessages(id as string);
   
-  // If user is already signed in, redirect to tabs
+  const [messageText, setMessageText] = useState('');
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [otherUser, setOtherUser] = useState<any>(null);
+  const flatListRef = useRef<FlatList>(null);
+
   useEffect(() => {
-    if (user) {
-      console.log('User already signed in, redirecting to tabs');
-      routerInstance.replace('/(tabs)');
+    // Get match details to determine the other user
+    const getMatchDetails = async () => {
+      try {
+        // In a real app, fetch match details from the database
+        // For demo, we'll simulate this
+        setTimeout(() => {
+          const mockOtherUser = {
+            id: user?.role === 'family' ? 'caregiver-1' : 'family-1',
+            name: user?.role === 'family' ? 'Sarah Johnson' : 'The Smiths',
+            avatar_url: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400'
+          };
+          setOtherUser(mockOtherUser);
+        }, 500);
+      } catch (error) {
+        console.error('Error getting match details:', error);
+      }
+    };
+
+    if (id) {
+      getMatchDetails();
     }
-  }, [user]);
+  }, [id, user]);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  useEffect(() => {
+    // Scroll to bottom when new messages arrive
+    if (messages.length > 0 && flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !user?.id) return;
     
     try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin request sent successfully');
-      // Navigation will be handled by the root layout based on auth state
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
+      await sendMessage(messageText, user.id);
+      setMessageText('');
       
-      if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
+      // Simulate typing response after a short delay
+      setTimeout(() => {
+        simulateTyping(3000);
+        
+        // Then simulate a response message
+        setTimeout(async () => {
+          if (user?.role === 'family') {
+            await sendMessage("I'd be happy to discuss the care position. When would be a good time to meet?", 'caregiver-1');
+          } else {
+            await sendMessage("Thanks for your message. I'm looking forward to learning more about the care needs.", 'family-1');
+          }
+        }, 3000);
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
 
+  const handleAttachment = (attachment: any) => {
+    console.log('Attachment:', attachment);
+    // In a real app, upload the attachment and send a message with the attachment
+  };
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderMessage = ({ item }: { item: any }) => {
+    const isCurrentUser = item.sender_id === user?.id;
+    
+    return (
+      <View style={[
+        styles.messageContainer,
+        isCurrentUser ? styles.sentMessage : styles.receivedMessage
+      ]}>
+        <View style={[
+          styles.messageBubble,
+          isCurrentUser ? styles.sentBubble : styles.receivedBubble
+        ]}>
+          {item.attachment && (
+            <MessageAttachment
+              type={item.attachment.type}
+              uri={item.attachment.uri}
+              name={item.attachment.name}
+              onPress={() => console.log('View attachment')}
+            />
+          )}
+          
+          <Text style={[
+            styles.messageText,
+            isCurrentUser ? styles.sentText : styles.receivedText
+          ]}>
+            {item.body}
+          </Text>
+          
+          <Text style={[
+            styles.messageTime,
+            isCurrentUser ? styles.sentTime : styles.receivedTime
+          ]}>
+            {formatTime(item.sent_at)}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  if (loading && messages.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color={Colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Chat</Text>
+        </View>
+        
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary[500]} />
+          <Text style={styles.loadingText}>Loading conversation...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color={Colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Chat</Text>
+        </View>
+        
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load messages. Please try again.</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
+          <ArrowLeft size={24} color={Colors.text.primary} />
         </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
+        
+        <Text style={styles.headerTitle}>
+          {otherUser?.name || 'Chat'}
+        </Text>
+        
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => setShowVideoCall(true)}
+          >
+            <Video size={20} color={Colors.primary[500]} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.headerButton}>
+            <Phone size={20} color={Colors.primary[500]} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
-
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
-
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Accounts</Text>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Family 1"
-              onPress={() => {
-                setFormData({
-                  email: 'family1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Family 2"
-              onPress={() => {
-                setFormData({
-                  email: 'family2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.messagesList}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              No messages yet. Start the conversation!
+            </Text>
           </View>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Caregiver 1"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 2"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 3"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver3@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-        </View>
+        }
+      />
 
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
+      <TypingIndicator 
+        visible={isTyping} 
+        userName={otherUser?.name || 'Someone'} 
+      />
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      <EnhancedMessageInput
+        value={messageText}
+        onChangeText={setMessageText}
+        onSend={handleSendMessage}
+        onAttachment={handleAttachment}
+        placeholder="Type a message..."
+      />
+
+      <VideoCallModal
+        visible={showVideoCall}
+        onClose={() => setShowVideoCall(false)}
+        otherUserName={otherUser?.name || 'User'}
+      />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -215,75 +256,109 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
+    backgroundColor: Colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
   },
   backButton: {
     padding: 8,
-    marginRight: 16,
+    marginRight: 8,
   },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
+  headerTitle: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    marginBottom: 8,
   },
-  subtitle: {
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  headerButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.primary[50],
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
     fontSize: 16,
     color: Colors.text.secondary,
-    marginBottom: 32,
   },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  signUpText: {
+  errorText: {
+    fontSize: 16,
+    color: Colors.error,
+    textAlign: 'center',
+  },
+  messagesList: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
     fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
   },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-  },
-  demoButtons: {
+  messageContainer: {
+    marginBottom: 16,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
   },
-  demoButton: {
-    minWidth: 100,
+  sentMessage: {
+    justifyContent: 'flex-end',
+  },
+  receivedMessage: {
+    justifyContent: 'flex-start',
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 16,
+  },
+  sentBubble: {
+    backgroundColor: Colors.primary[500],
+    borderTopRightRadius: 4,
+  },
+  receivedBubble: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  sentText: {
+    color: Colors.text.inverse,
+  },
+  receivedText: {
+    color: Colors.text.primary,
+  },
+  messageTime: {
+    fontSize: 12,
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  sentTime: {
+    color: Colors.text.inverse + '99',
+  },
+  receivedTime: {
+    color: Colors.text.tertiary,
   },
 });
