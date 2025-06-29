@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Phone, Video } from 'lucide-react-native';
-import { EnhancedMessageInput } from '../components/EnhancedMessageInput';
-import { MessageAttachment } from '../components/MessageAttachment';
-import { TypingIndicator } from '../components/TypingIndicator';
-import { VideoCallModal } from '../components/VideoCallModal';
+import { EnhancedMessageInput } from '../../components/EnhancedMessageInput';
+import { MessageAttachment } from '../../components/MessageAttachment';
+import { TypingIndicator } from '../../components/TypingIndicator';
+import { VideoCallModal } from '../../components/VideoCallModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useRealTimeMessages } from '../hooks/useRealTimeMessages';
 import { Colors } from '../constants/Colors';
