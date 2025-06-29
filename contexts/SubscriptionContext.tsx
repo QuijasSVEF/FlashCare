@@ -11,7 +11,7 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
-  const [isSubscriber, setIsSubscriber] = useState(true); // Demo: everyone is a subscriber for full functionality
+  const [isSubscriber, setIsSubscriber] = useState(true); // Demo: Full paid version - all features unlocked
   const [loading, setLoading] = useState(false);
 
   const initializeRevenueCat = async () => {

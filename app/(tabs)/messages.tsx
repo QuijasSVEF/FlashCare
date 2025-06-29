@@ -59,7 +59,7 @@ export default function MessagesScreen() {
             <View style={styles.conversationInfo}>
               <Text style={styles.conversationName}>{otherUser.name}</Text>
               <Text style={styles.conversationPreview}>
-                {isSubscriber ? 'Tap to open chat' : 'Upgrade to message'}
+                Tap to open chat - Full access enabled
               </Text>
             </View>
             

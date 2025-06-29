@@ -129,6 +129,15 @@ export const demoMatches = [
     created_at: '2023-10-27T00:00:00Z',
     caregiver: demoCaregivers[1],
     family: demoFamilies[0]
+  },
+  {
+    id: 'match-4',
+    caregiver_id: 'caregiver-1',
+    family_id: 'family-2',
+    job_id: 'job-2',
+    created_at: '2023-10-28T00:00:00Z',
+    caregiver: demoCaregivers[0],
+    family: demoFamilies[1]
   }
 ];
 

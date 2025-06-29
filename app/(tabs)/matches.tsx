@@ -78,7 +78,7 @@ export default function MatchesScreen() {
               )}
               
               <Text style={styles.lastMessage} numberOfLines={1}>
-                {isSubscriber ? 'Tap to start chatting!' : 'Upgrade to message'}
+                Tap to start chatting! Full access enabled
               </Text>
             </View>
             

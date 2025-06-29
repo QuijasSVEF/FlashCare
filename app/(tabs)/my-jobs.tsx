@@ -132,6 +132,7 @@ export default function MyJobsScreen() {
           Posted {new Date(item.created_at).toLocaleDateString()}
         </Text>
       </Card>
+      </Card>
     );
   };
 
