@@ -23,6 +23,9 @@ export default function SignInScreen() {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
+  }
+  )
+}
 import { useState, useEffect } from 'react';
 import { databaseService } from '../lib/database';
 import { useAuth } from '../contexts/AuthContext';

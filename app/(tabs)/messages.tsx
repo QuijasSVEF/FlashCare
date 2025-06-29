@@ -9,6 +9,9 @@ import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
   const [formData, setFormData] = useState({
+  }
+  )
+}
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
 import { Button } from '../../components/ui/Button';
