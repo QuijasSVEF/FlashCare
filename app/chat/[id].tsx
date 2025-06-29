@@ -1,236 +1,206 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform,
-  Image,
-  Alert
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Send, Phone, Video } from 'lucide-react-native';
-import { AppHeader } from '../../components/AppHeader';
-import { EnhancedMessageInput } from '../../components/EnhancedMessageInput';
-import { TypingIndicator } from '../../components/TypingIndicator'; 
-import { MessageAttachment } from '../../components/MessageAttachment'; 
-import { VideoCallModal } from '../../components/VideoCallModal'; 
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
-import { useMessages } from '../../hooks/useMessages';
-import { useSubscription } from '../../contexts/SubscriptionContext';
-import { PaywallModal } from '../../components/PaywallModal';
-import { databaseService } from '../../lib/database';
 import { Colors } from '../../constants/Colors';
 
-export default function ChatScreen() {
-  const { id: matchId } = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuth();
-  const { isSubscriber } = useSubscription();
-  const { messages, loading, sendMessage, error } = useMessages(matchId);
-  const [messageText, setMessageText] = useState('');
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [otherUser, setOtherUser] = useState<any>(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const [showVideoCall, setShowVideoCall] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (matchId && user?.id) {
-      loadMatchData();
+    if (user) {
+      console.log('User already signed in, redirecting to tabs');
+      routerInstance.replace('/(tabs)');
     }
-  }, [matchId, user?.id]);
+  }, [user]);
 
-  const loadMatchData = async () => {
-    try {
-      const matches = await databaseService.getUserMatches(user!.id);
-      const currentMatch = matches.find(m => m.id === matchId);
-      
-      if (currentMatch) {
-        const other = user?.role === 'family' ? currentMatch.caregiver : currentMatch.family;
-        setOtherUser(other);
-      }
-    } catch (error) {
-      console.error('Error loading match data:', error);
-    }
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  useEffect(() => {
-    // Scroll to bottom when new messages arrive
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages]);
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
 
-  const handleSendMessage = async () => {
-    if (!messageText.trim() || !user?.id) return;
-
-    if (!isSubscriber) {
-      setShowPaywall(true);
-      return;
-    }
-
-    try {
-      await sendMessage(messageText.trim(), user.id);
-      setMessageText('');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send message. Please try again.');
-    }
-  };
-
-  const handleAttachment = async (attachment: { type: 'image' | 'file'; uri: string; name?: string }) => {
-    if (!isSubscriber) {
-      setShowPaywall(true);
-      return;
-    }
-
-    try {
-      // In a real app, you would upload the file to storage first
-      // For now, we'll just send a message with attachment info
-      const attachmentMessage = `[${attachment.type.toUpperCase()}] ${attachment.name || 'Attachment'}`;
-      await sendMessage(attachmentMessage, user!.id);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send attachment. Please try again.');
-    }
-  };
-
-  const handleVideoCall = () => {
-    if (!isSubscriber) {
-      setShowPaywall(true);
-      return;
-    }
-    setShowVideoCall(true);
-  };
-
-  const handlePhoneCall = () => {
-    Alert.alert('Phone Call', 'Phone calling feature coming soon!');
-  };
-
-  const renderMessage = ({ item }: { item: any }) => {
-    const isOwnMessage = item.sender_id === user?.id;
+    setLoading(true);
+    setErrors({});
     
-    return (
-      <View style={[
-        styles.messageContainer,
-        isOwnMessage ? styles.ownMessage : styles.otherMessage
-      ]}>
-        <Text style={[
-          styles.messageText,
-          isOwnMessage ? styles.ownMessageText : styles.otherMessageText
-        ]}>
-          {item.body}
-        </Text>
-        <Text style={[
-          styles.messageTime,
-          isOwnMessage ? styles.ownMessageTime : styles.otherMessageTime
-        ]}>
-          {new Date(item.sent_at).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </Text>
-      </View>
-    );
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin request sent successfully');
+      // Navigation will be handled by the root layout based on auth state
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+                 error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>Loading messages...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorText}>Failed to load messages</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => window.location.reload()}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (!otherUser) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>Loading conversation...</Text>
-      </View>
-    );
-  }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <AppHeader
-        title={otherUser.name}
-        subtitle={otherUser.role === 'caregiver' ? 'Caregiver' : 'Family Member'}
-        rightComponent={
-          <View style={styles.chatActions}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={24} color="#374151" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handlePhoneCall} style={styles.actionButton}>
-              <Phone size={20} color="#2563EB" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleVideoCall} style={styles.actionButton}>
-              <Video size={20} color="#2563EB" />
-            </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
+
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <View style={styles.demoSection}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Family 1"
+              onPress={() => {
+                setFormData({
+                  email: 'family1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Family 2"
+              onPress={() => {
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
           </View>
-        }
-      />
-
-      {/* Messages */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        style={styles.messagesList}
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyMessages}>
-            <Text style={styles.emptyTitle}>Start the conversation!</Text>
-            <Text style={styles.emptyText}>
-              Send a message to {otherUser.name} to get started.
-            </Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 3"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver3@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
           </View>
-        }
-      />
+        </View>
 
-      <TypingIndicator visible={isTyping} userName={otherUser?.name} />
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
 
-      <EnhancedMessageInput
-        value={messageText}
-        onChangeText={setMessageText}
-        onSend={handleSendMessage}
-        onAttachment={handleAttachment}
-        disabled={!isSubscriber}
-        placeholder={isSubscriber ? "Type a message..." : "Upgrade to send messages"}
-      />
-
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="messaging and video calls"
-      />
-
-      <VideoCallModal
-        visible={showVideoCall}
-        onClose={() => setShowVideoCall(false)}
-        otherUserName={otherUser?.name || 'User'}
-      />
-    </KeyboardAvoidingView>
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -239,102 +209,81 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-  },
-  errorText: {
-    fontSize: 16,
-    color: Colors.error,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: Colors.primary[500],
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: Colors.text.inverse,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  chatActions: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   backButton: {
     padding: 8,
+    marginRight: 16,
   },
-  actionButton: {
-    padding: 8,
-  },
-  messagesList: {
-    flex: 1,
-  },
-  messagesContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  messageContainer: {
-    maxWidth: '80%',
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 16,
-  },
-  ownMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: Colors.primary[500],
-  },
-  otherMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.gray[200],
-  },
-  messageText: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 4,
-  },
-  ownMessageText: {
-    color: Colors.text.inverse,
-  },
-  otherMessageText: {
-    color: Colors.text.primary,
-  },
-  messageTime: {
-    fontSize: 12,
-  },
-  ownMessageTime: {
-    color: Colors.primary[100],
-    textAlign: 'right',
-  },
-  otherMessageTime: {
-    color: Colors.text.tertiary,
-  },
-  emptyMessages: {
-    flex: 1,
-    justifyContent: 'center',
+  logoContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 60,
+    position: 'relative',
   },
-  emptyTitle: {
+  logo: {
     fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text.primary,
     marginBottom: 8,
   },
-  emptyText: {
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
+  },
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
     fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 24,
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
   },
 });
