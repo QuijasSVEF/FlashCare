@@ -20,19 +20,16 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+    if (user) {
+      routerInstance.replace('/(tabs)');
     }
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.email) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Please enter a valid email';
     if (!formData.password) newErrors.password = 'Password is required';
 
     setErrors(newErrors);
@@ -44,6 +41,18 @@ export default function SignInScreen() {
     
     setLoading(true);
     try {
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
       if (error.message?.includes('Invalid login credentials') || 
                  error.message?.includes('invalid_credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
@@ -62,11 +71,6 @@ export default function SignInScreen() {
       }
       
       Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
-    } catch (error) {
-      console.error('Sign in error:', error);
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }
