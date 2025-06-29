@@ -1,91 +1,206 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Database } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/Colors';
 
-type User = Database['public']['Tables']['users']['Row'];
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<User | null>;
-  signUp: (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => Promise<void>;
-  signOut: () => Promise<boolean>;
-  updateProfile: (updates: Database['public']['Tables']['users']['Update']) => Promise<void>;
-  setDemoUser: (user: User) => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const signIn = async (email: string, password: string): Promise<User | null> => {
-    // Demo implementation - always succeeds
-    const demoUser: User = {
-      id: 'demo-user',
-      name: 'Demo User',
-      role: 'family',
-      avatar_url: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      bio: 'Demo user for testing',
-      phone: '+1 (555) 123-4567',
-      emergency_phone: '+1 (555) 911-0000',
-      location: 'San Francisco, CA',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setUser(demoUser);
-    return demoUser;
-  };
-
-  const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }): Promise<void> => {
-    // Demo implementation
-    const demoUser: User = {
-      id: 'demo-user-new',
-      name: userData.name,
-      role: userData.role,
-      avatar_url: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      bio: 'New demo user',
-      phone: '+1 (555) 123-4567',
-      emergency_phone: '+1 (555) 911-0000',
-      location: 'San Francisco, CA',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setUser(demoUser);
-  };
-
-  const signOut = async (): Promise<boolean> => {
-    setUser(null);
-    return true;
-  };
-
-  const updateProfile = async (updates: Database['public']['Tables']['users']['Update']): Promise<void> => {
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
     if (user) {
-      setUser({ ...user, ...updates });
+      console.log('User already signed in, redirecting to tabs');
+      routerInstance.replace('/(tabs)');
+    }
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const setDemoUser = (demoUser: User) => {
-    setUser(demoUser);
-  };
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
 
-  const value = {
-    user,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    updateProfile,
-    setDemoUser,
-  };
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginBottom: 32,
+  },
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+});
