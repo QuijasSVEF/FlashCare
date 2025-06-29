@@ -1,124 +1,210 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { router } from 'expo-router';
-import { MessageCircle } from 'lucide-react-native';
-import { Card } from '../../components/ui/Card';
-import { PaywallModal } from '../../components/PaywallModal';
-import { EmergencyButton } from '../../components/EmergencyButton';
-import { AppHeader } from '../../components/AppHeader';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
-import { useSubscription } from '../../contexts/SubscriptionContext';
-import { useMatches } from '../../hooks/useMatches';
-import { Button } from '../../components/ui/Button';
+import { Colors } from '../../constants/Colors';
 
-export default function MessagesScreen() {
-  const { user } = useAuth();
-  const { isSubscriber } = useSubscription();
-  const { matches, loading } = useMatches();
-  const [showPaywall, setShowPaywall] = useState(false);
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleStartMessaging = () => {
-    if (!isSubscriber) {
-      setShowPaywall(true);
-    } else {
-      // Navigate to messages list
-      console.log('Access messaging features');
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    }
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin request sent successfully');
+      // Navigation will be handled by the root layout based on auth state
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+                 error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderConversation = ({ item }: { item: any }) => {
-    const otherUser = user?.role === 'family' ? item.caregiver : item.family;
-    
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          if (!isSubscriber) {
-            setShowPaywall(true);
-            return;
-          }
-          router.push(`/chat/${item.id}`);
-        }}
-        style={styles.conversationItem}
-      >
-        <Card>
-          <View style={styles.conversationContent}>
-            <Image
-              source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
-              style={styles.avatar}
-            />
-            
-            <View style={styles.conversationInfo}>
-              <Text style={styles.conversationName}>{otherUser.name}</Text>
-              <Text style={styles.conversationPreview}>
-                {isSubscriber ? 'Tap to start chatting!' : 'Upgrade to message'}
-              </Text>
-            </View>
-            
-            <View style={styles.conversationActions}>
-              <MessageCircle size={20} color="#2563EB" />
-            </View>
-          </View>
-        </Card>
-      </TouchableOpacity>
-    );
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <AppHeader
-          title="Messages"
-          emergencyPhone={user?.emergency_phone}
-        />
-        
-        <View style={styles.upgradePrompt}>
-          <Text style={styles.upgradeTitle}>Loading conversations...</Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <AppHeader
-      />
-
-      {!isSubscriber && matches.length > 0 ? (
-        <View style={styles.upgradePrompt}>
-          <Text style={styles.upgradeTitle}>Unlock Messaging</Text>
-          <Text style={styles.upgradeText}>
-            Connect with caregivers and families through secure messaging. 
-            Upgrade to FlashCare Plus to start conversations.
-          </Text>
-          <Button
-            title="Upgrade Now"
-            onPress={handleStartMessaging}
-            size="large"
-            style={styles.upgradeButton}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
+          <Image
+            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
+            style={styles.boltBadge}
+            resizeMode="contain"
           />
         </View>
-      ) : matches.length === 0 ? (
-        <View style={styles.upgradePrompt}>
-          <Text style={styles.upgradeTitle}>No conversations yet</Text>
-          <Text style={styles.upgradeText}>
-            Start matching with caregivers to begin conversations!
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={matches}
-          renderItem={renderConversation}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.conversationsList}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      </View>
 
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="messaging"
-      />
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
+
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <View style={styles.demoSection}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Family 1"
+              onPress={() => {
+                setFormData({
+                  email: 'family1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Family 2"
+              onPress={() => {
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 3"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver3@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+        </View>
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -126,62 +212,83 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
-  upgradePrompt: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  upgradeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  upgradeText: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  upgradeButton: {
-    width: '100%',
-  },
-  conversationsList: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  conversationItem: {
-    marginBottom: 0,
-  },
-  conversationContent: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  backButton: {
+    padding: 8,
     marginRight: 16,
   },
-  conversationInfo: {
-    flex: 1,
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
   },
-  conversationName: {
-    fontSize: 18,
+  logo: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
+    color: Colors.primary[500],
+    marginLeft: 8,
   },
-  conversationPreview: {
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Colors.text.secondary,
+    marginBottom: 32,
   },
-  conversationActions: {
-    padding: 8,
+  signInButton: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
   },
 });

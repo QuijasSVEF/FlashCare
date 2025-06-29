@@ -1,46 +1,43 @@
-import Purchases, { PurchasesOffering, CustomerInfo } from 'react-native-purchases';
 import { Platform } from 'react-native';
 
 interface SubscriptionStatus {
   isSubscriber: boolean;
-  offering?: PurchasesOffering;
 }
 
 export const subscriptionService = {
   async initialize(): Promise<void> {
     try {
-      if (Platform.OS === 'ios') {
-        await Purchases.configure({
-          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY!,
-        });
-      } else if (Platform.OS === 'android') {
-        await Purchases.configure({
-          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY!,
-        });
-      }
+      console.log('Demo: Initializing subscription service');
+      // No-op for demo
     } catch (error) {
-      console.error('Error configuring RevenueCat:', error);
+      console.error('Error configuring subscription service:', error);
     }
   },
 
   async checkSubscription(): Promise<SubscriptionStatus> {
     try {
-      const customerInfo: CustomerInfo = await Purchases.getCustomerInfo();
-      const isSubscriber = customerInfo.entitlements.active['flashcare_plus'] !== undefined;
-      
+      // Demo implementation - everyone is a subscriber
       return {
-        isSubscriber,
+        isSubscriber: true,
       };
     } catch (error) {
       console.error('Error checking subscription:', error);
-      return { isSubscriber: false };
+      return { isSubscriber: true };
     }
   },
 
-  async getOfferings(): Promise<PurchasesOffering | null> {
+  async getOfferings(): Promise<any | null> {
     try {
-      const offerings = await Purchases.getOfferings();
-      return offerings.current;
+      // Demo implementation
+      return {
+        monthly: {
+          identifier: 'monthly',
+          title: 'Monthly Subscription',
+          description: 'FlashCare Plus Monthly',
+          price: 9.99,
+          priceString: '$9.99',
+        }
+      };
     } catch (error) {
       console.error('Error getting offerings:', error);
       return null;
@@ -49,26 +46,8 @@ export const subscriptionService = {
 
   async purchaseSubscription(): Promise<boolean> {
     try {
-      const offerings = await Purchases.getOfferings();
-      const currentOffering = offerings.current;
-      
-      if (!currentOffering) {
-        throw new Error('No offerings available');
-      }
-
-      // Get the monthly package (adjust based on your offering setup)
-      const monthlyPackage = currentOffering.monthly;
-      
-      if (!monthlyPackage) {
-        throw new Error('Monthly package not available');
-      }
-
-      const { customerInfo } = await Purchases.purchasePackage(monthlyPackage);
-      
-      // Check if the purchase was successful
-      const isSubscriber = customerInfo.entitlements.active['flashcare_plus'] !== undefined;
-      
-      return isSubscriber;
+      // Demo implementation - always succeeds
+      return true;
     } catch (error) {
       console.error('Error purchasing subscription:', error);
       return false;
@@ -77,10 +56,8 @@ export const subscriptionService = {
 
   async restorePurchases(): Promise<boolean> {
     try {
-      const customerInfo = await Purchases.restorePurchases();
-      const isSubscriber = customerInfo.entitlements.active['flashcare_plus'] !== undefined;
-      
-      return isSubscriber;
+      // Demo implementation - always succeeds
+      return true;
     } catch (error) {
       console.error('Error restoring purchases:', error);
       return false;
@@ -89,7 +66,8 @@ export const subscriptionService = {
 
   async setUserID(userID: string): Promise<void> {
     try {
-      await Purchases.logIn(userID);
+      // Demo implementation
+      console.log('Demo: Setting user ID for subscription service', userID);
     } catch (error) {
       console.error('Error setting user ID:', error);
     }
@@ -97,7 +75,8 @@ export const subscriptionService = {
 
   async logOut(): Promise<void> {
     try {
-      await Purchases.logOut();
+      // Demo implementation
+      console.log('Demo: Logging out of subscription service');
     } catch (error) {
       console.error('Error logging out:', error);
     }

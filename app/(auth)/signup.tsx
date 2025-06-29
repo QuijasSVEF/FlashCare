@@ -1,99 +1,79 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
-import { router } from 'expo-router';
-import { ArrowLeft, Heart, User, Users, Image as ImageIcon } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 
-export default function SignUpScreen() {
+export default function SignInScreen() {
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
-    role: '' as 'family' | 'caregiver' | '',
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { signUp } = useAuth();
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // Check if user is already signed in
+  useEffect(() => {
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    }
+  }, [user]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
     if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!formData.role) newErrors.role = 'Please select your role';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignUp = async () => {
+  const handleSignIn = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     setErrors({});
     
     try {
-      console.log('Attempting signup with:', formData.email, formData.role);
-      await signUp(formData.email, formData.password, {
-        name: formData.name,
-        role: formData.role as 'family' | 'caregiver',
-      });
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
       
-      // Success - go to profile setup
-      console.log('Signup successful, navigating to profile setup');
-      router.replace('/(auth)/profile-setup');
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
     } catch (error: any) {
-      console.error('Signup error:', error.message || error);
-      let errorMessage = 'Failed to create account';
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
       
-      if (error.message?.includes('User already registered') || 
-          error.message?.includes('user_already_exists') ||
-          error.code === 'user_already_exists') {
-        Alert.alert(
-          'Account Already Exists',
-          'An account with this email already exists. Would you like to sign in instead or try a different email?',
-          [
-            {
-              text: 'Try Different Email',
-              onPress: () => {
-                setFormData(prev => ({ ...prev, email: '' }));
-                setErrors(prev => ({ ...prev, email: '' }));
-              }
-            },
-            {
-              text: 'Sign In',
-              onPress: () => router.push('/(auth)/signin'),
-              style: 'default'
-            }
-          ]
-        );
-        return;
-      } else if (error.message?.includes('Email not confirmed')) {
-        Alert.alert(
-          'Check Your Email',
-          'Please check your email to complete your registration.',
-          [{ text: 'OK' }]
-        );
-        return;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
-      Alert.alert('Sign Up Error', errorMessage);
+      Alert.alert('Sign In Error', errorMessage);
     } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
@@ -110,16 +90,8 @@ export default function SignUpScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Create your account</Text>
-        <Text style={styles.subtitle}>Join the FlashCare community</Text>
-
-        <Input
-          label="Full Name"
-          value={formData.name}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-          placeholder="Enter your full name"
-          error={errors.name}
-        />
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
         <Input
           label="Email"
@@ -128,6 +100,7 @@ export default function SignUpScreen() {
           placeholder="Enter your email"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
           error={errors.email}
         />
 
@@ -135,64 +108,96 @@ export default function SignUpScreen() {
           label="Password"
           value={formData.password}
           onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Create a password"
+          placeholder="Enter your password"
           secureTextEntry
-          error={errors.password}
-        />
-
-        <Text style={styles.roleLabel}>I am a:</Text>
-        <View style={styles.roleOptions}>
-          <TouchableOpacity
-            style={[
-              styles.roleOption,
-              formData.role === 'family' && styles.roleOptionSelected,
-            ]}
-            onPress={() => setFormData(prev => ({ ...prev, role: 'family' }))}
-          >
-            <Users size={24} color={formData.role === 'family' ? Colors.primary[500] : '#6B7280'} />
-            <Text style={[
-              styles.roleText,
-              formData.role === 'family' && styles.roleTextSelected,
-            ]}>
-              Family Member
-            </Text>
-            <Text style={styles.roleDescription}>Looking for care</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.roleOption,
-              formData.role === 'caregiver' && styles.roleOptionSelected,
-            ]}
-            onPress={() => setFormData(prev => ({ ...prev, role: 'caregiver' }))}
-          >
-            <User size={24} color={formData.role === 'caregiver' ? Colors.primary[500] : '#6B7280'} />
-            <Text style={[
-              styles.roleText,
-              formData.role === 'caregiver' && styles.roleTextSelected,
-            ]}>
-              Caregiver
-            </Text>
-            <Text style={styles.roleDescription}>Providing care</Text>
-          </TouchableOpacity>
+          autoComplete="password"
+          error={errors.password} 
+        /> 
+        
+        <View style={styles.demoSection}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Family 1"
+              onPress={() => {
+                setFormData({
+                  email: 'family1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Family 2"
+              onPress={() => {
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 3"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver3@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
         </View>
-        {errors.role && <Text style={styles.error}>{errors.role}</Text>}
 
         <Button
-          title={loading ? "Creating account..." : "Create Account"}
-          onPress={handleSignUp}
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
           disabled={loading}
           size="large"
-          style={styles.createButton}
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
         />
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
-          <Text style={styles.signInText}>
-            Already have an account? <Text style={styles.signInLink}>Sign in</Text>
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
           </Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -230,8 +235,9 @@ const styles = StyleSheet.create({
     height: 30,
   },
   content: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 40,
   },
   title: {
     fontSize: 28,
@@ -244,62 +250,51 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginBottom: 32,
   },
-  roleLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 12,
-  },
-  roleOptions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  roleOption: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  roleOptionSelected: {
-    borderColor: Colors.primary[500],
-    backgroundColor: Colors.primary[50],
-  },
-  roleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  roleTextSelected: {
-    color: Colors.primary[500],
-  },
-  roleDescription: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  error: {
-    color: '#DC2626',
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  createButton: {
+  signInButton: {
     marginTop: 16,
     marginBottom: 24,
   },
-  signInText: {
+  demoSection: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 4,
+  },
+  demoSubtitle: {
+    fontSize: 12,
+    color: Colors.text.tertiary,
+    textAlign: 'center',
+  },
+  signUpText: {
     fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
   },
-  signInLink: {
+  signUpLink: {
     color: Colors.primary[500],
     fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
   },
 });
