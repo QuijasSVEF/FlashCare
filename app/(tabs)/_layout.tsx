@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search, FileText } from 'lucide-react-native';
+import { Heart, MessageCircle, User, Plus, Briefcase, Settings, ChartBar as BarChart3, Search, FileText, CreditCard, Calendar } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 import { Platform } from 'react-native';
@@ -105,13 +105,21 @@ export default function TabLayout() {
         <Tabs.Screen
           name="search"
           options={{
-            title: 'Analytics',
+            title: user?.role === 'caregiver' ? 'Analytics' : 'Search',
             tabBarIcon: ({ size, color, focused }) => (
-              <BarChart3 
-                size={focused ? size + 2 : size} 
-                color={color}
-                strokeWidth={focused ? 2.5 : 2}
-              />
+              user?.role === 'caregiver' ? (
+                <BarChart3 
+                  size={focused ? size + 2 : size} 
+                  color={color}
+                  strokeWidth={focused ? 2.5 : 2}
+                />
+              ) : (
+                <Search 
+                  size={focused ? size + 2 : size} 
+                  color={color}
+                  strokeWidth={focused ? 2.5 : 2}
+                />
+              )
             ),
           }}
         />
@@ -157,14 +165,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="schedule"
         options={{
-          href: null, // This hides it from the tab bar
+          title: "Schedule",
+          tabBarIcon: ({ size, color, focused }) => (
+            <Calendar 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
         }}
       />
       
       <Tabs.Screen
         name="billing"
         options={{
-          href: null, // This hides it from the tab bar
+          title: "Billing",
+          tabBarIcon: ({ size, color, focused }) => (
+            <CreditCard 
+              size={focused ? size + 2 : size} 
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
         }}
       />
       
