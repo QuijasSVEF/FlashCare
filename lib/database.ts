@@ -1,218 +1,367 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import { supabase } from './supabase';
+import type { Database } from '../types/database';
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+type Tables = Database['public']['Tables'];
+type User = Tables['users']['Row'];
+type JobPost = Tables['job_posts']['Row'];
+type Match = Tables['matches']['Row'];
+type Message = Tables['messages']['Row'];
+type Swipe = Tables['swipes']['Row'];
+type Review = Tables['reviews']['Row'];
+type Schedule = Tables['schedules']['Row'];
+type Credential = Tables['credentials']['Row'];
+type UserDocument = Tables['user_documents']['Row'];
 
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
-  
-  // If user is already signed in, redirect to tabs
-  useEffect(() => {
-    const handleAutoSignIn = async () => {
-      try {
-        const result = await signIn(formData.email, formData.password);
-        console.log('Signin successful, result:', !!result);
-        
-        // Small delay to ensure auth state is properly set
-        setTimeout(() => {
-          console.log('Navigating to tabs after signin');
-          routerInstance.replace('/(tabs)');
-        }, 100);
-      } catch (error) {
-        console.error('Auto signin error:', error);
-      }
-    };
+export const databaseService = {
+  // User operations
+  async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase
+      .from('users')
+      .insert(userData)
+      .select()
+      .single();
     
-    handleAutoSignIn();
-  }, [user]);
+    if (error) throw error;
+    return data;
+  },
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
+  async getUserById(id: string) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
     
-    try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
-      
-      if (error.message?.includes('Invalid login credentials') || 
-          error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
+    if (error) throw error;
+    return data;
+  },
+
+  async updateUser(id: string, updates: Partial<Omit<User, 'id' | 'created_at'>>) {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getUsersByRole(role: 'family' | 'caregiver') {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', role);
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Job post operations
+  async createJobPost(jobData: Omit<JobPost, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase
+      .from('job_posts')
+      .insert(jobData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getJobPosts() {
+    const { data, error } = await supabase
+      .from('job_posts')
+      .select(`
+        *,
+        users!job_posts_family_id_fkey(*)
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getJobPostsByFamily(familyId: string) {
+    const { data, error } = await supabase
+      .from('job_posts')
+      .select('*')
+      .eq('family_id', familyId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async updateJobPost(id: string, updates: Partial<Omit<JobPost, 'id' | 'family_id' | 'created_at'>>) {
+    const { data, error } = await supabase
+      .from('job_posts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteJobPost(id: string) {
+    const { error } = await supabase
+      .from('job_posts')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  // Swipe operations
+  async createSwipe(swipeData: Omit<Swipe, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('swipes')
+      .insert(swipeData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getSwipesBetweenUsers(familyId: string, caregiverId: string) {
+    const { data, error } = await supabase
+      .from('swipes')
+      .select('*')
+      .eq('family_id', familyId)
+      .eq('caregiver_id', caregiverId);
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Match operations
+  async createMatch(matchData: Omit<Match, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('matches')
+      .insert(matchData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getMatchesForUser(userId: string) {
+    const { data, error } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        family:users!matches_family_id_fkey(*),
+        caregiver:users!matches_caregiver_id_fkey(*),
+        job_posts(*)
+      `)
+      .or(`family_id.eq.${userId},caregiver_id.eq.${userId}`)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Message operations
+  async createMessage(messageData: Omit<Message, 'id' | 'sent_at'>) {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert(messageData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getMessagesForMatch(matchId: string) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(*)
+      `)
+      .eq('match_id', matchId)
+      .order('sent_at', { ascending: true });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Review operations
+  async createReview(reviewData: Omit<Review, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert(reviewData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getReviewsForUser(userId: string) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        reviewer:users!reviews_reviewer_id_fkey(*),
+        reviewee:users!reviews_reviewee_id_fkey(*)
+      `)
+      .eq('reviewee_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Schedule operations
+  async createSchedule(scheduleData: Omit<Schedule, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('schedules')
+      .insert(scheduleData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getSchedulesForMatch(matchId: string) {
+    const { data, error } = await supabase
+      .from('schedules')
+      .select('*')
+      .eq('match_id', matchId)
+      .order('start_ts', { ascending: true });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async updateScheduleStatus(id: string, status: 'pending' | 'confirmed' | 'cancelled') {
+    const { data, error } = await supabase
+      .from('schedules')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Credential operations
+  async createCredential(credentialData: Omit<Credential, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('credentials')
+      .insert(credentialData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getCredentialsForUser(userId: string) {
+    const { data, error } = await supabase
+      .from('credentials')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // User document operations
+  async createUserDocument(documentData: Omit<UserDocument, 'id' | 'uploaded_at' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('user_documents')
+      .insert(documentData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getUserDocuments(userId: string) {
+    const { data, error } = await supabase
+      .from('user_documents')
+      .select('*')
+      .eq('user_id', userId)
+      .order('uploaded_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteUserDocument(id: string) {
+    const { error } = await supabase
+      .from('user_documents')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  // Search and filtering
+  async searchJobPosts(filters: {
+    location?: string;
+    minRate?: number;
+    maxRate?: number;
+    minHours?: number;
+    maxHours?: number;
+  }) {
+    let query = supabase
+      .from('job_posts')
+      .select(`
+        *,
+        users!job_posts_family_id_fkey(*)
+      `);
+
+    if (filters.location) {
+      query = query.ilike('location', `%${filters.location}%`);
     }
-  };
+    if (filters.minRate) {
+      query = query.gte('rate_hour', filters.minRate);
+    }
+    if (filters.maxRate) {
+      query = query.lte('rate_hour', filters.maxRate);
+    }
+    if (filters.minHours) {
+      query = query.gte('hours_per_week', filters.minHours);
+    }
+    if (filters.maxHours) {
+      query = query.lte('hours_per_week', filters.maxHours);
+    }
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
-        </View>
-      </View>
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+  async searchCaregivers(filters: {
+    location?: string;
+    hasCredentials?: boolean;
+  }) {
+    let query = supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'caregiver');
 
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
+    if (filters.location) {
+      query = query.ilike('location', `%${filters.location}%`);
+    }
 
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
-
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-});
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  }
+};
