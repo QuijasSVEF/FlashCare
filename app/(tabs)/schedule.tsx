@@ -14,6 +14,7 @@ export default function SignInScreen() {
   });
   const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
+}
 
 export default function ScheduleScreen() {
   const { user } = useAuth();
