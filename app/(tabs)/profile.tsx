@@ -160,7 +160,11 @@ export default function ProfileScreen() {
         rightComponent={
           <TouchableOpacity 
             style={styles.notificationButton}
-            onPress={() => setShowNotifications(true)}
+            onPress={() => {
+              console.log('Opening notifications');
+              setShowNotifications(true);
+            }}
+            activeOpacity={0.7}
           >
             <Bell size={24} color="#6B7280" />
             <View style={styles.notificationBadge}>

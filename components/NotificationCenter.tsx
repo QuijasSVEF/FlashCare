@@ -215,18 +215,15 @@ export function NotificationCenter({ visible, onClose }: NotificationCenterProps
 
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 100,
+    paddingRight: 20,
     zIndex: 1000,
   },
   container: {
-    position: 'absolute',
-    top: 100,
-    right: 20,
     width: 350,
     maxHeight: 500,
     backgroundColor: Colors.background,

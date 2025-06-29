@@ -166,9 +166,11 @@ export const databaseService = {
   // Additional methods for demo functionality
   async getUserMatches(userId: string) {
     // Demo implementation
-    return demoMatches.filter(match => 
+    const userMatches = demoMatches.filter(match => 
       match.family_id === userId || match.caregiver_id === userId
     );
+    console.log('Getting matches for user:', userId, 'Found:', userMatches.length);
+    return userMatches;
   },
   
   async getMatchMessages(matchId: string) {

@@ -121,6 +121,15 @@ export const demoMatches = [
     caregiver: demoCaregivers[2],
     family: demoFamilies[1]
   }
+  {
+    id: 'match-3',
+    caregiver_id: 'caregiver-2',
+    family_id: 'family-1',
+    job_id: 'job-1',
+    created_at: '2023-10-27T00:00:00Z',
+    caregiver: demoCaregivers[1],
+    family: demoFamilies[0]
+  }
 ];
 
 // Demo messages

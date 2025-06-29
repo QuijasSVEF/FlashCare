@@ -14,16 +14,30 @@ import { Button } from '../../components/ui/Button';
 export default function MessagesScreen() {
   const { user } = useAuth();
   const { isSubscriber } = useSubscription();
-  const { matches, loading } = useMatches();
+  const { matches, loading, error } = useMatches();
   const [showPaywall, setShowPaywall] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  const [showChatModal, setShowChatModal] = useState(false);
 
   const handleStartMessaging = () => {
     if (!isSubscriber) {
       setShowPaywall(true);
     } else {
-      // Navigate to messages list
-      console.log('Access messaging features');
+      // For demo, show first match
+      if (matches.length > 0) {
+        setSelectedMatch(matches[0]);
+        setShowChatModal(true);
+      }
     }
+  };
+
+  const handleOpenChat = (match: any) => {
+    if (!isSubscriber) {
+      setShowPaywall(true);
+      return;
+    }
+    setSelectedMatch(match);
+    setShowChatModal(true);
   };
 
   const renderConversation = ({ item }: { item: any }) => {
@@ -31,14 +45,9 @@ export default function MessagesScreen() {
     
     return (
       <TouchableOpacity
-        onPress={() => {
-          if (!isSubscriber) {
-            setShowPaywall(true);
-            return;
-          }
-          router.push(`/chat/${item.id}`);
-        }}
+        onPress={() => handleOpenChat(item)}
         style={styles.conversationItem}
+        activeOpacity={0.7}
       >
         <Card>
           <View style={styles.conversationContent}>
@@ -50,7 +59,7 @@ export default function MessagesScreen() {
             <View style={styles.conversationInfo}>
               <Text style={styles.conversationName}>{otherUser.name}</Text>
               <Text style={styles.conversationPreview}>
-                {isSubscriber ? 'Tap to start chatting!' : 'Upgrade to message'}
+                {isSubscriber ? 'Tap to open chat' : 'Upgrade to message'}
               </Text>
             </View>
             
@@ -68,7 +77,6 @@ export default function MessagesScreen() {
       <View style={styles.container}>
         <AppHeader
           title="Messages"
-          emergencyPhone={user?.emergency_phone}
         />
         
         <View style={styles.upgradePrompt}>
@@ -82,29 +90,20 @@ export default function MessagesScreen() {
     <View style={styles.container}>
       <AppHeader
         title="Messages"
-        emergencyPhone={user?.emergency_phone}
       />
 
-      {!isSubscriber && matches.length > 0 ? (
-        <View style={styles.upgradePrompt}>
-          <Text style={styles.upgradeTitle}>Unlock Messaging</Text>
-          <Text style={styles.upgradeText}>
-            Connect with caregivers and families through secure messaging. 
-            Upgrade to FlashCare Plus to start conversations.
-          </Text>
-          <Button
-            title="Upgrade Now"
-            onPress={handleStartMessaging}
-            size="large"
-            style={styles.upgradeButton}
-          />
-        </View>
-      ) : matches.length === 0 ? (
+      {matches.length === 0 ? (
         <View style={styles.upgradePrompt}>
           <Text style={styles.upgradeTitle}>No conversations yet</Text>
           <Text style={styles.upgradeText}>
             Start matching with caregivers to begin conversations!
           </Text>
+          <Button
+            title="Find Matches"
+            onPress={() => router.push('/(tabs)')}
+            size="large"
+            style={styles.upgradeButton}
+          />
         </View>
       ) : (
         <FlatList
@@ -121,6 +120,26 @@ export default function MessagesScreen() {
         onClose={() => setShowPaywall(false)}
         feature="messaging"
       />
+
+      {selectedMatch && (
+        <Modal
+          visible={showChatModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <View style={styles.chatModal}>
+            <View style={styles.chatHeader}>
+              <Text style={styles.chatTitle}>
+                Chat with {user?.role === 'family' ? selectedMatch.caregiver.name : selectedMatch.family.name}
+              </Text>
+              <TouchableOpacity onPress={() => setShowChatModal(false)}>
+                <Text style={styles.closeButton}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.chatPlaceholder}>Demo chat interface would go here</Text>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -185,5 +204,37 @@ const styles = StyleSheet.create({
   },
   conversationActions: {
     padding: 8,
+  },
+  chatModal: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  chatTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  closeButton: {
+    fontSize: 16,
+    color: '#2563EB',
+    fontWeight: '600',
+  },
+  chatPlaceholder: {
+    flex: 1,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 16,
+    color: '#6B7280',
   },
 });
