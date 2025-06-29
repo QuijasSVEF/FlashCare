@@ -20,6 +20,7 @@ export default function SignInScreen() {
   
   // Check if user is already signed in
   useEffect(() => {
+    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
