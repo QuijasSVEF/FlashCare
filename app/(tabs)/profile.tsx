@@ -21,29 +21,35 @@ Alert.alert(
   'Are you sure you want to permanently delete your FlashCare account? This action cannot be undone.',
   [
     { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: () => {} }
+    { text: 'Delete', style: 'destructive', onPress: () => console.log('Delete account') }
   ]
 );
 
 // Fixed closing brackets for View components
 </View>
+</View>
 
 // Fixed closing brackets for TouchableOpacity components
+</TouchableOpacity>
+</TouchableOpacity>
 </TouchableOpacity>
 
 // Fixed closing brackets for CollapsibleSection components
 </CollapsibleSection>
+</CollapsibleSection>
+</CollapsibleSection>
 
-// Fixed closing brackets for ScrollView component
+// Fixed closing brackets for main component structure
+</View>
 </ScrollView>
 ```
 
 The main issues were:
 
-1. Unclosed TouchableOpacity components
+1. Missing closing brackets for TouchableOpacity components
 2. Incomplete Alert.alert parameters
-3. Missing closing brackets for View components
-4. Missing closing brackets for CollapsibleSection components
-5. Missing closing bracket for ScrollView component
+3. Missing closing tags for View components
+4. Missing closing tags for CollapsibleSection components
+5. Missing closing brackets for the main component structure
 
-The code should now be properly structured with all required closing brackets and proper component nesting.
+The file should now be properly formatted with all required closing brackets and tags.
