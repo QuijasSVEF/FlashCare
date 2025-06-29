@@ -162,6 +162,37 @@ export const databaseService = {
     // Demo implementation
     return demoJobPosts;
   },
+
+  // Swipe operations
+  async createSwipe(swipeData: Database['public']['Tables']['swipes']['Insert']) {
+    // Demo implementation
+    console.log('Creating swipe:', swipeData);
+    const newSwipe = {
+      id: `swipe-${Date.now()}`,
+      ...swipeData,
+      created_at: new Date().toISOString()
+    };
+    return newSwipe;
+  },
+
+  async checkForMatch(jobId: string, familyId: string, caregiverId: string) {
+    // Demo implementation - simulate checking for mutual likes
+    console.log('Checking for match:', { jobId, familyId, caregiverId });
+    // In a real implementation, this would check if both users liked each other
+    // For demo purposes, randomly return true 30% of the time
+    return Math.random() < 0.3;
+  },
+
+  async createMatch(matchData: Database['public']['Tables']['matches']['Insert']) {
+    // Demo implementation
+    console.log('Creating match:', matchData);
+    const newMatch = {
+      id: `match-${Date.now()}`,
+      ...matchData,
+      created_at: new Date().toISOString()
+    };
+    return newMatch;
+  },
   
   // Additional methods for demo functionality
   async getUserMatches(userId: string) {
