@@ -98,6 +98,7 @@ export default function HomeScreen() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({});
+  const [swipeCount, setSwipeCount] = useState(0);
 
   React.useEffect(() => {
     if (user?.role === 'family') {
@@ -165,7 +166,7 @@ export default function HomeScreen() {
         if (direction === 'like' && result.isMatch) {
           showSuccess(
             '🎉 It\'s a Match!',
-            `You matched with ${currentCaregiver.name}! Start chatting to schedule care.`
+            `You matched with ${currentCaregiver.name}! Check your matches tab to start chatting.`
           );
         }
       } else if (user?.role === 'caregiver') {
@@ -180,13 +181,22 @@ export default function HomeScreen() {
         if (direction === 'like' && result.isMatch) {
           showSuccess(
             '🎉 It\'s a Match!',
-            `You matched with ${currentJob.family?.name}! Start chatting to discuss the position.`
+            `You matched with ${currentJob.family?.name}! Check your matches tab to start chatting.`
           );
         }
       }
 
       // Move to next item after successful swipe
       setCurrentIndex(prev => prev + 1);
+      setSwipeCount(prev => prev + 1);
+      
+      // Show helpful tip after a few swipes
+      if (swipeCount === 2) {
+        showInfo(
+          'Tip',
+          'Check your Matches tab to see your connections and start conversations!'
+        );
+      }
 
     } catch (error) {
       console.error('Error saving swipe:', error);
