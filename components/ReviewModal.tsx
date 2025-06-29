@@ -33,6 +33,23 @@ export function ReviewModal({
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [showReviews, setShowReviews] = useState(true);
+
+  useEffect(() => {
+    if (visible && revieweeId) {
+      loadReviews();
+    }
+  }, [visible, revieweeId]);
+
+  const loadReviews = async () => {
+    try {
+      const userReviews = await databaseService.getUserReviews(revieweeId);
+      setReviews(userReviews);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
@@ -103,40 +120,80 @@ export function ReviewModal({
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.subtitle}>
-            How was your experience with {revieweeName}?
-          </Text>
+          {showReviews && reviews.length > 0 ? (
+            <View style={styles.reviewsList}>
+              <Text style={styles.reviewsTitle}>Reviews for {revieweeName}</Text>
+              {reviews.map((review, index) => (
+                <View key={index} style={styles.reviewItem}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewerName}>{review.reviewer?.name || 'Anonymous'}</Text>
+                    <View style={styles.reviewRating}>
+                      {[...Array(review.rating_int)].map((_, i) => (
+                        <Star key={i} size={14} color={Colors.warning} fill={Colors.warning} />
+                      ))}
+                    </View>
+                  </View>
+                  {review.comment_text && (
+                    <Text style={styles.reviewComment}>{review.comment_text}</Text>
+                  )}
+                  <Text style={styles.reviewDate}>
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </Text>
+                </View>
+              ))}
+              <Button
+                title="Write a Review"
+                onPress={() => setShowReviews(false)}
+                style={styles.writeReviewButton}
+              />
+            </View>
+          ) : (
+            <View style={styles.writeReviewForm}>
+              <Text style={styles.subtitle}>
+                How was your experience with {revieweeName}?
+              </Text>
 
-          <View style={styles.ratingSection}>
-            <Text style={styles.ratingLabel}>Rating</Text>
-            {renderStars()}
-            <Text style={styles.ratingText}>
-              {rating === 0 ? 'Tap to rate' : `${rating} star${rating !== 1 ? 's' : ''}`}
-            </Text>
-          </View>
+              <View style={styles.ratingSection}>
+                <Text style={styles.ratingLabel}>Rating</Text>
+                {renderStars()}
+                <Text style={styles.ratingText}>
+                  {rating === 0 ? 'Tap to rate' : `${rating} star${rating !== 1 ? 's' : ''}`}
+                </Text>
+              </View>
 
-          <Input
-            label="Comments (Optional)"
-            value={comment}
-            onChangeText={setComment}
-            placeholder="Share your experience..."
-            multiline
-            numberOfLines={4}
-            style={styles.commentInput}
-          />
+              <Input
+                label="Comments (Optional)"
+                value={comment}
+                onChangeText={setComment}
+                placeholder="Share your experience..."
+                multiline
+                numberOfLines={4}
+                style={styles.commentInput}
+              />
 
-          <Button
-            title={loading ? "Submitting..." : "Submit Review"}
-            onPress={handleSubmitReview}
-            disabled={loading || rating === 0}
-            size="large"
-            style={styles.submitButton}
-          />
+              <Button
+                title={loading ? "Submitting..." : "Submit Review"}
+                onPress={handleSubmitReview}
+                disabled={loading || rating === 0}
+                size="large"
+                style={styles.submitButton}
+              />
 
-          <Text style={styles.disclaimer}>
-            Reviews are public and help build trust in our community. 
-            Please be honest and constructive in your feedback.
-          </Text>
+              {reviews.length > 0 && (
+                <Button
+                  title="View All Reviews"
+                  onPress={() => setShowReviews(true)}
+                  variant="outline"
+                  style={styles.viewReviewsButton}
+                />
+              )}
+
+              <Text style={styles.disclaimer}>
+                Reviews are public and help build trust in our community. 
+                Please be honest and constructive in your feedback.
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -170,6 +227,55 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  reviewsList: {
+    flex: 1,
+  },
+  reviewsTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  reviewItem: {
+    backgroundColor: Colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  reviewRating: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: Colors.text.tertiary,
+  },
+  writeReviewButton: {
+    marginTop: 20,
+  },
+  writeReviewForm: {
+    flex: 1,
   },
   subtitle: {
     fontSize: 16,
@@ -205,6 +311,9 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 24,
+    marginBottom: 16,
+  },
+  viewReviewsButton: {
     marginBottom: 16,
   },
   disclaimer: {

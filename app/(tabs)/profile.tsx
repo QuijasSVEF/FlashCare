@@ -284,6 +284,11 @@ export default function ProfileScreen() {
           <View style={styles.actionsList}>
             <TouchableOpacity style={styles.actionItem}>
               <View style={styles.actionIconContainer}>
+              onPress={() => {
+                console.log('Opening schedule');
+                router.push('/(tabs)/schedule');
+              }}
+              activeOpacity={0.7}
                 <Calendar size={20} color="#2563EB" />
               </View>
               <Text style={styles.actionText}>View Schedule</Text>
@@ -358,8 +363,10 @@ export default function ProfileScreen() {
                 const url = Platform.OS === 'ios' ? `tel:${number}` : `tel:${number}`;
                 Linking.openURL(url).catch((err) => {
                   console.error('Error making emergency call:', err);
+                  Alert.alert('Demo Mode', 'In a real app, this would call ' + number);
                 });
               }}
+              activeOpacity={0.7}
             >
               <Phone size={20} color="#DC2626" />
               <Text style={[styles.settingText, styles.emergencyText]}>Emergency Call</Text>
@@ -368,19 +375,72 @@ export default function ProfileScreen() {
               </Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => {
+                Alert.alert(
+                  'App Settings',
+                  'Settings options:\n\n• Notifications\n• Privacy\n• Language\n• Theme\n• Data Usage',
+                  [{ text: 'OK' }]
+                );
+              }}
+              activeOpacity={0.7}
+            >
               <Settings size={20} color="#6B7280" />
+              onPress={() => {
+                console.log('Opening messages');
+                router.push('/(tabs)/messages');
+              onPress={() => {
+                console.log('Opening reviews');
+                setShowReviewModal(true);
+              }}
+              activeOpacity={0.7}
+              }}
+              activeOpacity={0.7}
               <Text style={styles.settingText}>App Settings</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => {
+                Alert.alert(
+                  'Privacy & Safety',
+                  'Privacy features:\n\n• Profile Visibility\n• Block Users\n• Report Issues\n• Data Protection\n• Safety Tips',
+                  [{ text: 'OK' }]
+                );
+              }}
+              activeOpacity={0.7}
+            >
               <Shield size={20} color="#6B7280" />
               <Text style={styles.settingText}>Privacy & Safety</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
+              onPress={() => {
+                console.log('Opening billing');
+                router.push('/(tabs)/billing');
+              }}
+              activeOpacity={0.7}
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => {
+                Alert.alert(
+                  'Help & Support',
+                  'Support options:\n\n• FAQ\n• Contact Support\n• Live Chat\n• Report a Bug\n• Feature Request',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Contact Support', 
+                      onPress: () => {
+                        Alert.alert('Demo Mode', 'In a real app, this would open support chat or email');
+                      }
+                    }
+                  ]
+                );
+              }}
+              activeOpacity={0.7}
+            >
               <User size={20} color="#6B7280" />
               <Text style={styles.settingText}>Help & Support</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
@@ -394,9 +454,29 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
               <LogOut size={20} color="#DC2626" />
               <Text style={styles.signOutText}>Sign Out of FlashCare</Text>
+              activeOpacity={0.7}
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.deleteAccountButton}>
+            <TouchableOpacity 
+              style={styles.deleteAccountButton}
+              onPress={() => {
+                Alert.alert(
+                  'Delete Account',
+                  'Are you sure you want to permanently delete your FlashCare account? This action cannot be undone.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Delete Account', 
+                      style: 'destructive',
+                      onPress: () => {
+                        Alert.alert('Demo Mode', 'In a real app, this would permanently delete your account');
+                      }
+                    }
+                  ]
+                );
+              }}
+              activeOpacity={0.7}
+            >
               <Text style={styles.deleteAccountText}>Delete Account</Text>
             </TouchableOpacity>
           </View>
@@ -418,6 +498,12 @@ export default function ProfileScreen() {
       <NotificationCenter
         visible={showNotifications}
         onClose={() => setShowNotifications(false)}
+        revieweeId={user?.id || ''}
+        revieweeName={user?.name || 'User'}
+        onReviewSubmitted={() => {
+          console.log('Review submitted');
+          loadUserReviews();
+        }}
       />
     </ScrollView>
   );
