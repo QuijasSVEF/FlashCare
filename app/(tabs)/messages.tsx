@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { MessageCircle } from 'lucide-react-native';
+import { Card } from '../../components/ui/Card';
+import { PaywallModal } from '../../components/PaywallModal';
+import { EmergencyButton } from '../../components/EmergencyButton';
+import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { AppHeader } from '../../components/AppHeader';
-import { PaywallModal } from '../../components/PaywallModal';
 
 export default function MessagesScreen() {
   const { user } = useAuth();

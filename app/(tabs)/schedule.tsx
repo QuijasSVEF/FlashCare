@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { Calendar, Clock, User, MapPin, CircleCheck as CheckCircle, Circle as XCircle, Plus } from 'lucide-react-native';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { AppHeader } from '../../components/AppHeader';
+import { PaywallModal } from '../../components/PaywallModal';
+import { EnhancedScheduleModal } from '../../components/EnhancedScheduleModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useSchedules } from '../../hooks/useSchedules';
+import { databaseService } from '../../lib/database';
 import { Colors } from '../../constants/Colors';
-
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-}
 
 export default function ScheduleScreen() {
   const { user } = useAuth();

@@ -7,82 +7,85 @@ import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 
-export default function SignUpScreen() {
+export default function SignInScreen() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
-    name: '',
-    role: 'family' as 'family' | 'caregiver',
   });
   const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const routerInstance = useRouter();
-  const { signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    const handleUserRedirect = async () => {
-      if (user) {
-        console.log('User already signed in, redirecting to tabs');
-        
-        // Small delay to ensure auth state is properly set
-        setTimeout(() => {
-          console.log('Navigating to tabs after signup');
-          routerInstance.replace('/(tabs)');
-        }, 100);
-      }
-    };
-    
-    handleUserRedirect();
+    if (user) {
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    }
   }, [user]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
     if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignUp = async () => {
+  const handleSignIn = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     setErrors({});
     
     try {
-      console.log('Attempting signup with:', formData.email);
-      const result = await signUp(formData.email, formData.password, {
-        name: formData.name,
-        role: formData.role,
-      });
-      console.log('Signup request sent successfully');
-      // Navigation will be handled by the root layout based on auth state
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      let errorMessage = 'Failed to create account';
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
       
-      if (error.message?.includes('User already registered')) {
-        errorMessage = 'An account with this email already exists. Please sign in instead.';
-      } else if (error.message?.includes('Password should be at least 6 characters')) {
-        errorMessage = 'Password must be at least 6 characters long.';
-      } else if (error.message?.includes('Invalid email')) {
-        errorMessage = 'Please enter a valid email address.';
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+                 error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
       } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      Alert.alert('Sign Up Error', errorMessage);
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -106,17 +109,8 @@ export default function SignUpScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Create your account</Text>
-        <Text style={styles.subtitle}>Join FlashCare today</Text>
-
-        <Input
-          label="Full Name"
-          value={formData.name}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-          placeholder="Enter your full name"
-          autoComplete="name"
-          error={errors.name}
-        />
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
         <Input
           label="Email"
@@ -135,66 +129,90 @@ export default function SignUpScreen() {
           onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
           placeholder="Enter your password"
           secureTextEntry
-          autoComplete="new-password"
+          autoComplete="password"
           error={errors.password}
         />
 
-        <Input
-          label="Confirm Password"
-          value={formData.confirmPassword}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, confirmPassword: text }))}
-          placeholder="Confirm your password"
-          secureTextEntry
-          autoComplete="new-password"
-          error={errors.confirmPassword}
-        />
-
-        <View style={styles.roleSection}>
-          <Text style={styles.roleLabel}>I am a:</Text>
-          <View style={styles.roleButtons}>
-            <TouchableOpacity
-              style={[
-                styles.roleButton,
-                formData.role === 'family' && styles.roleButtonActive
-              ]}
-              onPress={() => setFormData(prev => ({ ...prev, role: 'family' }))}
-            >
-              <Text style={[
-                styles.roleButtonText,
-                formData.role === 'family' && styles.roleButtonTextActive
-              ]}>
-                Family
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.roleButton,
-                formData.role === 'caregiver' && styles.roleButtonActive
-              ]}
-              onPress={() => setFormData(prev => ({ ...prev, role: 'caregiver' }))}
-            >
-              <Text style={[
-                styles.roleButtonText,
-                formData.role === 'caregiver' && styles.roleButtonTextActive
-              ]}>
-                Caregiver
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.demoSection}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Family 1"
+              onPress={() => {
+                setFormData({
+                  email: 'family1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Family 2"
+              onPress={() => {
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 3"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver3@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
           </View>
         </View>
 
         <Button
-          title={loading ? "Creating account..." : "Sign Up"}
-          onPress={handleSignUp}
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
           disabled={loading}
           size="large"
           variant={loading ? "disabled" : "primary"}
-          style={styles.signUpButton}
+          style={styles.signInButton}
         />
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
-          <Text style={styles.signInText}>
-            Already have an account? <Text style={styles.signInLink}>Sign in</Text>
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -251,52 +269,37 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginBottom: 32,
   },
-  roleSection: {
-    marginBottom: 24,
-  },
-  roleLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 12,
-  },
-  roleButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  roleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-  },
-  roleButtonActive: {
-    borderColor: Colors.primary[500],
-    backgroundColor: Colors.primary[50],
-  },
-  roleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.secondary,
-  },
-  roleButtonTextActive: {
-    color: Colors.primary[500],
-  },
-  signUpButton: {
+  signInButton: {
     marginTop: 16,
     marginBottom: 24,
   },
-  signInText: {
+  signUpText: {
     fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
   },
-  signInLink: {
+  signUpLink: {
     color: Colors.primary[500],
     fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
   },
 });
