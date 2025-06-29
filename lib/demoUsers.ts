@@ -1,4 +1,4 @@
-import { Database } from './supabase';
+import { Database } from '../types/database';
 
 type User = Database['public']['Tables']['users']['Row'];
 
@@ -242,10 +242,16 @@ export const demoReviews = [
 
 // Function to get a demo user by email (for login simulation)
 export function getDemoUserByEmail(email: string): User | null {
-  if (email.includes('caregiver')) {
+  if (email.includes('caregiver1')) {
     return demoCaregivers[0];
-  } else if (email.includes('family')) {
+  } else if (email.includes('caregiver2')) {
+    return demoCaregivers[1];
+  } else if (email.includes('caregiver3')) {
+    return demoCaregivers[2];
+  } else if (email.includes('family1')) {
     return demoFamilies[0];
+  } else if (email.includes('family2')) {
+    return demoFamilies[1];
   }
   return null;
 }

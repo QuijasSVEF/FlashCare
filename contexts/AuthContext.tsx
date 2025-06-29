@@ -1,281 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
+import { Database } from '../types/database';
+import { demoUsers, getDemoUserByEmail } from '../lib/demoUsers';
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+type User = Database['public']['Tables']['users']['Row'];
 
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
-  
-  // If user is already signed in, redirect to tabs
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  signUp: (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signOut: () => Promise<boolean>;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    if (user) {
-      console.log('User already signed in, redirecting to tabs');
-      routerInstance.replace('/(tabs)');
-    }
-  }, [user]);
+    let mounted = true;
+    
+    // Set a maximum timeout for initialization
+    const initTimeout = setTimeout(() => {
+      if (mounted) {
+        console.log('Auth initialization timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 3000); // 3 second timeout
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    // Initialize auth state
+    const initializeAuth = async () => {
+      try {
+        console.log('Initializing auth...');
+        setLoading(false);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    };
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
+    initializeAuth();
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return () => {
+      mounted = false;
+      clearTimeout(initTimeout);
+    };
+  }, []);
+
+  const signUp = async (email: string, password: string, userData: { name: string; role: 'family' | 'caregiver' }) => {
+    console.log('Starting signup with role:', userData.role);
+    // Demo implementation - just return a success
+    const demoUser = {
+      id: `user-${Date.now()}`,
+      email,
+      name: userData.name,
+      role: userData.role,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    setUser(demoUser as User);
   };
 
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
-    
+  const signIn = async (email: string, password: string) => {
     try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      // Navigation will be handled by the useEffect above
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
+      console.log('Starting signin for:', email);
+
+      // Demo implementation - find a matching demo user
+      const demoUser = getDemoUserByEmail(email);
       
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      if (!demoUser) {
+        throw new Error('Invalid email or password');
       }
       
-      Alert.alert('Sign In Error', errorMessage);
-    } finally {
-      setLoading(false);
+      setUser(demoUser);
+      
+      return { user: demoUser };
+    } catch (error) {
+      console.error('SignIn error in context:', error);
+      setUser(null);
+      throw error;
     }
+  };
+
+  const signOut = async (): Promise<boolean> => {
+    try {
+      console.log('Starting sign out process');
+
+      // Clear user state
+      setUser(null);
+      
+      console.log('Sign out completed successfully');
+      return true;
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Even if there's an error, clear the user state
+      setUser(null);
+      return true;
+    }
+  };
+
+  const updateProfile = async (updates: Partial<User>) => {
+    if (!user) throw new Error('No user logged in');
+    
+    // Demo implementation - just update the local state
+    const updatedUser = { ...user, ...updates, updated_at: new Date().toISOString() };
+    setUser(updatedUser);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <Heart size={24} color={Colors.primary[500]} />
-          <Text style={styles.logo}>FlashCare</Text>
-          <Image
-            source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
-            style={styles.boltBadge}
-            resizeMode="contain"
-          />
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
-
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password} 
-        /> 
-        
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Accounts</Text>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Family 1"
-              onPress={() => {
-                setFormData({
-                  email: 'family1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Family 2"
-              onPress={() => {
-                setFormData({
-                  email: 'family2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Caregiver 1"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 2"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 3"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver3@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-        </View>
-
-        <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
-          disabled={loading}
-          size="large"
-          variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
-        />
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      updateProfile,
+    }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary[500],
-    marginLeft: 8,
-  },
-  boltBadge: {
-    position: 'absolute',
-    right: -60,
-    width: 30,
-    height: 30,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 32,
-  },
-  signInButton: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  signUpText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    color: Colors.primary[500],
-    fontWeight: '600',
-  },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  demoButton: {
-    minWidth: 100,
-  },
-});
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

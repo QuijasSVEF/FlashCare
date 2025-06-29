@@ -1,147 +1,161 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
+// This is a mock implementation for demo purposes
+// In a real app, this would connect to Supabase
 
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false); 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+import { Platform } from 'react-native';
+import { Database } from '../types/database';
 
-  const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
-  
-  // Check if user is already signed in
-  useEffect(() => {
-    if (user) {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+// Mock Supabase client for demo purposes
+export const supabase = {
+  auth: {
+    getSession: async () => {
+      return { data: { session: null }, error: null };
+    },
+    getUser: async () => {
+      return { data: { user: null }, error: null };
+    },
+    signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
+      // In a demo, we'll just pretend this works
+      return { 
+        data: { 
+          user: { id: 'demo-user', email },
+          session: { access_token: 'demo-token' }
+        }, 
+        error: null 
+      };
+    },
+    signUp: async ({ email, password, options }: any) => {
+      // In a demo, we'll just pretend this works
+      return { 
+        data: { 
+          user: { id: 'demo-user', email },
+          session: null
+        }, 
+        error: null 
+      };
+    },
+    signOut: async () => {
+      return { error: null };
+    },
+    onAuthStateChange: (callback: any) => {
+      // No-op for demo
+      return { data: { subscription: { unsubscribe: () => {} } } };
     }
-  }, [user]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setErrors({});
-    
-    try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
+  },
+  from: (table: string) => {
+    return {
+      select: (query?: string) => {
+        return {
+          eq: (column: string, value: any) => {
+            return {
+              single: () => {
+                return { data: null, error: null };
+              },
+              maybeSingle: () => {
+                return { data: null, error: null };
+              },
+              limit: (limit: number) => {
+                return { data: [], error: null };
+              },
+              order: (column: string, { ascending }: { ascending: boolean }) => {
+                return { data: [], error: null };
+              },
+              in: (column: string, values: any[]) => {
+                return { data: [], error: null };
+              },
+              neq: (column: string, value: any) => {
+                return { data: [], error: null };
+              },
+              or: (query: string) => {
+                return { data: [], error: null };
+              },
+              ilike: (column: string, value: string) => {
+                return { data: [], error: null };
+              },
+              gte: (column: string, value: any) => {
+                return { data: [], error: null };
+              },
+              lte: (column: string, value: any) => {
+                return { data: [], error: null };
+              },
+              not: (column: string, operator: string, value: any) => {
+                return { data: [], error: null };
+              }
+            };
+          },
+          neq: (column: string, value: any) => {
+            return { data: [], error: null };
+          },
+          limit: (limit: number) => {
+            return { data: [], error: null };
+          },
+          order: (column: string, { ascending }: { ascending: boolean }) => {
+            return { data: [], error: null };
+          }
+        };
+      },
+      insert: (data: any) => {
+        return {
+          select: () => {
+            return {
+              single: () => {
+                return { data: { ...data, id: 'demo-id' }, error: null };
+              }
+            };
+          }
+        };
+      },
+      update: (data: any) => {
+        return {
+          eq: (column: string, value: any) => {
+            return {
+              select: () => {
+                return {
+                  single: () => {
+                    return { data: { ...data, id: value }, error: null };
+                  }
+                };
+              }
+            };
+          }
+        };
+      },
+      delete: () => {
+        return {
+          eq: (column: string, value: any) => {
+            return { error: null };
+          }
+        };
+      }
+    };
+  },
+  storage: {
+    from: (bucket: string) => {
+      return {
+        upload: (path: string, file: any, options?: any) => {
+          return { data: { path }, error: null };
+        },
+        getPublicUrl: (path: string) => {
+          return { data: { publicUrl: `https://example.com/${path}` } };
+        },
+        remove: (paths: string[]) => {
+          return { error: null };
+        }
+      };
     }
-  };
+  },
+  channel: (name: string) => {
+    return {
+      on: (event: string, filter: any, callback: (payload: any) => void) => {
+        return {
+          subscribe: () => {
+            return {
+              unsubscribe: () => {}
+            };
+          }
+        };
+      }
+    };
+  }
+};
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: Colors.background,
-      paddingTop: 60,
-      paddingHorizontal: 20,
-      paddingBottom: 20,
-    },
-    backButton: {
-      padding: 8,
-      marginRight: 16,
-    },
-    logoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      position: 'relative',
-    },
-    logo: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: Colors.primary[500],
-      marginLeft: 8,
-    },
-    boltBadge: {
-      position: 'absolute',
-      right: -60,
-      width: 30,
-      height: 30,
-    },
-    content: {
-      flex: 1,
-      paddingHorizontal: 20,
-      paddingTop: 40,
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: Colors.text.primary,
-      marginBottom: 8,
-    },
-    subtitle: {
-      fontSize: 16,
-      color: Colors.text.secondary,
-      marginBottom: 32,
-    },
-    signInButton: {
-      marginTop: 16,
-      marginBottom: 24,
-    },
-    signUpText: {
-      fontSize: 16,
-      color: Colors.text.secondary,
-      textAlign: 'center',
-    },
-    signUpLink: {
-      color: Colors.primary[500],
-      fontWeight: '600',
-    },
-    demoSection: {
-      marginTop: 20,
-      marginBottom: 20,
-      alignItems: 'center',
-    },
-    demoTitle: {
-      fontSize: 14,
-      color: Colors.text.secondary,
-      marginBottom: 12,
-    },
-    demoButtons: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      gap: 8,
-      marginBottom: 8,
-    },
-    demoButton: {
-      minWidth: 100,
-    },
-  });
-}
+export type { Database };

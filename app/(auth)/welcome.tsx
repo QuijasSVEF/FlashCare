@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { Link } from 'expo-router';
+import { Shield, Users } from 'lucide-react-native';
+import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
+
 export default function WelcomeScreen() {
   const { loading } = useAuth();
-  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -25,74 +24,6 @@ export default function WelcomeScreen() {
             resizeMode="contain"
           />
         </View>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-
-        <Input
-          label="Email"
-          value={formData.email}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          error={errors.email}
-        />
-
-        <Input
-          label="Password"
-          value={formData.password}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-          placeholder="Enter your password"
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password} 
-        /> 
-        
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Accounts</Text>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Family 1"
-              onPress={() => {
-                setFormData({
-                  email: 'family1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Family 2"
-              onPress={() => {
-                setFormData({
-                  email: 'family2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Caregiver 1"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
 
         <Text style={styles.title}>Supporting families and caregivers</Text>
         <Text style={styles.subtitle}>
@@ -138,11 +69,9 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-        }
-  )
   container: {
     flex: 1,
-    backgroundColor: Colors.surface, 
+    backgroundColor: Colors.surface,
     paddingTop: 60,
   },
   content: {
@@ -222,25 +151,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 16,
-  },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  demoButton: {
-    minWidth: 100,
   },
 });
