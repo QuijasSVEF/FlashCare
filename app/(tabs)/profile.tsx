@@ -159,12 +159,20 @@ export default function ProfileScreen() {
         title="Profile"
         rightComponent={
           <TouchableOpacity 
-            style={styles.notificationButton}
+            activeOpacity={0.7}
+          >
             onPress={() => {
               console.log('Opening notifications');
               setShowNotifications(true);
             }}
+          <TouchableOpacity 
+            style={styles.actionItem}
+            onPress={() => {
+              console.log('Opening messages');
+              router.push('/(tabs)/messages');
+            }}
             activeOpacity={0.7}
+          >
           >
             <Bell size={24} color="#6B7280" />
             <View style={styles.notificationBadge}>
@@ -387,16 +395,6 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
             >
               <Settings size={20} color="#6B7280" />
-              onPress={() => {
-                console.log('Opening messages');
-                router.push('/(tabs)/messages');
-              onPress={() => {
-                console.log('Opening reviews');
-                setShowReviewModal(true);
-              }}
-              activeOpacity={0.7}
-              }}
-              activeOpacity={0.7}
               <Text style={styles.settingText}>App Settings</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
             </TouchableOpacity>
@@ -415,11 +413,6 @@ export default function ProfileScreen() {
               <Shield size={20} color="#6B7280" />
               <Text style={styles.settingText}>Privacy & Safety</Text>
               <ChevronDown size={16} color="#9CA3AF" style={{ transform: [{ rotate: '-90deg' }] }} />
-              onPress={() => {
-                console.log('Opening billing');
-                router.push('/(tabs)/billing');
-              }}
-              activeOpacity={0.7}
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -454,32 +447,35 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
               <LogOut size={20} color="#DC2626" />
               <Text style={styles.signOutText}>Sign Out of FlashCare</Text>
-              activeOpacity={0.7}
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.deleteAccountButton}
               onPress={() => {
                 Alert.alert(
-                  'Delete Account',
+          <TouchableOpacity 
+            style={styles.actionItem}
+            onPress={() => {
+              console.log('Opening reviews');
+              setShowReviewModal(true);
+            }}
+            activeOpacity={0.7}
+          >
                   'Are you sure you want to permanently delete your FlashCare account? This action cannot be undone.',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: 'Delete Account', 
-                      style: 'destructive',
-                      onPress: () => {
-                        Alert.alert('Demo Mode', 'In a real app, this would permanently delete your account');
-                      }
-                    }
-                  ]
                 );
               }}
               activeOpacity={0.7}
             >
               <Text style={styles.deleteAccountText}>Delete Account</Text>
             </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.actionItem}
+            onPress={() => {
+              console.log('Opening billing');
+              router.push('/(tabs)/billing');
+            }}
+            activeOpacity={0.7}
+          >
         </CollapsibleSection>
 
         {/* Footer */}
