@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CreditCard, Crown, Calendar, Receipt, Settings, ChevronRight } from 'lucide-react-native';
+import { CreditCard, Crown, Calendar, Receipt, Settings, ChevronRight, Download, Eye } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { AppHeader } from '../../components/AppHeader';
@@ -19,29 +19,63 @@ export default function BillingScreen() {
       date: '2024-01-15',
       description: 'FlashCare Plus Monthly',
       amount: '$9.99',
-      status: 'paid'
+      status: 'paid',
+      invoice: 'INV-2024-001'
     },
     {
       id: '2',
       date: '2023-12-15',
       description: 'FlashCare Plus Monthly',
       amount: '$9.99',
-      status: 'paid'
+      status: 'paid',
+      invoice: 'INV-2023-012'
     },
     {
       id: '3',
       date: '2023-11-15',
       description: 'FlashCare Plus Monthly',
       amount: '$9.99',
-      status: 'paid'
+      status: 'paid',
+      invoice: 'INV-2023-011'
     }
   ];
+
+  const paymentMethods = [
+    {
+      id: '1',
+      type: 'card',
+      last4: '4242',
+      brand: 'Visa',
+      expiryMonth: 12,
+      expiryYear: 2025,
+      isDefault: true
+    },
+    {
+      id: '2',
+      type: 'card',
+      last4: '5555',
+      brand: 'Mastercard',
+      expiryMonth: 8,
+      expiryYear: 2026,
+      isDefault: false
+    }
+  ];
+
+  const handleDownloadInvoice = (invoiceId: string) => {
+    console.log('Downloading invoice:', invoiceId);
+    // In production, this would download the actual invoice
+  };
+
+  const handleViewInvoice = (invoiceId: string) => {
+    console.log('Viewing invoice:', invoiceId);
+    // In production, this would open the invoice in a modal or new tab
+  };
 
   return (
     <ScrollView style={styles.container}>
       <AppHeader
         title="Billing & Subscription"
-        subtitle="Manage your FlashCare subscription"
+        subtitle="Manage your FlashCare subscription and billing"
       />
 
       <View style={styles.content}>
@@ -57,7 +91,7 @@ export default function BillingScreen() {
               </View>
               <Text style={styles.planDescription}>
                 {isSubscriber 
-                  ? 'Premium features unlocked'
+                  ? 'Premium features unlocked - Full access enabled'
                   : 'Basic features included'
                 }
               </Text>
@@ -85,6 +119,10 @@ export default function BillingScreen() {
                 <Text style={styles.detailLabel}>Auto-renewal:</Text>
                 <Text style={styles.detailValue}>Enabled</Text>
               </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Plan status:</Text>
+                <Text style={[styles.detailValue, { color: '#059669' }]}>Active</Text>
+              </View>
             </View>
           ) : (
             <View style={styles.upgradePrompt}>
@@ -98,6 +136,44 @@ export default function BillingScreen() {
               />
             </View>
           )}
+        </Card>
+
+        {/* Payment Methods */}
+        <Card style={styles.paymentMethodsCard}>
+          <Text style={styles.sectionTitle}>Payment Methods</Text>
+          
+          {paymentMethods.map((method) => (
+            <View key={method.id} style={styles.paymentMethod}>
+              <View style={styles.paymentMethodInfo}>
+                <View style={styles.cardIcon}>
+                  <CreditCard size={20} color="#2563EB" />
+                </View>
+                <View style={styles.cardDetails}>
+                  <Text style={styles.cardBrand}>
+                    {method.brand} •••• {method.last4}
+                  </Text>
+                  <Text style={styles.cardExpiry}>
+                    Expires {method.expiryMonth}/{method.expiryYear}
+                  </Text>
+                </View>
+                {method.isDefault && (
+                  <View style={styles.defaultBadge}>
+                    <Text style={styles.defaultText}>Default</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity style={styles.editPaymentButton}>
+                <Settings size={16} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+          ))}
+          
+          <Button
+            title="Add Payment Method"
+            variant="outline"
+            onPress={() => console.log('Add payment method')}
+            style={styles.addPaymentButton}
+          />
         </Card>
 
         {/* Quick Actions */}
@@ -127,19 +203,6 @@ export default function BillingScreen() {
 
           <TouchableOpacity style={styles.actionItem}>
             <View style={styles.actionIcon}>
-              <CreditCard size={20} color="#2563EB" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Payment Methods</Text>
-              <Text style={styles.actionDescription}>
-                Manage your payment information
-              </Text>
-            </View>
-            <ChevronRight size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={styles.actionIcon}>
               <Receipt size={20} color="#2563EB" />
             </View>
             <View style={styles.actionContent}>
@@ -150,38 +213,61 @@ export default function BillingScreen() {
             </View>
             <ChevronRight size={20} color="#9CA3AF" />
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionItem}>
+            <View style={styles.actionIcon}>
+              <Calendar size={20} color="#2563EB" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Billing History</Text>
+              <Text style={styles.actionDescription}>
+                View all past transactions
+              </Text>
+            </View>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </TouchableOpacity>
         </Card>
 
         {/* Billing History */}
         {isSubscriber && (
           <Card style={styles.historyCard}>
-            <Text style={styles.sectionTitle}>Billing History</Text>
+            <Text style={styles.sectionTitle}>Recent Billing History</Text>
             
             {billingHistory.map((item) => (
               <View key={item.id} style={styles.historyItem}>
                 <View style={styles.historyInfo}>
                   <Text style={styles.historyDescription}>{item.description}</Text>
                   <Text style={styles.historyDate}>
-                    {new Date(item.date).toLocaleDateString()}
+                    {new Date(item.date).toLocaleDateString()} • {item.invoice}
                   </Text>
                 </View>
                 
-                <View style={styles.historyAmount}>
+                <View style={styles.historyActions}>
                   <Text style={styles.historyPrice}>{item.amount}</Text>
-                  <View style={[
-                    styles.statusBadge,
-                    item.status === 'paid' ? styles.paidBadge : styles.pendingBadge
-                  ]}>
-                    <Text style={[
-                      styles.statusText,
-                      item.status === 'paid' ? styles.paidText : styles.pendingText
-                    ]}>
-                      {item.status}
-                    </Text>
+                  <View style={styles.historyButtons}>
+                    <TouchableOpacity 
+                      style={styles.historyButton}
+                      onPress={() => handleViewInvoice(item.invoice)}
+                    >
+                      <Eye size={14} color="#6B7280" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.historyButton}
+                      onPress={() => handleDownloadInvoice(item.invoice)}
+                    >
+                      <Download size={14} color="#6B7280" />
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
             ))}
+            
+            <Button
+              title="View All History"
+              variant="outline"
+              onPress={() => console.log('View all history')}
+              style={styles.viewAllButton}
+            />
           </Card>
         )}
 
@@ -327,13 +413,69 @@ const styles = StyleSheet.create({
   upgradeButton: {
     paddingHorizontal: 32,
   },
-  actionsCard: {
+  paymentMethodsCard: {
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
+    marginBottom: 16,
+  },
+  paymentMethod: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  paymentMethodInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  cardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  cardDetails: {
+    flex: 1,
+  },
+  cardBrand: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  cardExpiry: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  defaultBadge: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  defaultText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  editPaymentButton: {
+    padding: 8,
+  },
+  addPaymentButton: {
+    marginTop: 12,
+  },
+  actionsCard: {
     marginBottom: 16,
   },
   actionItem: {
@@ -389,7 +531,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-  historyAmount: {
+  historyActions: {
     alignItems: 'flex-end',
   },
   historyPrice: {
@@ -398,27 +540,17 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 4,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+  historyButtons: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  paidBadge: {
-    backgroundColor: '#D1FAE5',
+  historyButton: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: '#F3F4F6',
   },
-  pendingBadge: {
-    backgroundColor: '#FEF3C7',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  paidText: {
-    color: '#059669',
-  },
-  pendingText: {
-    color: '#D97706',
+  viewAllButton: {
+    marginTop: 12,
   },
   featuresCard: {
     marginBottom: 16,

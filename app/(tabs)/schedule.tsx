@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { Calendar, Clock, User, MapPin, CircleCheck as CheckCircle, Circle as XCircle, Plus } from 'lucide-react-native';
+import { Calendar, Clock, User, MapPin, CircleCheck as CheckCircle, Circle as XCircle, Plus, Video } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { AppHeader } from '../../components/AppHeader';
 import { PaywallModal } from '../../components/PaywallModal';
 import { EnhancedScheduleModal } from '../../components/EnhancedScheduleModal';
+import { VideoCallModal } from '../../components/VideoCallModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useSchedules } from '../../hooks/useSchedules';
@@ -18,7 +19,9 @@ export default function ScheduleScreen() {
   const { schedules, loading, refetch } = useSchedules();
   const [showPaywall, setShowPaywall] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  const [callPartner, setCallPartner] = useState<string>('');
 
   const handleScheduleAction = () => {
     if (!isSubscriber) {
@@ -44,6 +47,11 @@ export default function ScheduleScreen() {
       });
       setShowScheduleModal(true);
     }
+  };
+
+  const handleVideoCall = (partnerName: string) => {
+    setCallPartner(partnerName);
+    setShowVideoCall(true);
   };
 
   const handleAcceptSchedule = async (scheduleId: string) => {
@@ -110,6 +118,8 @@ export default function ScheduleScreen() {
     const endDate = new Date(item.end_ts);
     const StatusIcon = getStatusIcon(item.status);
     const statusColor = getStatusColor(item.status);
+    const isUpcoming = startDate > new Date();
+    const isToday = startDate.toDateString() === new Date().toDateString();
     
     return (
       <Card style={styles.scheduleItem}>
@@ -128,12 +138,13 @@ export default function ScheduleScreen() {
             <View style={styles.scheduleDetails}>
               <View style={styles.detailRow}>
                 <Calendar size={16} color={Colors.text.secondary} />
-                <Text style={styles.scheduleDate}>
+                <Text style={[styles.scheduleDate, isToday && styles.todayText]}>
                   {startDate.toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     month: 'short', 
                     day: 'numeric' 
                   })}
+                  {isToday && ' (Today)'}
                 </Text>
               </View>
               
@@ -154,6 +165,18 @@ export default function ScheduleScreen() {
             </View>
           </View>
         </View>
+
+        {item.status === 'confirmed' && isUpcoming && (
+          <View style={styles.scheduleActions}>
+            <Button
+              title="Start Video Call"
+              onPress={() => handleVideoCall(otherUser.name)}
+              variant="primary"
+              size="small"
+              style={styles.videoButton}
+            />
+          </View>
+        )}
 
         {user?.role === 'caregiver' && item.status === 'pending' && (
           <View style={styles.scheduleActions}>
@@ -199,67 +222,46 @@ export default function ScheduleScreen() {
         subtitle={`${schedules.length} upcoming session${schedules.length !== 1 ? 's' : ''}`}
       />
 
-      {!isSubscriber ? (
-        <View style={styles.upgradePrompt}>
-          <View style={styles.upgradeIcon}>
-            <Calendar size={48} color={Colors.primary[500]} />
-          </View>
-          <Text style={styles.upgradeTitle}>Unlock Advanced Scheduling</Text>
-          <Text style={styles.upgradeText}>
-            Manage your care schedule, book appointments, and coordinate with your matches. 
-            Upgrade to access full scheduling features.
-          </Text>
+      {user?.role === 'family' && (
+        <View style={styles.quickActions}>
           <Button
-            title="Upgrade Now"
-            onPress={handleScheduleAction}
-            size="large"
-            style={styles.upgradeButton}
+            title="Schedule New Session"
+            onPress={handleNewSession}
+            style={styles.newSessionButton}
           />
         </View>
-      ) : (
-        <>
-          {user?.role === 'family' && (
-            <View style={styles.quickActions}>
-              <Button
-                title="Schedule New Session"
-                onPress={handleNewSession}
-                style={styles.newSessionButton}
-              />
-            </View>
-          )}
-
-          <FlatList
-            data={schedules}
-            renderItem={renderScheduleItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.scheduleList}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIcon}>
-                  <Calendar size={64} color={Colors.gray[300]} />
-                </View>
-                <Text style={styles.emptyTitle}>No scheduled sessions</Text>
-                <Text style={styles.emptyText}>
-                  {user?.role === 'family' 
-                    ? "Schedule sessions with your matched caregivers to get started"
-                    : "You'll see your upcoming care sessions here once families book with you"
-                  }
-                </Text>
-                {user?.role === 'family' && (
-                  <TouchableOpacity
-                    style={styles.scheduleButton}
-                    onPress={handleNewSession}
-                  >
-                    <Plus size={20} color={Colors.text.inverse} />
-                    <Text style={styles.scheduleButtonText}>Schedule Session</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            }
-          />
-        </>
       )}
+
+      <FlatList
+        data={schedules}
+        renderItem={renderScheduleItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.scheduleList}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Calendar size={64} color={Colors.gray[300]} />
+            </View>
+            <Text style={styles.emptyTitle}>No scheduled sessions</Text>
+            <Text style={styles.emptyText}>
+              {user?.role === 'family' 
+                ? "Schedule sessions with your matched caregivers to get started"
+                : "You'll see your upcoming care sessions here once families book with you"
+              }
+            </Text>
+            {user?.role === 'family' && (
+              <TouchableOpacity
+                style={styles.scheduleButton}
+                onPress={handleNewSession}
+              >
+                <Plus size={20} color={Colors.text.inverse} />
+                <Text style={styles.scheduleButtonText}>Schedule Session</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        }
+      />
 
       <PaywallModal
         visible={showPaywall}
@@ -284,6 +286,12 @@ export default function ScheduleScreen() {
           }}
         />
       )}
+
+      <VideoCallModal
+        visible={showVideoCall}
+        onClose={() => setShowVideoCall(false)}
+        otherUserName={callPartner}
+      />
     </View>
   );
 }
@@ -362,6 +370,10 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginLeft: 8,
   },
+  todayText: {
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
   scheduleTime: {
     fontSize: 14,
     color: Colors.text.secondary,
@@ -379,31 +391,8 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-  upgradePrompt: {
+  videoButton: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  upgradeIcon: {
-    marginBottom: 24,
-  },
-  upgradeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  upgradeText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  upgradeButton: {
-    width: '100%',
   },
   emptyState: {
     alignItems: 'center',

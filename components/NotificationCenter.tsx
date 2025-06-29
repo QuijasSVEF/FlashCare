@@ -217,15 +217,14 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 100,
-    paddingRight: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 1000,
   },
   container: {
     width: 350,
     maxHeight: 500,
+    margin: 20,
     backgroundColor: Colors.background,
     borderRadius: 16,
     shadowColor: '#000',

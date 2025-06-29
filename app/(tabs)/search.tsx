@@ -1,335 +1,236 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { TrendingUp, Users, Calendar, DollarSign, Clock, Star, Award, ChartBar as BarChart3 } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { Search, Filter, MapPin, DollarSign, Clock, Star, Award, Users, TrendingUp } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
 import { AppHeader } from '../../components/AppHeader';
+import { CaregiverProfileCard } from '../../components/CaregiverProfileCard';
+import { JobCard } from '../../components/JobCard';
+import { AdvancedSearchFilters } from '../../components/AdvancedSearchFilters';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
 import { Colors } from '../../constants/Colors';
 
-const { width } = Dimensions.get('window');
-
-interface AnalyticsData {
-  totalMatches: number;
-  activeJobs: number;
-  completedJobs: number;
-  averageRating: number;
-  totalEarnings: number;
-  responseRate: number;
-  profileViews: number;
-  weeklyStats: Array<{ day: string; matches: number; earnings: number }>;
-}
-
-export default function AnalyticsScreen() {
+export default function SearchScreen() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<AnalyticsData>({
-    totalMatches: 0,
-    activeJobs: 0,
-    completedJobs: 0,
-    averageRating: 0,
-    totalEarnings: 0,
-    responseRate: 0,
-    profileViews: 0,
-    weeklyStats: []
-  });
-  const [loading, setLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'year'>('month');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<any>({});
+  const [searchType, setSearchType] = useState<'all' | 'caregivers' | 'jobs'>('all');
 
   useEffect(() => {
-    if (user?.id) {
-      loadAnalytics();
+    if (user?.role === 'family') {
+      setSearchType('caregivers');
+      loadCaregivers();
+    } else {
+      setSearchType('jobs');
+      loadJobs();
     }
-  }, [user?.id, timeframe]);
+  }, [user?.role]);
 
-  const loadAnalytics = async () => {
+  const loadCaregivers = async () => {
     try {
       setLoading(true);
-      
-      // Load user statistics
-      const matches = await databaseService.getUserMatches(user!.id);
-      const schedules = await databaseService.getUserSchedules(user!.id);
-      const rating = await databaseService.getUserRating(user!.id);
-      
-      // Calculate analytics
-      const completedJobs = schedules.filter(s => 
-        s.status === 'confirmed' && new Date(s.end_ts) < new Date()
-      ).length;
-      
-      const activeJobs = schedules.filter(s => 
-        s.status === 'confirmed' && new Date(s.start_ts) > new Date()
-      ).length;
-
-      // Mock weekly stats for demonstration
-      const weeklyStats = [
-        { day: 'Mon', matches: 2, earnings: 150 },
-        { day: 'Tue', matches: 1, earnings: 75 },
-        { day: 'Wed', matches: 3, earnings: 225 },
-        { day: 'Thu', matches: 1, earnings: 100 },
-        { day: 'Fri', matches: 2, earnings: 180 },
-        { day: 'Sat', matches: 4, earnings: 320 },
-        { day: 'Sun', matches: 1, earnings: 80 },
-      ];
-
-      setAnalytics({
-        totalMatches: matches.length,
-        activeJobs,
-        completedJobs,
-        averageRating: rating.average,
-        totalEarnings: 2450, // Mock data
-        responseRate: 85, // Mock data
-        profileViews: 156, // Mock data
-        weeklyStats
-      });
+      const caregivers = await databaseService.searchCaregivers(activeFilters);
+      setResults(caregivers);
     } catch (error) {
-      console.error('Error loading analytics:', error);
+      console.error('Error loading caregivers:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    change, 
-    icon: Icon, 
-    color = Colors.primary[500],
-    suffix = '' 
-  }: {
-    title: string;
-    value: string | number;
-    change?: string;
-    icon: any;
-    color?: string;
-    suffix?: string;
-  }) => (
-    <Card style={styles.statCard}>
-      <View style={styles.statHeader}>
-        <View style={[styles.statIcon, { backgroundColor: `${color}15` }]}>
-          <Icon size={20} color={color} />
-        </View>
-        {change && (
-          <View style={[styles.changeIndicator, { backgroundColor: Colors.success + '15' }]}>
-            <Text style={[styles.changeText, { color: Colors.success }]}>
-              {change}
-            </Text>
-          </View>
-        )}
-      </View>
-      <Text style={styles.statValue}>{value}{suffix}</Text>
-      <Text style={styles.statTitle}>{title}</Text>
-    </Card>
-  );
+  const loadJobs = async () => {
+    try {
+      setLoading(true);
+      const jobs = await databaseService.searchJobPosts(activeFilters);
+      setResults(jobs);
+    } catch (error) {
+      console.error('Error loading jobs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const WeeklyChart = () => (
-    <Card style={styles.chartCard}>
-      <View style={styles.chartHeader}>
-        <Text style={styles.chartTitle}>Weekly Performance</Text>
-        <View style={styles.timeframeSelector}>
-          {(['week', 'month', 'year'] as const).map((period) => (
-            <TouchableOpacity
-              key={period}
-              style={[
-                styles.timeframeButton,
-                timeframe === period && styles.timeframeButtonActive
-              ]}
-              onPress={() => setTimeframe(period)}
-            >
-              <Text style={[
-                styles.timeframeText,
-                timeframe === period && styles.timeframeTextActive
-              ]}>
-                {period.charAt(0).toUpperCase() + period.slice(1)}
-              </Text>
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      setLoading(true);
+      const searchFilters = {
+        ...activeFilters,
+        query: searchQuery,
+      };
+
+      if (user?.role === 'family') {
+        const caregivers = await databaseService.searchCaregivers(searchFilters);
+        setResults(caregivers);
+      } else {
+        const jobs = await databaseService.searchJobPosts(searchFilters);
+        setResults(jobs);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    setActiveFilters(filters);
+    setShowFilters(false);
+    
+    // Reload results with new filters
+    if (user?.role === 'family') {
+      loadCaregivers();
+    } else {
+      loadJobs();
+    }
+  };
+
+  const renderSearchResult = ({ item }: { item: any }) => {
+    if (user?.role === 'family') {
+      return (
+        <CaregiverProfileCard
+          caregiver={item}
+          onMessage={() => console.log('Message caregiver')}
+          onViewProfile={() => console.log('View profile')}
+        />
+      );
+    } else {
+      return <JobCard job={item} />;
+    }
+  };
+
+  const getActiveFiltersCount = () => {
+    return Object.keys(activeFilters).filter(key => {
+      const value = activeFilters[key];
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== '' && value !== null && value !== undefined;
+    }).length;
+  };
+
+  if (showFilters) {
+    return (
+      <View style={styles.container}>
+        <AppHeader
+          title="Advanced Search"
+          rightComponent={
+            <TouchableOpacity onPress={() => setShowFilters(false)}>
+              <Text style={styles.doneButton}>Done</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      
-      <View style={styles.chart}>
-        <View style={styles.chartBars}>
-          {analytics.weeklyStats.map((stat, index) => {
-            const maxEarnings = Math.max(...analytics.weeklyStats.map(s => s.earnings));
-            const height = (stat.earnings / maxEarnings) * 120;
-            
-            return (
-              <View key={index} style={styles.barContainer}>
-                <View style={styles.barWrapper}>
-                  <View 
-                    style={[
-                      styles.bar, 
-                      { 
-                        height: height || 4,
-                        backgroundColor: Colors.primary[500]
-                      }
-                    ]} 
-                  />
-                </View>
-                <Text style={styles.barLabel}>{stat.day}</Text>
-                <Text style={styles.barValue}>${stat.earnings}</Text>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    </Card>
-  );
-
-  if (user?.role !== 'caregiver') {
-    return (
-      <View style={styles.container}>
-        <AppHeader
-          title="Analytics"
-          subtitle="Performance insights and metrics"
+          }
         />
-        <View style={styles.errorContainer}>
-          <BarChart3 size={64} color={Colors.gray[300]} />
-          <Text style={styles.errorTitle}>Analytics Not Available</Text>
-          <Text style={styles.errorText}>
-            Analytics dashboard is only available for caregivers. 
-            Family members can view their activity in the Profile section.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <AppHeader
-          title="Analytics"
-          subtitle="Performance insights and metrics"
+        <AdvancedSearchFilters
+          onApplyFilters={handleApplyFilters}
+          userRole={user?.role || 'family'}
+          initialFilters={activeFilters}
         />
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingSpinner}>
-            <BarChart3 size={48} color={Colors.primary[500]} />
-          </View>
-          <Text style={styles.loadingText}>Loading your analytics...</Text>
-        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <AppHeader
-        title="Analytics Dashboard"
-        subtitle="Track your caregiving performance"
+        title={user?.role === 'family' ? 'Find Caregivers' : 'Find Jobs'}
+        subtitle="Advanced search and filtering"
       />
 
-      <View style={styles.content}>
-        {/* Key Metrics */}
-        <View style={styles.metricsGrid}>
-          <StatCard
-            title="Total Matches"
-            value={analytics.totalMatches}
-            change="+12%"
-            icon={Users}
-            color={Colors.primary[500]}
+      <View style={styles.searchSection}>
+        <View style={styles.searchBar}>
+          <Input
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={user?.role === 'family' ? 'Search caregivers...' : 'Search jobs...'}
+            style={styles.searchInput}
           />
-          
-          <StatCard
-            title="Active Jobs"
-            value={analytics.activeJobs}
-            change="+5%"
-            icon={Calendar}
-            color={Colors.secondary[500]}
-          />
-          
-          <StatCard
-            title="Avg Rating"
-            value={analytics.averageRating.toFixed(1)}
-            icon={Star}
-            color={Colors.warning}
-          />
-          
-          <StatCard
-            title="Total Earnings"
-            value={`$${analytics.totalEarnings.toLocaleString()}`}
-            change="+18%"
-            icon={DollarSign}
-            color={Colors.success}
-          />
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={handleSearch}
+          >
+            <Search size={20} color={Colors.text.inverse} />
+          </TouchableOpacity>
         </View>
 
-        {/* Weekly Performance Chart */}
-        <WeeklyChart />
-
-        {/* Performance Insights */}
-        <Card style={styles.insightsCard}>
-          <Text style={styles.insightsTitle}>Performance Insights</Text>
-          
-          <View style={styles.insightsList}>
-            <View style={styles.insightItem}>
-              <View style={[styles.insightIcon, { backgroundColor: Colors.success + '15' }]}>
-                <TrendingUp size={16} color={Colors.success} />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>Response Rate</Text>
-                <Text style={styles.insightValue}>{analytics.responseRate}%</Text>
-                <Text style={styles.insightDescription}>
-                  You respond to messages 15% faster than average
-                </Text>
-              </View>
+        <TouchableOpacity
+          style={[styles.filterButton, getActiveFiltersCount() > 0 && styles.filterButtonActive]}
+          onPress={() => setShowFilters(true)}
+        >
+          <Filter size={20} color={getActiveFiltersCount() > 0 ? Colors.text.inverse : Colors.primary[500]} />
+          {getActiveFiltersCount() > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{getActiveFiltersCount()}</Text>
             </View>
-            
-            <View style={styles.insightItem}>
-              <View style={[styles.insightIcon, { backgroundColor: Colors.primary[500] + '15' }]}>
-                <Users size={16} color={Colors.primary[500]} />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>Profile Views</Text>
-                <Text style={styles.insightValue}>{analytics.profileViews}</Text>
-                <Text style={styles.insightDescription}>
-                  Your profile was viewed 23 times this week
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.insightItem}>
-              <View style={[styles.insightIcon, { backgroundColor: Colors.warning + '15' }]}>
-                <Award size={16} color={Colors.warning} />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>Completed Jobs</Text>
-                <Text style={styles.insightValue}>{analytics.completedJobs}</Text>
-                <Text style={styles.insightDescription}>
-                  You've successfully completed {analytics.completedJobs} care sessions
-                </Text>
-              </View>
-            </View>
-          </View>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card style={styles.actionsCard}>
-          <Text style={styles.actionsTitle}>Quick Actions</Text>
-          
-          <View style={styles.actionsList}>
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={[styles.actionIcon, { backgroundColor: Colors.primary[50] }]}>
-                <TrendingUp size={20} color={Colors.primary[500]} />
-              </View>
-              <Text style={styles.actionText}>View Detailed Report</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={[styles.actionIcon, { backgroundColor: Colors.secondary[50] }]}>
-                <Users size={20} color={Colors.secondary[500]} />
-              </View>
-              <Text style={styles.actionText}>Optimize Profile</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={[styles.actionIcon, { backgroundColor: Colors.success + '15' }]}>
-                <DollarSign size={20} color={Colors.success} />
-              </View>
-              <Text style={styles.actionText}>Earnings History</Text>
-            </TouchableOpacity>
-          </View>
-        </Card>
+          )}
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      {/* Quick Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickFilters}>
+        <TouchableOpacity style={styles.quickFilter}>
+          <MapPin size={16} color={Colors.primary[500]} />
+          <Text style={styles.quickFilterText}>Nearby</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.quickFilter}>
+          <Star size={16} color={Colors.warning} />
+          <Text style={styles.quickFilterText}>Top Rated</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.quickFilter}>
+          <Clock size={16} color={Colors.secondary[500]} />
+          <Text style={styles.quickFilterText}>Available Now</Text>
+        </TouchableOpacity>
+        
+        {user?.role === 'family' && (
+          <TouchableOpacity style={styles.quickFilter}>
+            <Award size={16} color={Colors.success} />
+            <Text style={styles.quickFilterText}>Certified</Text>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
+
+      {/* Results */}
+      <View style={styles.resultsSection}>
+        <View style={styles.resultsHeader}>
+          <Text style={styles.resultsTitle}>
+            {results.length} {user?.role === 'family' ? 'caregivers' : 'jobs'} found
+          </Text>
+          
+          <TouchableOpacity style={styles.sortButton}>
+            <TrendingUp size={16} color={Colors.text.secondary} />
+            <Text style={styles.sortText}>Sort</Text>
+          </TouchableOpacity>
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Searching...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={results}
+            renderItem={renderSearchResult}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.resultsList}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Search size={64} color={Colors.gray[300]} />
+                <Text style={styles.emptyTitle}>No results found</Text>
+                <Text style={styles.emptyText}>
+                  Try adjusting your search criteria or filters
+                </Text>
+              </View>
+            }
+          />
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -338,238 +239,135 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-  content: {
+  doneButton: {
+    fontSize: 16,
+    color: Colors.primary[500],
+    fontWeight: '600',
+  },
+  searchSection: {
+    flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 20,
+    gap: 12,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  searchButton: {
+    backgroundColor: Colors.primary[500],
+    padding: 12,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  filterButton: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.primary[50],
+    borderWidth: 1,
+    borderColor: Colors.primary[200],
+    position: 'relative',
+  },
+  filterButtonActive: {
+    backgroundColor: Colors.primary[500],
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: Colors.error,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadgeText: {
+    color: Colors.text.inverse,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  quickFilters: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    marginBottom: 20,
+  },
+  quickFilter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+  },
+  quickFilterText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    marginLeft: 6,
+    fontWeight: '500',
+  },
+  resultsSection: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: Colors.gray[100],
+  },
+  sortText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginLeft: 4,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  loadingSpinner: {
-    marginBottom: 20,
   },
   loadingText: {
     fontSize: 16,
     color: Colors.text.secondary,
-    textAlign: 'center',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  resultsList: {
+    paddingBottom: 100,
+  },
+  emptyState: {
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingVertical: 60,
   },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginTop: 20,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  statCard: {
-    width: (width - 52) / 2,
-    padding: 16,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  changeIndicator: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  changeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 4,
-  },
-  statTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
-  chartCard: {
-    marginBottom: 20,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  timeframeSelector: {
-    flexDirection: 'row',
-    backgroundColor: Colors.gray[100],
-    borderRadius: 8,
-    padding: 2,
-  },
-  timeframeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  timeframeButtonActive: {
-    backgroundColor: Colors.background,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  timeframeText: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    fontWeight: '500',
-  },
-  timeframeTextActive: {
-    color: Colors.text.primary,
-    fontWeight: '600',
-  },
-  chart: {
-    height: 160,
-  },
-  chartBars: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 120,
-    paddingHorizontal: 10,
-  },
-  barContainer: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  barWrapper: {
-    height: 120,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  bar: {
-    width: 20,
-    borderRadius: 10,
-    minHeight: 4,
-  },
-  barLabel: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    marginBottom: 2,
-  },
-  barValue: {
-    fontSize: 10,
-    color: Colors.text.tertiary,
-    fontWeight: '500',
-  },
-  insightsCard: {
-    marginBottom: 20,
-  },
-  insightsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 16,
-  },
-  insightsList: {
-    gap: 16,
-  },
-  insightItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  insightIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  insightContent: {
-    flex: 1,
-  },
-  insightTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 2,
-  },
-  insightValue: {
+  emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    marginBottom: 4,
+    marginTop: 16,
+    marginBottom: 8,
   },
-  insightDescription: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    lineHeight: 16,
-  },
-  actionsCard: {
-    marginBottom: 20,
-  },
-  actionsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 16,
-  },
-  actionsList: {
-    gap: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: Colors.gray[50],
-    borderRadius: 12,
-  },
-  actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  actionText: {
+  emptyText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: Colors.text.primary,
+    color: Colors.text.secondary,
+    textAlign: 'center',
   },
 });
