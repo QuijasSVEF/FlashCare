@@ -7,80 +7,82 @@ import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 
-export default function SignInScreen() {
+export default function SignUpScreen() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
+    name: '',
+    role: 'family' as 'family' | 'caregiver',
   });
   const [loading, setLoading] = useState(false); 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const routerInstance = useRouter();
-  const { signIn, user } = useAuth();
+  const { signUp, user } = useAuth();
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
-    }
+    const handleUserRedirect = async () => {
+      if (user) {
+        console.log('User already signed in, redirecting to tabs');
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signup');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      }
+    };
+    
+    handleUserRedirect();
   }, [user]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
     if (!formData.password) newErrors.password = 'Password is required';
+    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     setErrors({});
     
     try {
-      console.log('Attempting signin with:', formData.email);
-      const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+      console.log('Attempting signup with:', formData.email);
+      const result = await signUp(formData.email, formData.password, {
+        name: formData.name,
+        role: formData.role,
+      });
+      console.log('Signup request sent successfully');
+      // Navigation will be handled by the root layout based on auth state
     } catch (error: any) {
-      console.error('Signin error:', error);
-      let errorMessage = 'Failed to sign in';
+      console.error('Signup error:', error);
+      let errorMessage = 'Failed to create account';
       
-      if (error.message?.includes('Invalid login credentials') || 
-                 error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      if (error.message?.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      } else if (error.message?.includes('Password should be at least 6 characters')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
       } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      if (errorMessage.includes('User not found')) {
-        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
-      }
-      
-      Alert.alert('Sign In Error', errorMessage);
+      Alert.alert('Sign Up Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -104,8 +106,17 @@ export default function SignInScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome back!</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+        <Text style={styles.title}>Create your account</Text>
+        <Text style={styles.subtitle}>Join FlashCare today</Text>
+
+        <Input
+          label="Full Name"
+          value={formData.name}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+          placeholder="Enter your full name"
+          autoComplete="name"
+          error={errors.name}
+        />
 
         <Input
           label="Email"
@@ -124,90 +135,66 @@ export default function SignInScreen() {
           onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
           placeholder="Enter your password"
           secureTextEntry
-          autoComplete="password"
+          autoComplete="new-password"
           error={errors.password}
         />
 
-        <View style={styles.demoSection}>
-          <Text style={styles.demoTitle}>Demo Accounts</Text>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Family 1"
-              onPress={() => {
-                setFormData({
-                  email: 'family1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Family 2"
-              onPress={() => {
-                setFormData({
-                  email: 'family2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-          </View>
-          <View style={styles.demoButtons}>
-            <Button
-              title="Caregiver 1"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver1@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 2"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver2@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
-            <Button
-              title="Caregiver 3"
-              onPress={() => {
-                setFormData({
-                  email: 'caregiver3@example.com',
-                  password: 'password'
-                });
-              }}
-              variant="outline"
-              size="small"
-              style={styles.demoButton}
-            />
+        <Input
+          label="Confirm Password"
+          value={formData.confirmPassword}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, confirmPassword: text }))}
+          placeholder="Confirm your password"
+          secureTextEntry
+          autoComplete="new-password"
+          error={errors.confirmPassword}
+        />
+
+        <View style={styles.roleSection}>
+          <Text style={styles.roleLabel}>I am a:</Text>
+          <View style={styles.roleButtons}>
+            <TouchableOpacity
+              style={[
+                styles.roleButton,
+                formData.role === 'family' && styles.roleButtonActive
+              ]}
+              onPress={() => setFormData(prev => ({ ...prev, role: 'family' }))}
+            >
+              <Text style={[
+                styles.roleButtonText,
+                formData.role === 'family' && styles.roleButtonTextActive
+              ]}>
+                Family
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.roleButton,
+                formData.role === 'caregiver' && styles.roleButtonActive
+              ]}
+              onPress={() => setFormData(prev => ({ ...prev, role: 'caregiver' }))}
+            >
+              <Text style={[
+                styles.roleButtonText,
+                formData.role === 'caregiver' && styles.roleButtonTextActive
+              ]}>
+                Caregiver
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         <Button
-          title={loading ? "Signing in..." : "Sign In"}
-          onPress={handleSignIn}
+          title={loading ? "Creating account..." : "Sign Up"}
+          onPress={handleSignUp}
           disabled={loading}
           size="large"
           variant={loading ? "disabled" : "primary"}
-          style={styles.signInButton}
+          style={styles.signUpButton}
         />
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-          <Text style={styles.signUpText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+        <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
+          <Text style={styles.signInText}>
+            Already have an account? <Text style={styles.signInLink}>Sign in</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -264,37 +251,52 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginBottom: 32,
   },
-  signInButton: {
+  roleSection: {
+    marginBottom: 24,
+  },
+  roleLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  roleButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  roleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+  },
+  roleButtonActive: {
+    borderColor: Colors.primary[500],
+    backgroundColor: Colors.primary[50],
+  },
+  roleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.secondary,
+  },
+  roleButtonTextActive: {
+    color: Colors.primary[500],
+  },
+  signUpButton: {
     marginTop: 16,
     marginBottom: 24,
   },
-  signUpText: {
+  signInText: {
     fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
   },
-  signUpLink: {
+  signInLink: {
     color: Colors.primary[500],
     fontWeight: '600',
-  },
-  demoSection: {
-    marginTop: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  demoButton: {
-    minWidth: 100,
   },
 });

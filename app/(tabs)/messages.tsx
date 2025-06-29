@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button'; 
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
+import { router } from 'expo-router';
+import { MessageCircle } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { Colors } from '../../constants/Colors';
-
-export default function SignInScreen() {
-  const [formData, setFormData] = useState({
-  }
-  )
-}
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
 import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { AppHeader } from '../../components/AppHeader';
+import { PaywallModal } from '../../components/PaywallModal';
 
 export default function MessagesScreen() {
   const { user } = useAuth();
@@ -86,6 +80,8 @@ export default function MessagesScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
+        title="Messages"
+        emergencyPhone={user?.emergency_phone}
       />
 
       {!isSubscriber && matches.length > 0 ? (
