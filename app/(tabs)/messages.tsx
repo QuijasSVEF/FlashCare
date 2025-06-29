@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Modal } from 'react-native';
 import { router } from 'expo-router';
 import { MessageCircle } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
