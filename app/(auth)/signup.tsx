@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { router, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { ArrowLeft, Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
@@ -18,9 +18,8 @@ export default function SignInScreen() {
   const routerInstance = useRouter();
   const { signIn, user } = useAuth();
   
-  // Check if user is already signed in
+  // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -52,16 +51,24 @@ export default function SignInScreen() {
     try {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
-      console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+      console.log('Signin request sent successfully');
+      // Navigation will be handled by the root layout based on auth state
     } catch (error: any) {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+                 error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       if (errorMessage.includes('User not found')) {
         errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
@@ -69,7 +76,7 @@ export default function SignInScreen() {
       
       Alert.alert('Sign In Error', errorMessage);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -112,9 +119,9 @@ export default function SignInScreen() {
           placeholder="Enter your password"
           secureTextEntry
           autoComplete="password"
-          error={errors.password} 
-        /> 
-        
+          error={errors.password}
+        />
+
         <View style={styles.demoSection}>
           <Text style={styles.demoTitle}>Demo Accounts</Text>
           <View style={styles.demoButtons}>
@@ -254,20 +261,6 @@ const styles = StyleSheet.create({
   signInButton: {
     marginTop: 16,
     marginBottom: 24,
-  },
-  demoSection: {
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 4,
-  },
-  demoSubtitle: {
-    fontSize: 12,
-    color: Colors.text.tertiary,
-    textAlign: 'center',
   },
   signUpText: {
     fontSize: 16,
