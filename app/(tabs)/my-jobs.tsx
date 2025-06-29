@@ -75,6 +75,7 @@ export default function MyJobsScreen() {
             <Text style={styles.jobDescription} numberOfLines={2}>
               {item.description}
             </Text>
+          </View>
 
           <View style={styles.jobActions}>
             <TouchableOpacity
@@ -90,7 +91,6 @@ export default function MyJobsScreen() {
               <Trash2 size={16} color="#DC2626" />
             </TouchableOpacity>
           </View>
-
         </View>
 
         <View style={styles.jobDetails}>
@@ -106,7 +106,6 @@ export default function MyJobsScreen() {
             <DollarSign size={14} color="#6B7280" />
             <Text style={styles.detailText}>${item.rate_hour}/hr</Text>
           </View>
-
         </View>
 
         <View style={styles.jobFooter}>
@@ -114,7 +113,6 @@ export default function MyJobsScreen() {
             <Text style={styles.weeklyTotalText}>
               ${weeklyTotal.toFixed(2)}/week
             </Text>
-          </View><View style={styles.applicants}>
           </View>
 
           <View style={styles.applicants}>
@@ -128,7 +126,6 @@ export default function MyJobsScreen() {
               <Text style={styles.applicantsText}>0 applicants</Text>
             </TouchableOpacity>
           </View>
-
         </View>
 
         <Text style={styles.postedDate}>
