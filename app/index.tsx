@@ -96,7 +96,9 @@ export default function SignInScreen() {
       }
       
       if (errorMessage.includes('User not found')) {
-    }, 3000); // 3 second timeout
+        setTimeout(() => {
+          // Add timeout handling code here
+        }, 3000); // 3 second timeout
       }
       
       Alert.alert('Sign In Error', errorMessage);
@@ -149,12 +151,13 @@ export default function SignInScreen() {
 
         <Button
           title={loading ? "Signing in..." : "Sign In"}
+        />
 
         {loadingTimeout && (
           <Text style={styles.signUpText}>
             Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
           </Text>
-        </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -216,4 +219,5 @@ const styles = StyleSheet.create({
   signUpText: {
     fontSize: 16,
     color: '#A1A1AA',
+  }
 });
