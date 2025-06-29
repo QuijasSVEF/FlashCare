@@ -11,13 +11,13 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Phone, Video } from 'lucide-react-native';
-import { EnhancedMessageInput } from '../components/EnhancedMessageInput';
-import { MessageAttachment } from '../components/MessageAttachment';
-import { TypingIndicator } from '../components/TypingIndicator';
-import { VideoCallModal } from '../components/VideoCallModal';
-import { useAuth } from '../contexts/AuthContext';
-import { useRealTimeMessages } from '../hooks/useRealTimeMessages';
-import { Colors } from '../constants/Colors';
+import { EnhancedMessageInput } from '../../components/EnhancedMessageInput';
+import { MessageAttachment } from '../../components/MessageAttachment';
+import { TypingIndicator } from '../../components/TypingIndicator';
+import { VideoCallModal } from '../../components/VideoCallModal';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRealTimeMessages } from '../../hooks/useRealTimeMessages';
+import { Colors } from '../../constants/Colors';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
