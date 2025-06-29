@@ -59,12 +59,7 @@ export default function SignInScreen() {
       console.log('Attempting signin with:', formData.email);
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
-      
-      // Small delay to ensure auth state is properly set
-      setTimeout(() => {
-        console.log('Navigating to tabs after signin');
-        routerInstance.replace('/(tabs)');
-      }, 100);
+      // Navigation will be handled by the useEffect above
       // Small delay to ensure auth state is properly set
       setTimeout(() => {
         console.log('Navigating to tabs after signin');
@@ -74,18 +69,10 @@ export default function SignInScreen() {
       console.error('Signin error:', error);
       let errorMessage = 'Failed to sign in';
       
-      if (error.message?.includes('Invalid login credentials') || 
-          error.message?.includes('invalid_credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('too_many_requests')) {
-        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+    if (user) {
+      console.log('User already signed in, redirecting to tabs');
+      routerInstance.replace('/(tabs)');
+    }
       
       if (errorMessage.includes('User not found')) {
         errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
@@ -136,8 +123,76 @@ export default function SignInScreen() {
           placeholder="Enter your password"
           secureTextEntry
           autoComplete="password"
-          error={errors.password}
-        />
+          error={errors.password} 
+        /> 
+        
+        <View style={styles.demoSection}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Family 1"
+              onPress={() => {
+                setFormData({
+                  email: 'family1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Family 2"
+              onPress={() => {
+                setFormData({
+                  email: 'family2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+          <View style={styles.demoButtons}>
+            <Button
+              title="Caregiver 1"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver1@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 2"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver2@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+            <Button
+              title="Caregiver 3"
+              onPress={() => {
+                setFormData({
+                  email: 'caregiver3@example.com',
+                  password: 'password'
+                });
+              }}
+              variant="outline"
+              size="small"
+              style={styles.demoButton}
+            />
+          </View>
+        </View>
 
         <Button
           title={loading ? "Signing in..." : "Sign In"}
@@ -219,5 +274,25 @@ const styles = StyleSheet.create({
   signUpLink: {
     color: Colors.primary[500],
     fontWeight: '600',
+  },
+  demoSection: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  demoButton: {
+    minWidth: 100,
   },
 });

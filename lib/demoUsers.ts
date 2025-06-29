@@ -137,7 +137,7 @@ export const demoMessages = {
       id: 'msg-1-2',
       match_id: 'match-1',
       sender_id: 'caregiver-1',
-      body: 'Hi there! Thank you for reaching out. I'd be happy to discuss how I can help with your mother\'s care. What specific needs does she have?',
+      body: 'Hi there! Thank you for reaching out. I\'d be happy to discuss how I can help with your mother\'s care. What specific needs does she have?',
       sent_at: '2023-10-25T15:45:00Z',
     },
     {
@@ -151,7 +151,7 @@ export const demoMessages = {
       id: 'msg-1-4',
       match_id: 'match-1',
       sender_id: 'caregiver-1',
-      body: 'That sounds like something I can definitely help with. I'm available for an interview on Thursday afternoon or Friday morning. Would either of those work for you?',
+      body: 'That sounds like something I can definitely help with. I\'m available for an interview on Thursday afternoon or Friday morning. Would either of those work for you?',
       sent_at: '2023-10-25T17:05:00Z',
     }
   ],
@@ -160,21 +160,21 @@ export const demoMessages = {
       id: 'msg-2-1',
       match_id: 'match-2',
       sender_id: 'family-2',
-      body: 'Hi Jasmine! We're looking for someone to help with our twins a few days a week. Your experience with children caught our attention.',
+      body: 'Hi Jasmine! We\'re looking for someone to help with our twins a few days a week. Your experience with children caught our attention.',
       sent_at: '2023-10-26T10:15:00Z',
     },
     {
       id: 'msg-2-2',
       match_id: 'match-2',
       sender_id: 'caregiver-3',
-      body: 'Hello! Thank you for reaching out. I love working with children, especially toddlers. I'd be happy to learn more about your twins and how I can help.',
+      body: 'Hello! Thank you for reaching out. I love working with children, especially toddlers. I\'d be happy to learn more about your twins and how I can help.',
       sent_at: '2023-10-26T11:30:00Z',
     },
     {
       id: 'msg-2-3',
       match_id: 'match-2',
       sender_id: 'family-2',
-      body: 'They're very active and love arts and crafts. We need someone Tuesday, Wednesday, and Thursday from 1-5pm. Would that schedule work for you?',
+      body: 'They\'re very active and love arts and crafts. We need someone Tuesday, Wednesday, and Thursday from 1-5pm. Would that schedule work for you?',
       sent_at: '2023-10-26T12:45:00Z',
     }
   ]

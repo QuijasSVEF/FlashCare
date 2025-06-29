@@ -1,68 +1,153 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
-import { Shield, Users } from 'lucide-react-native';
-import { Button } from '../../components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { router, useRouter } from 'expo-router';
+import { ArrowLeft, Heart, Image as ImageIcon } from 'lucide-react-native';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 
-export default function WelcomeScreen() {
-  const { loading } = useAuth();
+export default function SignInScreen() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false); 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const routerInstance = useRouter();
+  const { signIn, user } = useAuth();
+  
+  // If user is already signed in, redirect to tabs
+  useEffect(() => {
+    const handleAutoSignIn = async () => {
+      try {
+        const result = await signIn(formData.email, formData.password);
+        console.log('Signin successful, result:', !!result);
+        
+        // Small delay to ensure auth state is properly set
+        setTimeout(() => {
+          console.log('Navigating to tabs after signin');
+          routerInstance.replace('/(tabs)');
+        }, 100);
+      } catch (error) {
+        console.error('Auto signin error:', error);
+      }
+    };
+    
+    handleAutoSignIn();
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignIn = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      console.log('Attempting signin with:', formData.email);
+      const result = await signIn(formData.email, formData.password);
+      console.log('Signin successful, result:', !!result);
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log('Navigating to tabs after signin');
+        routerInstance.replace('/(tabs)');
+      }, 100);
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/images/logo (2).png')}
-            style={styles.logoImage}
-            resizeMode="cover"
-          />
+          <Heart size={24} color={Colors.primary[500]} />
+          <Text style={styles.logo}>FlashCare</Text>
           <Image
             source={{ uri: 'https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/src/public/bolt-badge/white_circle_360x360/white_circle_360x360.png' }}
             style={styles.boltBadge}
             resizeMode="contain"
           />
         </View>
-
-        <Text style={styles.title}>Supporting families and caregivers</Text>
-        <Text style={styles.subtitle}>
-          Purposeful bonds, trusted care
-        </Text>
-
-        <Image
-          source={{ uri: 'https://images.pexels.com/photos/7551667/pexels-photo-7551667.jpeg?auto=compress&cs=tinysrgb&w=800' }}
-          style={styles.heroImage}
-        />
-
-        <View style={styles.features}>
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Shield size={24} color={Colors.primary[500]} />
-            </View>
-            <Text style={styles.featureText}>Verified caregivers</Text>
-          </View>
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Users size={24} color={Colors.primary[500]} />
-            </View>
-            <Text style={styles.featureText}>Trusted community</Text>
-          </View>
-        </View>
       </View>
 
-      <View style={styles.actions}>
-        <Link href="/(auth)/signup" asChild>
-          <Button title="Get Started" size="large" style={styles.primaryButton} />
-        </Link>
-        
-        <Link href="/(auth)/signin" asChild>
-          <Button title="Sign In" variant="outline" size="large" />
-        </Link>
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Sign in to your account</Text>
 
-        <Text style={styles.terms}>
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </Text>
+        <Input
+          label="Email"
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoComplete="password"
+          error={errors.password}
+        />
+
+        <Button
+          title={loading ? "Signing in..." : "Sign In"}
+          onPress={handleSignIn}
+          disabled={loading}
+          size="large"
+          variant={loading ? "disabled" : "primary"}
+          style={styles.signInButton}
+        />
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signUpText}>
+            Don't have an account? <Text style={styles.signUpLink}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -72,84 +157,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.surface,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary[500],
+    marginLeft: 8,
+  },
+  boltBadge: {
+    position: 'absolute',
+    right: -60,
+    width: 30,
+    height: 30,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-    position: 'relative',
-  },
-  logoImage: {
-    width: 300,
-    height: 120,
-  },
-  boltBadge: {
-    position: 'absolute',
-    top: -10,
-    right: 20,
-    width: 50,
-    height: 50,
+    paddingTop: 40,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 26,
     marginBottom: 32,
   },
-  heroImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 20,
-    marginBottom: 32,
-  },
-  features: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  feature: {
-    alignItems: 'center',
-  },
-  featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  featureText: {
-    fontSize: 14,
-    color: Colors.text.primary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  actions: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  primaryButton: {
-    marginBottom: 16,
-  },
-  terms: {
-    fontSize: 12,
-    color: Colors.text.tertiary,
-    textAlign: 'center',
+  signInButton: {
     marginTop: 16,
-    lineHeight: 16,
+    marginBottom: 24,
+  },
+  signUpText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  signUpLink: {
+    color: Colors.primary[500],
+    fontWeight: '600',
   },
 });
