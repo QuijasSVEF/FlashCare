@@ -20,7 +20,6 @@ export default function SignInScreen() {
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
-    if (user) {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin successful, result:', !!result);
       
@@ -30,13 +29,10 @@ export default function SignInScreen() {
         routerInstance.replace('/(tabs)');
       }, 100);
     }
-  }, [user]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.email.includes('@')) newErrors.email = 'Invalid email format';
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      let errorMessage = 'Failed to sign in';
+      
     if (!formData.password) newErrors.password = 'Password is required';
 
     setErrors(newErrors);
@@ -44,16 +40,36 @@ export default function SignInScreen() {
   };
 
   const handleSignIn = async () => {
-      // Demo implementation
+    if (!validateForm()) return;
+    
+    setLoading(true);
+    try {
+      if (error.message?.includes('Invalid login credentials') || 
+                 error.message?.includes('invalid_credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('too_many_requests')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('User not found')) {
+        errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
       setLoading(false);
-      setAnalytics({
-        ...analytics,
-        weeklyStats: [
-          { day: 'Mon', matches: 2, earnings: 150 },
-          { day: 'Tue', matches: 1, earnings: 75 },
-          { day: 'Wed', matches: 3, earnings: 225 }
-        ]
-      });
+    } catch (error) {
+      console.error('Sign in error:', error);
+      Alert.alert('Error', 'Failed to sign in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
