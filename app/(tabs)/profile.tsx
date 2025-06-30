@@ -11,6 +11,8 @@ import {
 import { Bell, Settings, User, Shield, CreditCard, CircleHelp as HelpCircle, LogOut, Trash2 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { GlobalNotifications } from '../../components/GlobalNotifications';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -39,6 +41,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, children
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
+  const { showSuccess, showError } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -54,17 +57,21 @@ export default function ProfileScreen() {
           style: 'destructive', 
           onPress: async () => {
             try {
+              console.log('Starting sign out process...');
               await signOut();
+              showSuccess('Signed Out', 'You have been successfully signed out.');
+              console.log('Sign out successful, navigating to welcome...');
               router.replace('/(auth)/welcome');
             } catch (error) {
               console.error('Error signing out:', error);
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
+              showError('Sign Out Error', 'Failed to sign out. Please try again.');
             }
           }
         }
       ]
     );
   };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
@@ -77,7 +84,9 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <>
+      <GlobalNotifications />
+      <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.profileInfo}>
@@ -161,7 +170,8 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 

@@ -5,6 +5,8 @@ import { ArrowLeft, Heart } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button'; 
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { GlobalNotifications } from '../../components/GlobalNotifications';
 import { Colors } from '../../constants/Colors';
 
 export default function SignInScreen() {
@@ -17,6 +19,7 @@ export default function SignInScreen() {
 
   const routerInstance = useRouter();
   const { signIn, user } = useAuth();
+  const { showSuccess, showError } = useNotifications();
   
   // If user is already signed in, redirect to tabs
   useEffect(() => {
@@ -48,6 +51,8 @@ export default function SignInScreen() {
       const result = await signIn(formData.email, formData.password);
       console.log('Signin request sent successfully');
       
+      showSuccess('Welcome Back!', 'You have successfully signed in.');
+      
       // Navigation will be handled by the root layout based on auth state
       setTimeout(() => {
         console.log('Navigating to tabs after signin');
@@ -74,14 +79,16 @@ export default function SignInScreen() {
         errorMessage = 'No account found with this email. Please check your email or sign up for a new account.';
       }
       
-      Alert.alert('Sign In Error', errorMessage);
+      showError('Sign In Error', errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <>
+      <GlobalNotifications />
+      <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
@@ -205,7 +212,8 @@ export default function SignInScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+      </View>
+    </>
   );
 }
 

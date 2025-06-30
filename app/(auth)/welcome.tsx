@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import { Link } from 'expo-router';
 import { Shield, Users } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
+import { GlobalNotifications } from '../../components/GlobalNotifications';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 
@@ -10,7 +11,9 @@ export default function WelcomeScreen() {
   const { loading } = useAuth();
 
   return (
-    <View style={styles.container}>
+    <>
+      <GlobalNotifications />
+      <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <Image
@@ -64,7 +67,8 @@ export default function WelcomeScreen() {
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
       </View>
-    </View>
+      </View>
+    </>
   );
 }
 

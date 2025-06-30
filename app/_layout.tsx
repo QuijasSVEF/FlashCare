@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '../contexts/AuthContext';
 import { SubscriptionProvider } from '../contexts/SubscriptionContext';
+import { NotificationProvider } from '../contexts/NotificationContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -11,12 +12,14 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <SubscriptionProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
+        <NotificationProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </NotificationProvider>
       </SubscriptionProvider>
     </AuthProvider>
   );

@@ -5,6 +5,8 @@ import { ArrowLeft, Heart, User, Users } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { GlobalNotifications } from '../../components/GlobalNotifications';
 import { Colors } from '../../constants/Colors';
 
 export default function SignUpScreen() {
@@ -18,6 +20,7 @@ export default function SignUpScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { signUp } = useAuth();
+  const { showSuccess, showError } = useNotifications();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -45,6 +48,8 @@ export default function SignUpScreen() {
         name: formData.name,
         role: formData.role as 'family' | 'caregiver',
       });
+      
+      showSuccess('Account Created!', 'Welcome to FlashCare! Please complete your profile.');
       
       // Success - go to profile setup
       console.log('Signup successful, navigating to profile setup');
@@ -76,24 +81,22 @@ export default function SignUpScreen() {
         );
         return;
       } else if (error.message?.includes('Email not confirmed')) {
-        Alert.alert(
-          'Check Your Email',
-          'Please check your email to complete your registration.',
-          [{ text: 'OK' }]
-        );
+        showInfo('Check Your Email', 'Please check your email to complete your registration.');
         return;
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      Alert.alert('Sign Up Error', errorMessage);
+      showError('Sign Up Error', errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <>
+      <GlobalNotifications />
+      <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
@@ -192,7 +195,8 @@ export default function SignUpScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 

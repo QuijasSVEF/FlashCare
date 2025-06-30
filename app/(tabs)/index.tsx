@@ -10,8 +10,8 @@ import { AppHeader } from '../../components/AppHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchingService } from '../../lib/matching';
 import { databaseService } from '../../lib/database';
-import { useNotifications } from '../../hooks/useNotifications';
-import { NotificationBanner } from '../../components/NotificationBanner';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { GlobalNotifications } from '../../components/GlobalNotifications';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 
@@ -88,7 +88,7 @@ function QuickMenuModal({ visible, onClose, userRole }: QuickMenuModalProps) {
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { notifications, showSuccess, showError, hideNotification } = useNotifications();
+  const { showSuccess, showError, showInfo } = useNotifications();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [caregivers, setCaregivers] = useState<any[]>([]);
   const [jobPosts, setJobPosts] = useState<any[]>([]);
@@ -261,17 +261,9 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {notifications.map((notification) => (
-        <NotificationBanner
-          key={notification.id}
-          visible={notification.visible}
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          onDismiss={() => hideNotification(notification.id)}
-        />
-      ))}
+    <>
+      <GlobalNotifications />
+      <View style={styles.container}>
       
       <AppHeader
         title={user?.role === 'family' ? 'Find Caregivers' : 'Browse Jobs'}
@@ -371,7 +363,8 @@ export default function HomeScreen() {
         onApplyFilters={handleApplyFilters}
         userRole={user?.role || 'family'}
       />
-    </View>
+      </View>
+    </>
   );
 }
 
