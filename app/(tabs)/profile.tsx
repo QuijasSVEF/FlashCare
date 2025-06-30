@@ -9,6 +9,8 @@ import {
   Switch,
 } from 'react-native';
 import { Bell, Settings, User, Shield, CreditCard, CircleHelp as HelpCircle, LogOut, Trash2 } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -36,10 +38,33 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, children
 };
 
 export default function ProfileScreen() {
+  const { signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
 
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace('/(auth)/welcome');
+            } catch (error) {
+              console.error('Error signing out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
@@ -125,7 +150,7 @@ export default function ProfileScreen() {
         </CollapsibleSection>
 
         <View style={styles.dangerZone}>
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
             <LogOut size={20} color="#EF4444" />
             <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
