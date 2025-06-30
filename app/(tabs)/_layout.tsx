@@ -200,7 +200,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="file-demo"
         options={{
-          title: "File Demo",
+          title: "Files",
           tabBarIcon: ({ size, color, focused }) => (
             <FileText 
               size={focused ? size + 2 : size} 
