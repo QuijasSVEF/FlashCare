@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { PaywallModal } from '../../components/PaywallModal';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { AppHeader } from '../../components/AppHeader';
+import { DetailedProfileModal } from '../../components/DetailedProfileModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -16,6 +17,8 @@ export default function MessagesScreen() {
   const { isSubscriber } = useSubscription();
   const { matches, loading, error } = useMatches();
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
 
   const handleStartMessaging = () => {
     if (!isSubscriber) {
@@ -47,10 +50,15 @@ export default function MessagesScreen() {
       >
         <Card>
           <View style={styles.conversationContent}>
-            <Image
-              source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
-              style={styles.avatar}
-            />
+            <TouchableOpacity onPress={() => {
+              setSelectedProfile(otherUser);
+              setShowProfileModal(true);
+            }}>
+              <Image
+                source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
             
             <View style={styles.conversationInfo}>
               <Text style={styles.conversationName}>{otherUser.name}</Text>
@@ -115,7 +123,32 @@ export default function MessagesScreen() {
         visible={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="messaging"
-      />      
+      />
+
+      {selectedProfile && (
+        <DetailedProfileModal
+          visible={showProfileModal}
+          onClose={() => {
+            setShowProfileModal(false);
+            setSelectedProfile(null);
+          }}
+          user={selectedProfile}
+          onStartConversation={() => {
+            setShowProfileModal(false);
+            if (!isSubscriber) {
+              setShowPaywall(true);
+            } else {
+              // Navigate to chat
+              const matchId = matches.find(m => 
+                (user?.role === 'family' ? m.caregiver.id : m.family.id) === selectedProfile.id
+              )?.id;
+              if (matchId) {
+                router.push(`/chat/${matchId}`);
+              }
+            }
+          }}
+        />
+      )}
     </View>
   );
 }

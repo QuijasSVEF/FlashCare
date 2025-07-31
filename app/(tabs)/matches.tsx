@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { EmergencyButton } from '../../components/EmergencyButton';
 import { AppHeader } from '../../components/AppHeader';
 import { PaywallModal } from '../../components/PaywallModal';
+import { DetailedProfileModal } from '../../components/DetailedProfileModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -18,6 +19,8 @@ export default function MatchesScreen() {
   const { matches, loading, error } = useMatches();
   const [showPaywall, setShowPaywall] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -43,6 +46,10 @@ export default function MatchesScreen() {
       }
     };
 
+    const handleProfilePress = () => {
+      setSelectedProfile(otherUser);
+      setShowProfileModal(true);
+    };
     return (
       <TouchableOpacity
         onPress={handleMatchPress}
@@ -52,10 +59,12 @@ export default function MatchesScreen() {
         <Card style={styles.matchCard}>
           <View style={styles.matchContent}>
             <View style={styles.avatarContainer}>
-              <Image
-                source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400' }}
-                style={styles.avatar}
-              />
+              <TouchableOpacity onPress={handleProfilePress}>
+                <Image
+                  source={{ uri: otherUser.avatar_url || 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400' }}
+                  style={styles.avatar}
+                />
+              </TouchableOpacity>
               <View style={styles.onlineIndicator} />
             </View>
             
@@ -175,6 +184,31 @@ export default function MatchesScreen() {
         onClose={() => setShowPaywall(false)}
         feature="messaging"
       />
+
+      {selectedProfile && (
+        <DetailedProfileModal
+          visible={showProfileModal}
+          onClose={() => {
+            setShowProfileModal(false);
+            setSelectedProfile(null);
+          }}
+          user={selectedProfile}
+          onStartConversation={() => {
+            setShowProfileModal(false);
+            if (!isSubscriber) {
+              setShowPaywall(true);
+            } else {
+              // Navigate to chat
+              const matchId = matches.find(m => 
+                (user?.role === 'family' ? m.caregiver.id : m.family.id) === selectedProfile.id
+              )?.id;
+              if (matchId) {
+                router.push(`/chat/${matchId}`);
+              }
+            }
+          }}
+        />
+      )}
     </View>
   );
 }

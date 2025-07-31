@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, MapPin, MessageCircle, User } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { ProfileModal } from '../../components/ProfileModal';
+import { DetailedProfileModal } from '../../components/DetailedProfileModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { databaseService } from '../../lib/database';
 
@@ -100,7 +100,10 @@ export default function JobApplicantsScreen() {
 
           <Button
             title="View Profile"
-            onPress={() => handleViewProfile(item)}
+            onPress={() => {
+              setSelectedProfile(item.caregiver);
+              setShowProfileModal(true);
+            }}
             variant="outline"
             size="small"
           />
@@ -162,7 +165,7 @@ export default function JobApplicantsScreen() {
       )}
 
       {selectedProfile && (
-        <ProfileModal
+        <DetailedProfileModal
           visible={showProfileModal}
           onClose={() => {
             setShowProfileModal(false);
@@ -171,6 +174,7 @@ export default function JobApplicantsScreen() {
           user={selectedProfile}
           onStartConversation={() => {
             setShowProfileModal(false);
+            setSelectedProfile(null);
             handleStartConversation({ caregiver: selectedProfile });
           }}
         />

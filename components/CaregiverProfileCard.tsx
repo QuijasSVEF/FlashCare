@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, useState } from 'react-native';
 import { MapPin, Star, Clock, Award, Shield, MessageCircle } from 'lucide-react-native';
 import { Card } from './ui/Card';
+import { DetailedProfileModal } from './DetailedProfileModal';
 
 interface CaregiverProfileCardProps {
   caregiver: {
@@ -27,6 +28,7 @@ export function CaregiverProfileCard({
   onViewProfile,
   showActions = true 
 }: CaregiverProfileCardProps) {
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const memberSince = new Date(caregiver.created_at).getFullYear();
   
   // Mock data - in production, fetch from database
@@ -44,12 +46,14 @@ export function CaregiverProfileCard({
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
-        <Image
-          source={{ 
-            uri: caregiver.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-          }}
-          style={styles.avatar}
-        />
+        <TouchableOpacity onPress={() => setShowProfileModal(true)}>
+          <Image
+            source={{ 
+              uri: caregiver.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
+            }}
+            style={styles.avatar}
+          />
+        </TouchableOpacity>
         <View style={styles.info}>
           <Text style={styles.name}>{caregiver.name}</Text>
           <View style={styles.rating}>
@@ -129,7 +133,7 @@ export function CaregiverProfileCard({
         <View style={styles.actions}>
           <TouchableOpacity 
             style={styles.viewProfileButton}
-            onPress={onViewProfile}
+            onPress={() => setShowProfileModal(true)}
           >
             <Text style={styles.viewProfileText}>View Profile</Text>
           </TouchableOpacity>
@@ -142,6 +146,13 @@ export function CaregiverProfileCard({
           </TouchableOpacity>
         </View>
       )}
+
+      <DetailedProfileModal
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={caregiver}
+        onStartConversation={onMessage}
+      />
     </Card>
   );
 }

@@ -7,10 +7,12 @@ import {
   Image,
   Platform,
   PanResponder,
-  Animated
+  Animated,
+  TouchableOpacity
 } from 'react-native';
 import { Heart, X, Star, MapPin, Clock, DollarSign, Image as ImageIcon } from 'lucide-react-native';
 import { Card } from './ui/Card';
+import { DetailedProfileModal } from './DetailedProfileModal';
 import { Colors } from '../constants/Colors'; 
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -33,6 +35,7 @@ export function SwipeableCard({
   const translateY = useRef(new Animated.Value(0)).current;
   const [isSwipingLeft, setIsSwipingLeft] = useState(false);
   const [isSwipingRight, setIsSwipingRight] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSwipe = (direction: 'left' | 'right') => {
     Animated.timing(translateX, {
@@ -108,12 +111,14 @@ export function SwipeableCard({
   const renderCaregiverCard = () => (
     <View style={styles.cardContent}>
       <View style={styles.imageContainer}>
-        <Image
-          source={{ 
-            uri: data.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-          }}
-          style={styles.profileImage}
-        />
+        <TouchableOpacity onPress={() => setShowProfileModal(true)}>
+          <Image
+            source={{ 
+              uri: data.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
+            }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
         <View style={styles.ratingBadge}>
           <Star size={16} color={Colors.warning} fill={Colors.warning} />
           <Text style={styles.ratingText}>4.8</Text>
@@ -160,12 +165,14 @@ export function SwipeableCard({
       <View style={styles.jobHeader}>
         <Text style={styles.jobTitle}>{data.title}</Text>
         <View style={styles.familyInfo}>
-          <Image
-            source={{ 
-              uri: data.family?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
-            }}
-            style={styles.familyAvatar}
-          />
+          <TouchableOpacity onPress={() => setShowProfileModal(true)}>
+            <Image
+              source={{ 
+                uri: data.family?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400'
+              }}
+              style={styles.familyAvatar}
+            />
+          </TouchableOpacity>
           <View>
             <Text style={styles.familyName}>{data.family?.name || 'Family Member'}</Text>
             <View style={styles.location}>
@@ -237,6 +244,16 @@ export function SwipeableCard({
           <Heart size={32} color={Colors.text.inverse} />
         </View>
       )}
+
+      <DetailedProfileModal
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={userRole === 'family' ? data : data.family || data}
+        onStartConversation={() => {
+          setShowProfileModal(false);
+          // Handle starting conversation
+        }}
+      />
     </Animated.View>
   );
 }
